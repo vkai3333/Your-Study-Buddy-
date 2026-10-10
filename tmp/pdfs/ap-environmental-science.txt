@@ -1,0 +1,1531 @@
+    AP Environmental Science Study Guide
+                   Unit 1-2: The Living World
+● Ecosystem Structure
+     ○ Abiotic vs. Biotic Components
+          ■ Abiotic
+                  ● Nonliving components of Earth
+                          ○ Eg: Atmosphere, Hydrosphere, and Lithosphere
+          ■ Biotic
+                  ● Living components of Earth
+                          ○ Eg: Animals, plants, fungi, protists, and bacteria which
+                              form the biosphere
+     ○ Interactions of Organisms with the Environment
+          ■ Population
+                  ● A group of organisms of the same species
+          ■ Community
+                  ● Populations of different species that occupy the same geographic
+                      area
+                  ● Every species occupies a habitat and has an ecological niche
+          ■ Habitat
+                  ● The area or environment where an organism lives, or where an
+                      ecological community occurs
+          ■ Ecological Niche
+                  ● The role and position a species has in its environment
+                  ● Includes how a species uses biotic and abiotic resources in its
+                      environment, where the species lives, and what it eats
+     ○ Interactions of Organisms Among Each Other
+          ■ Competition
+                  ● Occurs when two individuals are competing for resources in the
+                      environment
+          ■ Resource Partitioning
+                  ● Occurs when species can coexist and share resources without any
+                      conflict
+          ■ Predation
+                  ● Occurs when one species feeds on another
+                  ● Drives changes in population size
+                          ○ Eg:
+                                 ■ Cat & Mouse
+                                 ■ Polar Bear & Seals
+                                 ■ Lions & Wildebeests
+                                 ■ Great White Shark & Elephant Seals
+
+     ○ Symbiotic Relationships
+                        ○ Close, prolonged associations between two or more
+                          different organisms of different species
+            ■ Types of Symbiotic Relationships
+                 ● Mutualism
+                        ○ Both organisms receive beneficial properties from their
+                          relationship
+                              ■ Eg: pollinators benefit from feeding on plant nectar,
+                                  and plants benefit from pollinators moving their
+                                  pollen from plant to plant
+                 ● Commensalism
+                        ○ One organism benefits in the relationship and the other are
+                          neither harmed nor benefited
+                              ■ Eg: Barnacles are sedentary crustaceans that sweep
+                                  the surrounding water for small, free-floating
+                                  organisms. They often grow attached to scallop
+                                  shells, which has almost no effect on the scallop
+                 ● Parasitism
+                        ○ One organism benefits by harming the other organism
+                              ■ Eg: Mistletoe is a flowering plant that grows
+                                  attached to, and within, the vascular system of a tree
+                                  or shrub. This helps the mistletoe but harms the tree
+
+● Types of Ecosystems
+     ○ Classifications
+          ■ Blending
+                  ● The biomes blend into each other
+                  ● There are no distinct boundaries
+          ■ Ecotones
+                  ● A transitional area where two biomes meet
+          ■ Ecozones/Ecoregions
+                  ● Small regions within ecosystems that have similar physical
+                      features
+          ■ Edge Effects
+                  ● Ecotones have a great amount of species diversity and biological
+                      density
+                  ● Some species only live on the edge of certain habitats
+● Energy Flow
+     ○ Cell Respiration - Occurs when autotrophs make ATP (adenosine triphosphate)
+       from carbohydrates and other biomolecules in a complex series of reactions
+     ○ Bioenergetics - The study of how energy flows through living organisms
+          ■ All energy on Earth comes from the Sun
+          ■ Photosynthetic organisms use solar energy to turn CO2 and H2O into
+              carbohydrates
+                  ● Also releases O2
+          ■ Biological macromolecules store energy in their chemical bonds
+          ■ Cells use respiration to transfer energy from the chemical bonds of
+              macromolecules to the chemical bonds of smaller molecules like ATP,
+              GTP, NADH, NADPH and FADH2
+                  ● This releases CO2 and H2O
+          ■ These small, high-energy molecules power all the reactions and processes
+              the cell needs to perform
+     ○ Photosynthesis
+                  ● Plants and algae are producers and perform photosynthesis: they
+                      convert solar energy into chemical energy
+                  ● In plants, most photosynthesis occurs in leaves
+                  ● Algae include some bacteria and plant-like protists
+          ■ Light-Dependent Reactions
+                  ● Purpose:
+                          ○ Convert light energy to chemical energy
+                          ○ Reactant(s) = Sunlight + H2O
+                          ○ Products(s) = O2 + ATP + NADPH
+          ■ Light-Independent Reactions
+                  ● Purpose:
+                          ○ Use ATP and NADPH to build organic molecules from
+                              CO2
+                          ○ Reactant(s) = CO2 + ATP + NADPH
+                          ○ Product(s) = C6H12O6
+     ○ Cellular Respiration
+                  ● All living organisms require a source of energy, and all living
+                      organisms use the same metabolic pathways to power life
+                  ● Cell respiration is a series of redox reactions. Glucose is oxidized
+                      to CO2, and this powers the synthesis of ATP, an energy source
+                  ● All living organisms perform cellular respiration
+● Classifying Organisms in Ecosystems
+     ○ Autotrophs
+          ■ Autotrophs produce complex organic compounds from simple substances
+             in the environment
+          ■ Most autotrophs use energy from light (photoautotrophs)
+          ■ Some autotrophs use inorganic chemical reactions instead
+          ■ Autotrophs serve as primary producers in a food chain
+          ■ Example:
+                 ● Producers
+                 ● Saprotrophs
+     ○ Heterotrophs
+          ■ Heterotrophs consume other organisms in a food chain
+          ■ A heterotroph is unable to produce organic substances from inorganic ones
+          ■ Heterotrophs depend either directly or indirectly on autotrophs for
+             nutrients and food energy
+          ■ Example:
+                 ● Primary Consumers
+                 ● Secondary Consumers
+                     ● Tertiary Consumers
+                     ● Decomposers
+                     ● Detritivores
+● Food Chains & Food Webs
+      ○ Food Chain - shows how energy flow step by step from producer to consumers
+              ■ Eg.
+                     ● Rice→Humans→Microorganisms
+                     ● Corn plants→Beef cattle→Humans
+                     ● Phytoplankton→Crustaceans→Fish→Humans
+      ○ Energy Pyramid - shows how much energy is available to each successive
+          trophic level
+      ○ Food Webs - show the complex interactions between many species
+● Ecosystem Diversity - describes how variable an ecosystem is within a geographical
+  location
+      ○ Biodiversity
+                     ● The number and variety of organisms found in the world or in a
+                         particular habitat or ecosystem
+                     ● The variability among living organisms
+                     ● Biodiversity in all forms is the result evolution
+                     ● More biodiversity means a larger and more diverse gene pool,
+                         which leads to a greater chance of adaptation and survival
+      ○ Evolution - the change in the population’s genetic composition over time
+              ■ Natural Selection
+                     ● The natural selection of advantageous traits changes the makeup of
+                         a population
+                              ○ Charles Darwin (Father of Evolution) Theory
+                                     ■ Certain organisms live and reproduce, and other die
+                                     ■ Beneficial inherited characteristics are passed down
+                                         to the next generation
+                                     ■ Unfavorable heritable characteristics become less
+                                         common in the population
+                                     ■ This process acts upon a whole population over
+                                         time, not on one individual organism
+              ■ Genetic Drift
+                     ● Chance events change the makeup of a population with no regard
+                         to traits
+              ■ Phylogenetic Tree - a diagram that shows how organisms are related
+                  based on evolutionary relationships.
+      ○ Species - a group of organisms that are capable of breeding with one another but
+          incapable of breeding with other species
+              ■ Speciation - the formation of new species from preexisting species
+      ○ Extinction - occurs when a species cannot adapt quickly enough to environmental
+          change and all members of the species die
+              ■ Biological Extinction
+                     ● Extermination of a species
+                     ● No individuals of this species left on the planet
+                        ○ Eg: Dodo birds, Passenger pigeon, Mammoth, Dinosaurs
+            ■ Ecological Extinction
+                 ● So few individuals of a species that this species can no longer
+                    perform its ecological function
+                        ○ Eg: Alligators in the Everglades in 1960; Wolves in
+                            Yellowstone before reintroduction in the 1990s
+            ■ Commercial or Economic Extinction
+                 ● A few individuals exist, but the effort needed to locate and harvest
+                    them is not worth the expense
+                        ○ Eg: Groundfish population of the Grand Banks
+● Ecosystem Services
+          ■ Humans gain many benefits from the natural environment and from
+              properly functioning ecosystems
+          ■ Ecosystems are essential to life
+          ■ Land, water, and air must be used responsibly if they are to benefit future
+              generations
+     ○ Provisioning Services
+          ■ Physical items we obtain from our environment
+          ■ Example:
+                 ● Food
+                 ● Raw materials
+                 ● Water
+                 ● Energy
+                 ● Medicinal resources
+          ■ Cultural Services
+                 ● Non-material benefits people obtain from the ecosystem
+                 ● Example:
+                         ○ Recreation
+                         ○ Science & education
+                         ○ Tourism
+                         ○ Inspiration for culture & art
+                         ○ Spiritual experience
+          ■ Regulating Services
+                 ● Benefits obtained from the regulating of ecosystems. These are
+                     often hard to see and are taken for granted
+                 ● Example:
+                         ○ Pest & disease control
+                         ○ Water & air purification
+                         ○ Climate regulation
+                         ○ Waste decomposition & detoxification
+                         ○ Pollination
+          ■ Support Services
+                 ● Allow for other ecosystems services to be present
+                         ○ Example:
+                                 ■ Nutrient recycling and soil formation
+● Natural Ecosystem Change
+○ Types of Species
+     ■ Keystone
+            ● Maintain the biotic balance in a community
+            ● Their presence contributes to an ecosystem’s diversity
+            ● Their extinction would lead to a large change in the ecosystem
+                    ○ Eg: Fig trees in a tropical forest; Wolves in western North
+                        America
+     ■ Indicator
+            ● Used as a standard to evaluate the health of an ecosystem
+            ● More sensitive to biological changes within their ecosystems than
+                others species
+            ● Used as an early warning system to detect dangerous changes to a
+                community
+                    ○ Eg: Trout in freshwater biomes
+○ Ecological Succession
+     ■ Primary Succession
+            ● Begins in a virtually lifeless area, such as the area below a
+                retreating glacier
+     ■ Secondary Succession
+            ● Takes place where an existing community has been cleared, but the
+                soil has been left intact
+     ■ Pioneer Species
+            ● Organisms present in the first stages of either type of succession
+            ● Have wide ranges of environmental tolerance
+     ■ Climax Community
+            ● Formed in the final stage of succession
+            ● Have a dynamic balance between abiotic and biotic components of
+                the community
+     ■ Habitat Fragmentation
+            ● When a natural habitat is reduced or fragmented
+            ● When a regular and balanced ecosystem is damaged
+                          Unit 3: Populations
+● Population Ecology
+     ○ Population - a group of organisms of the same species
+          ■ Population Density - the number of individuals of a population that
+             inhabit a certain unit of land or water area
+          ■ Population Dispersion - how individuals of a population are spaced
+             within a region
+                 ● Clumped Dispersion
+                         ○ The most common dispersion pattern for populations
+                         ○ Adheres to the “those of a feather flock together” idea
+                         ○ Eg: Plants & fish
+                 ● Uniform Dispersion
+                         ○ Members of a population are uniformly spaced throughout
+                              their geographic region; usually a result of competition for
+                              an ecosystem’s resources
+                         ○ Eg: Trees
+                 ● Random Dispersion
+                         ○ A relatively uncommon pattern of dispersion
+                         ○ Occurs when the position of each member of a population
+                              is not determined or influenced by other members of the
+                              population
+     ○ Population Growth & Carrying Capacity
+          ■ Biotic Potential
+                 ● How much a population would grow if there were unlimited
+                     resources in the environment
+                 ● Not a practical model for population growth because resources in
+                     an environment are limited
+          ■ Carrying Capacity
+                 ● The maximum population size that can be supported by the
+                     available resources in the region
+                 ● Differ by species, as different species have different requirements
+                     for life
+          ■ Graphing Population Growth
+                 ● J-Curve Model - Exponential Growth
+                         ○
+                 ● Logistic Population Growth (S-Curve) - Initial burst then growth
+                     rate drops
+                         ○
+          ■ Rule of 70 - the time it takes for a population to double can be
+             approximated by dividing 70 by the current growth rate of the population
+                           70
+                 ● Eg:        = 2.8 years
+                          25%
+     ○ Reproductive Strategies
+          ■ R-selected Organisms
+                 ● Reproduces early in life
+            ● Usually have a high capacity for reproductive growth
+            ● Little to no care given to offspring
+                    ○ Eg; Bacteria, algae, protozoa
+     ■ K-selected Organisms
+            ● Reproduces later in life
+            ● Produces fewer organisms
+            ● Devote significant time and energy to nurturing of offspring
+            ● Parents are invested in each individual offspring
+                    ○ Eg: Humans, lions, cows
+○ Survivorship and Population Cycles
+     ■ Boom-and-Bust Cycle
+            ● Very common among r-strategists
+            ● Rapid increase→Equally rapid drop-off
+     ■ Predator-Prey Cycle
+○ Factors Influencing Population Growth
+     ■ Density-dependent Factors
+            ● Increased predation
+            ● Competition for food or living space
+            ● Disease
+            ● Buildup of toxic materials
+     ■ Density-independent Factors
+            ● Fires
+            ● Storms
+            ● Earthquakes
+○ Survivorship Curve
+     ■ Type I
+            ● The majority of offspring will live for a long period of time;
+                eventually they will start to die off
+     ■ Type II
+            ● Offspring have a 50-50 chance of surviving to old age
+     ■ Type III
+            ● Most offspring die young, but if they live to a certain age, they will
+                live a longer life
+                    ○
+● Human Population
+○ World Population
+     ■ Birth rate = the number of live births per 1,000 members of the
+        population in a year
+     ■ Death rate = the number of deaths per 1,000 members
+                         (𝐵𝑖𝑟𝑡ℎ 𝑟𝑎𝑡𝑒+𝑖𝑚𝑚𝑖𝑔𝑟𝑎𝑡𝑖𝑜𝑛)−(𝑑𝑒𝑎𝑡ℎ 𝑟𝑎𝑡𝑒+𝑒𝑚𝑖𝑔𝑟𝑎𝑡𝑖𝑜𝑛)
+     ■ Growth Rate =                           1,000
+○ Population Changes
+     ■ Emigration - the movement of people out of a population
+     ■ Immigration - the movement of people into a population
+     ■ Total Fertility Rate
+            ● The number of children a woman in a given population will bear
+               during her lifetime
+                ● Based on an analysis of data from preceding years
+                ● TFRs cannot be depended on because they assume the conditions
+                   of the past will be the conditions of the future
+           ■ Replacement Birth Rate
+                ● The number of children a couple must have in order to replace
+                   themselves in a population
+                ● Worldwide, the replacement birth rate is slightly higher than 2
+                ● In developing countries, this number is as high as 3.4 due to higher
+                   mortality rates
+           ■ Factors that Affect TFRs of a Population
+                ● Availability of birth control
+                ● Demand for children in the labor force
+                ● Base level of education for women
+                ● Existence of public and/or private retirement systems
+                ● The population’s religious beliefs, culture, and traditions
+           ■ Factors that Affect the Growth Rate of a Population
+                ● Base level of education for women
+                ● Dominant religion
+                ● Existence of public and/or private retirement systems
+                ● The population’s religious beliefs, culture, and traditions
+● Human Impact on Earth
+    ○ Ecological Footprint
+                ● Used to describe the environmental impact of a population
+         ■ IPAT Model
+                ● I=P*A*T
+                        ○ I - The total impact
+                        ○ P - Population size
+                        ○ A - Affluence
+                        ○ T - Level of technology
+    ○ Environmental Problems
+         ■ Overgrazing & Desertification
+                ● Green Revolution - the technological innovation and an increased
+                    use of pesticides and fertilizers, which allowed farmer to increase
+                    crop production throughout the world
+                ● Extensive Pastoralism - the shifting of animal herds between
+                    grazing pastures has remained popular in several arid parts of the
+                    world
+                ● Population Pressure - too many people and too many animals on
+                    too little lands
+                ● Overgrazing - led to significant amounts of dry grassland being
+                    denuded, eroded, and desertified
+                ● Desertification - any human process that turns a vegetated
+                    environment into a desert-like landscape
+                ● Soil Salinization - the salt content in soil increasing due to non-
+                    anthropogenic and/or anthropogenic influences
+         ■ Irrigation Agriculture
+                  ● Irrigation - the application of controlled amounts of water to
+                     plants at needed intervals
+                  ● Aquifers - underground water tables
+                         ○ Aquifer supplies are being depleted at a rapid rate in large-
+                             scale countries such as India, China and the United States
+             ■ Deforestation
+                  ● Deforestation - the act of clearing a forested area of trees and
+                     other vegetation without the intention of replanting
+● Threatened & Endangered Species
+    ○ Vulnerable Species
+           ■ The species is likely to become endangered if no action is taken
+    ○ Endangered Species
+           ■ The species is likely to become extinct
+    ○ Critically Endangered
+           ■ The species is at a very high risk of extinction
+    ○ Background Extinction Rate
+           ■ Species that are the most endangered have several factors in common
+                  ● They:
+                         ○ Require large ranges of habitat to survive
+                         ○ Have low reproductive rates
+                         ○ Have specialized feeding habits
+                         ○ Have some sort of value for humans
+                         ○ Have low population numbers
+           ■ Fragmentation - habitats are broken into smaller pieces by, for example,
+              building of roads and cities
+           ■ Degradation - pollutants are added to the environment
+           ■ Overexploitation - contribution to extinction
+           ■ Biodiversity Hotspot -
+● HIPPCO - an acronym to memorize the cause of extinction
+    ○ H - Habitat Destruction/Fragmentation
+    ○ I - Invasives
+    ○ P - Population
+    ○ P - Pollution
+    ○ C - Climate Change
+    ○ O - Overharvesting/Overexploitation
+            Unit 4: Earth Systems and Resources
+● The Lithosphere
+     ○ Tectonic Plates - parts of the lithosphere that float on the asthenosphere
+                   ● Earth’s Tectonic Plates
+           ■ Plate Boundaries - the edges of tectonic plates
+                   ● Types of Plate Boundaries
+                           ○ Convergent Boundary - two plates are pushed toward and
+                               into each other
+                           ○ Divergent Boundary - two plates move away from each
+                               other
+                           ○ Transform Fault Boundary - two plates slide against each
+                               other in opposite directions
+           ■ Subduction - an older and denser plate sinks beneath the younger and
+               lighter plate
+           ■ Ocean-continent convergence - the oceanic plate is subducted beneath
+               the less dense continental plate, forming a deep ocean trench
+                           ○ Eg: Cascade Range is an example of ocean-continent
+                               convergence
+     ○ Earthquakes - geological events resulting from vibrations deep in the Earth that
+       release energy
+           ■ Epicenter - Initial surface location of the earthquake
+           ■ Seismograph - an instrument that measures size or magnitude
+           ■ Richter Scale - measures amplitude of the highest S-wave
+     ○ Volcanoes - geological events resulting from plate movement
+           ■ Volcano Classification
+                   ● Active - Erupted within the last 10,000 years
+                   ● Dormant - Has not erupted within the last 10,000 years but is
+                       expected to erupt again
+                   ● Extinct - Is not expected to erupt again
+                           ○ Recharging - build up of pressure between eruptions
+           ■ Volcano Creation
+                   ● Subduction Zone - Occurs at convergent boundaries between
+                       oceanic and continental plates
+                           ○ Eg: Ring of Fire
+                   ● Rift Valley - Occurs at divergent boundaries usually between
+                       oceanic plates. New ocean floor is formed as magma fills in the
+                       gap between separating plates.
+                           ○ Eg: East African Rift
+                   ● Hotspots - Found in the middle of tectonic plates. Columns of
+                       unusually hot magma rise from deep in the mantle, partially
+                       melting and weakening the mantle in the lower lithosphere.
+                           ○ Eg: Hawaiian Islands
+           ■ Types of Volcanoes
+                   ● Shield Volcanoes - Tall, Broad base, Gentle slope
+                           ○ Eg: Kohala
+                 ● Composite Volcanoes - Tall, Broad base, Steep slope
+                      ○ Eg: Mount Fuji
+                 ● Cinder Cones - Small, Short, Steep slope, Symmetrical cone,
+                   Bowl-like crater,
+                      ○ Eg: Sunset Crater
+                 ● Lava Domes - Small, Short, Steep slope, Dome
+                      ○ Eg: Mount St. Helens
+● The Atmosphere
+    ○ Layer of the Atmosphere
+         ■ Exosphere
+                 ● Gases are thinnest
+         ■ Thermosphere
+                 ● Gases are very thin
+                 ● Auroras occur
+         ■ Ionosphere
+                 ● Absorbs X-rays and ultraviolet radiation from Sun
+         ■ Mesosphere
+                 ● Air pressure extremely low
+                 ● Temperature decreases with altitude
+                 ● Where meteors usually burn up before striking Earth
+         ■ Stratosphere
+                 ● Includes the ozone layer
+                 ● Gases are not well mixed
+                 ● Gradually warmer with altitude
+         ■ Tropopause
+                 ● Between the troposphere and the stratosphere
+         ■ Troposphere
+                 ● Where weather takes place
+                 ● Usually well-mixed
+                 ● Gradually colder with altitude
+                 ● Contains 99% of water vapor and clouds
+    ○ Greenhouse Gases
+         ■ Types of Greenhouse Gases
+                 ● Water Vapor - H₂O - 0-4% of troposphere
+                 ● Carbon Dioxide - CO₂ - 0.033% of the troposphere
+                 ● Methane - CH₄ - 0.0002% of the troposphere
+    ○ Weather & Climate
+         ■ Weather
+                 ● Day-to-Day properties
+                 ● Wind Speed + Directions
+                 ● Temperature
+                 ● Amount of Sunlight
+                 ● Pressure
+                 ● Humidity
+         ■ Climate
+                 ● Patterns that are constant over many years
+                  ● Average Temperature
+                  ● Average Precipitation Amounts
+    ○ Seasons - the motion of the Earth around the Sun that results in a variation in
+      insolation, the amount of solar radiation that reaches a given area
+
+
+
+
+           ■ Northern Hemisphere Tilted Towards the Sun
+                ● North = Summer
+                ● South = Winter
+           ■ Southern Hemisphere Tilted Towards the Sun
+                ● North = Winter
+                ● South = Summer
+● The Hydrosphere
+    ○ Includes Earth’s oceans and freshwater bodies
+    ○ Covers about 75% of planet Earth
+    ○ Freshwater
+          ■ Contains minimal quantities of dissolved salts
+          ■ Usually comes from precipitation from atmospheric water vapor
+          ■ Watershed - an area of land that collects rainwater and drains it into a
+             particular stream or river
+          ■ Freshwater Biomes
+                 ● Deltas
+                         ○ Landforms that forms at the juncture of a river and ocean
+                         ○ Made of deposited sediment
+                 ● Estuaries
+                         ○ Sites where the “arm” of the sea extends inland to meet the
+                             mouth of a river
+                         ○ Often rich with many different types of plant and animal
+                             species
+                         ○ Water usually has a high concentration of nutrients and
+                             sediments
+                 ● Wetlands
+                         ○ Ecologically diverse ecosystems
+                         ○ Found along the shores of fresh bodies of water
+                                 ■ Eg: Marshes, swamps, bogs, prairie potholes, and
+                                     floodplains
+    ○ Saltwater
+          ■ Saltwater Biomes (Examples)
+                ● Barrier Islands
+                       ○ Landforms that lie off coastal shores
+                       ○ Spits of land
+                       ○ Created by buildup of deposited sediments
+                       ○ Boundaries constantly shifting as water moves around them
+                       ○ Function to buffer the shoreline behind them
+                ● Coral Reef
+                       ○ A type of barrier island
+                       ○ Formed by a community of living things
+                       ○ Home to a large diversity of species
+                       ○ Extremely delicate
+                       ○ Vulnerable to physical stresses, changes in light intensity,
+                           changes in water temperature, and ocean depth and pH
+     ○ Water Problem & Issues
+         ■ Water Risk
+                ● The possibility of an area experiencing a water-related challenge
+                   such as water scarcity, water stress, flooding or drought
+         ■ Water Stress
+                ● Occurs when demand for water exceeds the available amount
+                   during a certain period, or when poor quality restricts water use.
+                   Water-stressed countries have a renewable annual water supply of
+                   about 1,000-2,000 m³ per person.
+         ■ Water Scarcity
+                ● A lack of sufficient available water resources to meet demand for
+                   water in a region. It affects every continent and around 2.8 billion
+                   people around the world at least one month out of every year.
+                   Water-scarce countries have a renewable annual water supply of
+                   less than 1,000 m³ per person
+     ○ Water Conservation
+                ● Includes Policies, strategies, and activities to sustainably manage
+                   the natural resource of fresh water, to protect the hydrosphere, and
+                   to meet the current and future human demand for water.
+● Soil & Soil Dynamics
+     ○ The Pedosphere
+          ■ What is Soil?
+                ● A complex, ancient material teeming with living organisms
+                ● Consists of
+                      ○ Finely broken-down or weathered rock (45%)
+                      ○ Living and dead organic matter (~5%)
+                      ○ Air (~25%)
+                      ○ Water (~25%)
+          ■ The Chemistry of Soil: pH
+                ● pH substances ranges from 0-14
+                ● pH is the measure of the concentration of hydrogen ions
+                ● Most soils have a pH between 4 to 8
+                ● Soil can be acidic (<7) or alkaline/basic (>7)
+          ■ The Importance of Soil
+               ● Links the abiotic and biotic components of the world
+               ● Plays an active role in nutrient cycling
+               ● Supports plant life by supplying a physical foundation for growth,
+                  water, and nutrients
+               ● Nonrenewable resource
+● Rocks
+    ○ Rock Cycle
+
+
+
+
+         ■
+    ○ Types of Rocks
+         ■ Igneous
+                ● Rock is melted by heat and pressure below the crust
+                       ○ Eg: Basalt, Granite
+         ■ Sedimentary
+                ● Forms as a sediment; builds up and is compressed
+                       ○ Eg: Limestone, shale, coal, chert
+         ■ Metamorphic
+                ● Formed by transforming an existing rock via a large amount of
+                   pressure and heat
+                       ○ Eg: Slate, marble
+    ○ Rock Weathering
+         ■ Types of Weathering
+                ● Physical
+                       ○ Rock is weakened and worn down by physical forces,
+                          usually wind or water
+                       ○ No change in the chemistry of the rock
+                       ○ Dominates in cold or dry environments
+
+
+                 ● Chemical
+                          ○ Rock is subjected to chemical alteration through reactions
+                               with water, oxygen, or dissolved minerals
+                          ○ Breakdown and reorganization of rock minerals
+                          ○ Dominates in warm or moist environments
+                  ● Biological
+                          ○ Weathering that takes place as the result of the activities of
+                               living organisms
+                          ○ Organisms can weather rock by physical or chemical means
+     ○ Types of Soil
+           ■ Sand
+                  ● Large particles
+                  ● Don’t easily adhere together
+                  ● Large pores
+                  ● More space for water but it drains away quickly
+           ■ Clay
+                  ● Small particles
+                  ● Easily adhere to each other
+                  ● Small pores
+                  ● Less space for water but is held in soil and doesn’t drain
+     ○ Soil Problems
+           ■ Enough arable soil is needed to meet our agricultural needs
+           ■ Soil fertility is a must
+     ○ Erosion
+                  ● The removal of soil, rock, or dissolved material from one location
+                     on the Earth’s crust and transportation to another location
+● Problems w. Modern Agriculture
+     ○ Monoculture vs. Polyculture
+          ■ Monoculture
+                ● Planting just one type of crop in a large area
+                ● Common in modern agriculture
+                ● Leeches soil of specific nutrients
+                ● Decreases crop genetic diversity, making crops more susceptible to
+                   pests and diseases
+          ■ Polyculture
+                ● Planting many types of crops in a large area
+                ● Increases sustainability
+                ● Limits nutrient depletion in soil
+                ● Increases genetic diversity
+                ● Crop rotation another good solution
+     ○ Other Problems
+                ● Damaged soil due to large machinery
+                ● Repeated plowing breaks down soil aggregates; this leaves plow
+                   pan, or hard pan, which is hard, infertile soil
+                ● Large energy consumption, including burning fossil fuels
+                ● Pollution in the form of pesticides and fertilizers
+     ○ Green Revolution
+      ■ What is it?
+            ● A huge increase in worldwide agricultural productivity over the
+               past 50 years
+            ● Due to mechanization of farming that resulted from the Industrial
+               Revolution
+      ■ Cons
+            ● Many detrimental effects on the environment
+            ● Use of chemical pesticides lead to new pesticide-resistance insects
+            ● Over-irrigation has caused salinization of soil and land degradation
+      ■ Solutions
+            ● Genetically modified plants decrease the need for pesticide use
+            ● Drip irrigation adds only the water required and delivers water
+               directly to plants’ roots
+○ Soil Conservation
+      ■ Practices to Conserve Soil Properties
+            ● Using manure, compost, and the residue of plants to increase the
+               amount of organic matter in the soil
+            ● Organic agriculture, a method of farming that uses compost,
+               manure, crop rotation, and non-chemical methods to manage soil
+               fertility and pest control
+            ● Changing tillage practices to reduce soil breakup and erosion,
+               including contour plowing and strip planting
+            ● Using trees and other winds barriers to reduce wind force
+                  Unit 5: Land and Water Use
+● Resource Utilization
+     ○ “The Tragedy of the Commons”
+          ■ Serves as a foundation for modern conservation
+                ● Conservation - the management or regulation of a resource
+                       ○ Different from preservation
+                ● Preservation - the maintenance of a species or ecosystem in order
+                   to ensure its perpetuation
+     ○ Renewable & Non-renewable Resources
+          ■ Renewable Resources
+                ● Resources that can be regenerated quickly
+                       ○ Eg: Hardwood trees take 50 years to mature; It’s widely
+                           considered the crossover point of nonrenewable and
+                           renewable resources.
+          ■ Nonrenewable Resource
+                ● Things like minerals and fossil fuels
+                ● Typically formed by very slow geologic processes
+          ■ Main Sources of Energy
+                ● Fossil Fuels
+                       ○ Provide 65% of the world’s electricity
+                       ○ Formed from the fossilized remains of once-living
+                           organisms; over time, this organic matter was exposed to
+                           intense heat & pressure, eventually breaking the organic
+                           molecules down into oil, coal, and natural gas
+                ● Nuclear Energy
+                       ○ The world’s primary non-fossil fuel, nonrenewable energy
+                           source
+                       ○ In the U.S., 20% of electrical energy is provided by nuclear
+                           power plants
+                       ○ Worldwide, more than 400 nuclear power plants produce
+                           approximately 13% of the world’s electrical energy
+                       ○ China and India lead the world in the creation of new
+                           nuclear facilities
+                ● Renewable Energy
+                       ○ Bottomless energy source = advantage
+                       ○ Examples include biomass, solar, wind, geothermal, and
+                           hydropower energy
+                       ○ Globally, only 15% of our energy needs are currently met
+                           using renewable energy sources
+                       ○ Energy storage limitations hinder the expansion of
+                           renewable storage
+
+
+● Agriculture
+     ○ Agricultural Innovations
+■ Neolithic Agricultural Revolution - the period of time during which
+  people transitioned from hunting and gathering for food to an organized
+  system of farming
+      ● Vegetative planting - where shoot, stems, and roots of existing
+          wild plants are collected and grown together          ↓
+      ● Seed agriculture - fertilized seed grains and fruits of plants are
+          collected and planted together                ↓
+      ● Horticulture - the domestication of plants by rejecting poorly
+          growing crops and taking seeds from productive, heartier crops
+          to grow future generations            ↓
+      ● Animal domestication - the process in which selected animal
+          populations become accustomed to human provision and
+          control; was established as an alternative to hunting & fishing
+                  ↓
+      ● Animal husbandry - productive breeds were purposely interbred
+          or hybridized for reproduction
+■ Second Agricultural Revolution - technological innovations in
+  agriculture and manufacturing that drastically reduced labor requirements
+  and increased the scale of farm production
+      ● Green Revolution - the time after the Industrial Revolution when
+          farming became mechanized and crop yields in industrialized
+          nations booms
+              ○ Positive Effects
+                     ■ Mechanization, fertilizers, and pesticides that led to
+                         improved crop production on small plots of land
+                         and a reduction in world hunger
+                     ■ Decreased food costs
+                     ■ Affordable irrigation pumps that move water to
+                         farming regions
+                     ■ Genetic engineering allowing farmers to modify
+                         crops with beneficial traits and create high-yield
+                         seeds
+                     ■ Biotechnology research resulting in the
+                         development of vaccines, antibiotics, and growth
+                         hormones
+              ○ Negative Effects
+                     ■ Suffering small farms due to their inability to
+                         capitalize on economies of scale
+                     ■ Detrimental environmental impact caused by the
+                         increased use of energy, materials, and machinery
+                     ■ Chemical use leading to eutrophication and causes
+                         explosive algae growth and water pollution
+                     ■ Use of fertilizers and pesticides resulting in
+                         pesticide resistance
+                     ■ Genetic engineering resulting in distrust
+● Agricultural Activity & the Environment
+     ○ Irrigation
+           ■ Problem
+                  ● Repeated irrigation can cause serious problem , including a
+                     significant buildup of salts on the soil’s surface, which makes the
+                     lands unusable for crops
+           ■ How the Problem is Being Addressed
+                  ● To combat this salinization of the land, farmers have begun
+                     flooding fields with massive amounts of water in order to move the
+                     salt deeper into the soil
+           ■ Drawbacks
+                  ● The large amounts of water can waterlog plant roots, which will
+                     kill the crops; this process also causes the water table of the region
+                     to rise
+                  ● The water for these irrigation farms comes from underground
+                     aquifers which are being depleted at a rapid rate
+     ○ Prevention of Soil Degradation
+           ■ Intercropping
+                  ● Also called strip cropping
+                  ● The practice of planting bands of different crops across a hillside
+                  ● Can also prevent some erosion by creating an extensive network of
+                     roots
+           ■ Contour Plowing
+                  ● Rows of crops are plowed across the hillside; prevents the erosion
+                     that can occur when rows are cut up and down on a slope
+           ■ Terracing
+                  ● Aids in preventing in soil erosion on steep slopes
+                  ● Terraces are flat platforms that are cut into the hillside to provide a
+                     level planting surface; this reduces the soil runoff from the slope
+           ■ No-Hill Method
+                  ● Farmers plant seeds without using a plow to turn the soil, reduces
+                     the levels of CO2 let into the environment by plowing
+           ■ Crop Rotation
+                  ● Can provide soils with nutrients when legumes are part of the cycle
+                     of crops in an area
+     ○ Types of Pesticides
+           ■ Biological
+                  ● Living organisms are used to control pests
+                          ○ Eg: Bacteria, ladybugs, milky spore disease, parasitic
+                              wasps, and certain viruses
+           ■ Carbamates
+                  ● Affect the nervous systems of pests
+           ■ Chlorinated Hydrocarbons & Other Persistent Organic Compounds
+              (POPs)
+                  ● Chlorinated Hydrocarbons are synthetic organic compounds
+                     belonging to the group of persistent organic pollutants
+                           ○ Eg: DDT pesticide
+                    ● POPS are organic compounds that are resistant to environmental
+                       degradation through chemical, biological, and photolytic
+                       processes.
+             ■   Fumigants
+                    ● Used to sterilize soil and prevent pest infestation of stored grain
+             ■   Inorganic
+                    ● Broad-based pesticides
+                    ● Includes arsenic, copper, lead, and mercury.
+                    ● Highly toxic and accumulate in the environment
+             ■   Organic/Natural
+                    ● Natural poisons derived from plants such as tobacco or
+                       chrysanthemum
+             ■   Organophosphates
+                    ● Extremely toxic but remain in the environment for only a brief
+                       time
+                           ○ Eg: Malathium
+● Livestock & Overgrazing
+     ○ Livestock Grazing
+          ■ The shifting of animal herds between grazing pastures in area where dry
+              grassland is common
+          ■ A sustainable practice, as long as the grazing area is sufficient for the
+              number of animals
+     ○ Overgrazing
+          ■ Occurs when too many people and too many animals are placing
+              population pressure on too little land
+          ■ Has led to significant amounts to dry grasslands being denuded, eroded,
+              and desertified
+          ■ Harmful to the soil because it leads to erosion and soil compaction
+          ■ Solutions include rotating animals from site to site and away from their
+              source of water, and overall control of herd numbers
+     ○ Animal Waste
+          ■ Manure not used as fertilizer due to difficulty with transport
+          ■ Has become the most widespread source of water pollution in the United
+              States
+● Forestry
+     ○ Deforestation
+                 ● The removal of trees for agricultural purposes or purposes of
+                     exportation
+                 ● Slash & Burn - severely reduces the amount of available forest
+                     and contributes to deforestation; an area of vegetation is cut down
+                     and burned before being planted with crops
+     ○ Tree Plantations and Old Growth Forests
+          ■ Old Growth Forests
+                 ● Have never been cut or seriously disturbed for several hundred
+                     years
+                ● Contains incredible biodiversity, with nyriad habitats and highly
+                   evolved intricate niches for a multitude of organisms
+          ■ Second Growth Forests
+                ● Areas where cutting has occurred and a new, younger forest has
+                   arisen naturally
+          ■ Plantations & Tree Farms
+                ● Planted and managed tracts of trees of the same age that are
+                   harvested for commercial use
+     ○ Forest Management
+                ● Silviculture - the management of forest plantations for the purpose
+                   of harvesting timber
+                ● Clear-Cutting - the removal of all of the trees in an area
+                ● Selective Cutting - the removal of select trees in an area
+● Natural Events & Forest Fires
+     ○ Humans control the areas that affect the quality of food and the number of trees
+       that are available to use by:
+           ■ Removing infected trees
+           ■ Removing select trees
+           ■ Using chemical and natural pest controls
+           ■ Carefully inspecting imported trees and tree products
+           ■ Developing pest and disease-resistant species of trees
+● Rangelands
+            ■ Are diverse in nature, consisting of desert, wet and dry grasslands, and
+              mountainous meadows
+            ■ Approximately 770 million acres are rangelands; 46% of it is governed
+● Types of Mining
+     ○ Strip Mining
+           ■ Controversial type of mining
+           ■ Strips the surface layer of soil and rock in order to expose a seam of
+              mineral ore
+           ■ Least expensive and least dangerous method of mining for coal
+           ■ Has a detrimental effect on the environment
+     ○ Mountaintop Removal
+           ■ Most extreme form of strip mining
+           ■ Mostly associated with coal mining in the Appalachian Mountains
+           ■ Transforms the summits of mountains and destroys ecosystems
+     ○ Shaft Mining
+           ■ Vertical tunnels are built to access
+           ■ Excavate minerals that are unreachable
+● Fishing
+     ○ Fishing Techniques
+          ■ Drift Nets
+                 ● Nets float through the water and catch everything in their path
+          ■ Long-Lining
+                 ● The use of long lines with baited hooks that are taken by
+                    numerous aquatic organisms
+    ■ Bottom Trawling
+            ● The ocean floor is scraped by heavy nets that smash everything in
+               their path
+○ Overfishing & Aquaculture
+            ● About 69% of major fish stocks of the world are either
+               overexploited or fully exploited
+            ● About 20% of the stocks are moderately overexploited
+            ● About 8% are either recovering from depletion or depleted
+    ■ Aquaculture - raising aquatic species in captivity for harvesting
+       Unit 6: Energy Resources and Consumption
+● Energy Concepts
+     ○ Forms of Energy
+          ■ Potential = energy at rest, or stored energy
+          ■ Kinetic = energy in motion
+          ■ Radiant = sunlight, or electromagnetic energy
+          ■ Thermal = heat, or the internal energy in substances
+          ■ Chemical = energy stored in chemical bonds between atoms
+          ■ Electrical = energy from the motion of electrons
+          ■ Nuclear = stored in the nuclei of atoms
+     ○ Laws of Thermodynamics
+          ■ First Law of Thermodynamics
+                 ● Energy can neither be created nor destroyed
+                 ● It can only be transferred and transformed
+                        ○ Eg: Photosynthesis
+          ■ Second Law of Thermodynamics
+                 ● Entropy (disorder) of the universe is increasing
+                 ● In most energy transformations, a significant fraction of energy is
+                    lost to the universe as heat
+                        ○ Eg: Food chains
+● Sources of Energy
+     ○ Nonrenewable
+          ■ Electricity
+          ■ Nuclear
+          ■ Fossil Fuels
+                ● Oil
+                ● Coal
+                ● Natural gas
+                ● Synfuels
+     ○ Renewable
+          ■ Hydroelectric
+          ■ Solar
+          ■ Wind
+          ■ Biomass
+          ■ Geothermal
+          ■ Ocean Waves and Tides
+          ■ Hydrogen fuel cells
+● Fossil Fuels
+     ○ What Are Fossil Fuels?
+         ■ Oil
+                ● Long chains of hydrocarbons
+         ■ Coal
+                ● Mixture of carbon, hydrogen, oxygen, and other atoms
+                ● Types of Coals
+                  ○ Anthracite = Purest Form
+                  ○ Bituminous
+                  ○ Subbituminous
+                  ○ Lignite = Least Pure
+     ■ Natural Gas
+            ● Mostly methane gas (CH4) with a mixture of other gases such as
+               Pentane (C5H12) and Butane (C4H10)
+○ Where Are Fossil Fuels Found?
+     ■ Oil & Natural Gas
+            ● Source = Ancient marine organisms such as zooplankton;
+               Organisms in ancient swamps, especially plants
+            ● Locations
+                  ○ Deep in the Earth
+                  ○ Under both land and ocean floor
+                  ○ Stored in spaces between rocks
+                  ○ Long continuous deposits called seams
+                  ○ At various depths underground
+     ■ Coal
+            ● Source = Living organisms found in landfills, swamps, wetlands,
+               and the intestines of various animals
+            ● Location = Many locations around the world
+○ Extraction & Use of Fossil Fuels
+     ■ Crude Oil
+            ● Raw or fresh oil when it is pumped up from a reserve
+            ● Methods of Extracting Oil:
+                  ○ Primary Extraction
+                           ■ Oil well is tapped and pumped to the surface
+                           ■ Easiest way to extract oil
+                  ○ Pressure Extraction
+                           ■ This method is used when oil is harder to extract
+                           ■ Mus, saltwater, or CO2 is used to push oil out from
+                               the reserve
+                  ○ Heat Extraction
+                           ■ Steam, hot water, or hot gases are used to partially
+                               melt very thick crude oil
+                           ■ This makes the oil easier to extract
+     ■ Coal
+            ● Coal mining occurs through two processes
+                  ○ Strip Mining
+                           ■ Removal of the Earth’s surface, all the way down to
+                               the level of coal seam
+                           ■ Removed earth is called the overburden
+                           ■ Coal is removed; overburden is replaced with and
+                               topped with soil
+                           ■ Area contoured and re-vegetated
+                  ○ Underground Mining
+                           ■ Sink shafts to reach underground deposits
+                           ■ Networks of tunnels are dug or blasted
+                           ■ Humans enter these tunnels to manually retrieve
+                             coal
+      ■ Natural Gas
+           ● Uses
+                 ○      Heating homes
+                 ○      Cooking
+                 ○      Burned to generate electricity
+                 ○      Can be used in some cars and trucks
+           ● Pros
+                 ○      Produces only CO2 and H2O when it burns
+                 ○      Cleaner than burning oil or coal
+           ● Cons
+                 ○      A leak can cause a violent explosion
+                 ○      More difficult to transport than oil or coal
+                 ○      Liquified before transportation, which requires energy
+                 ○      Can be transported via pipes, but these can leak and
+                        explode, as well as damage habitats when they’re installed
+○ Synfuels
+     ■ Characteristics
+           ● Synthetic fuel
+           ● Obtained from non-petroleum sources such as coal, natural gas, or
+              biomass
+           ● Can also be derived from waste such as plastic or rubber
+           ● Can be liquid or gas
+           ● A mixture of carbon monoxide and hydrogen
+     ■ Pros
+           ● Large potential supply
+           ● Lower air pollution than coal
+           ● Can replace oil or natural gas in some cases
+           ● Used in transportation and industry
+           ● Holds promise to be a more sustainable or renewable energy
+              source in the future
+     ■ Cons
+           ● Low to moderate net energy yield
+           ● More costly than fossil fuels
+           ● Currently still requires coal
+           ● High water use
+           ● Higher CO2 emissions than coal
+○ Environmental Considerations of Fossil Fuels
+     ■ Oil Drilling
+           ● Pros
+                  ○ Drilling for oil is only moderately damaging to the
+                      environment
+                  ○ Little land is needed to drill
+                  ● Cons
+                        ○ Oil is transported thousands of miles by tankers, pipelines,
+                            and trucks
+                        ○ A lot of environmental damage can occur during
+                            transportation
+             ■ Burning Coal
+                  ● Burning coal produces:
+                        ○ Air pollutants such as CO2, NOx, Hg, and SO2
+                        ○ Fly ash - small dark flecks that are carried into the air
+                        ○ Boiler residue - solid waste left at the bottom of the boiler
+● Nuclear Energy
+    ○ Fusion & Fission
+          ■ Fusion
+                ● Combining two small atoms to produce heavier atoms and energy
+                ● Can release more energy than fission without producing as many
+                   radioactive by-products
+                ● Reactions occur in the Sun
+                ● Practice is still being developed
+          ■ Fission
+                ● Discovered first
+                ● Energetic splitting of large atoms into two smaller atoms
+                ● To split an atom, you have to hit in with a neutron
+                ● Several neutrons are released, which continue the chain reaction
+                ● Used by all commercial nuclear power plants
+    ○ Nuclear Reactors
+                ● Steam is piped directly to the turbines
+                ● Steam spins turbines to generate electricity
+                ● Water is cooled back into a liquid then pumped back to the core to
+                   be turned into steam again
+● Renewable Energy
+
+            Energy Source      Definition/Exam    Pros                Cons
+                               ples
+
+            Hydroelectric      Electricity        Doesn’t produce     Produces thermal
+                               generated as       chemical            pollution
+                               moving water       pollutants          Affects river flow
+                               turns a turbine                        and nearby
+                                                                      habitats
+
+            Solar              Solar panels       Doesn’t produce     Producing PV
+                               convert solar      pollutants          cells requires
+                               energy into heat   No moving parts     fossil fuels
+                               or electricity     Requires little     Not every
+                                                  maintenance         location receives
+                                                  Silent              enough light to
+                                   Pays off in the      make solar panels
+                                   long term            worthwhile
+                                                        Initially expensive
+                                                        Limited by Sun
+                                                        exposure and
+                                                        energy storage
+                                                        potential
+
+Biomass         Wood               Carbon neutral       Expensive
+                Charcoal           Widely available     Can lead to
+                Animal waste       Still being          deforestation
+                products           optimized
+
+Wind            Wind is used to    Fastest growing      Expensive
+                rotate blades      alternative energy   Loud
+                                   source               Unattractive to
+                                   Safe                 some
+                                   Doesn’t produce      Need an
+                                   pollutants           alternative for
+                                                        when there is no
+                                                        wind
+
+Geothermal      Energy that is     Cost effective       Only possible in
+                obtained from      Reliable             some locations
+                within the Earth   Doesn’t produce      Affects and is
+                Harness Earth’s    pollutants during    limited by
+                internal heat      typical operation    groundwater
+                                   Minimal harm to      Salts in the water
+                                   land and habitats    corrode
+                                   Virtually infinite   machinery
+                                   supply               Gases or trace
+                                                        toxic chemicals
+                                                        trapped in the
+                                                        water may be
+                                                        released as the
+                                                        water is used
+
+Ocean Waves &   Incoming and/or    Doesn’t produce      Expensive
+Tides           outgoing tides     pollutants           Limited locations
+                pass through the   Predictable          Environmental
+                dam, turning       Long life span       impact is still
+                turbines and                            being determined
+                generating
+                electricity
+
+Hydrogen Fuel   Hydrogen is        Use is clean and     Expensive
+Cells           obtained from      safe                 Making the fuel
+water or organic   can release
+matter, stored,    pollutants
+and used to
+generate
+electricity
+Unit 7-8: Atmospheric, Terrestrial and Aquatic Pollution
+● Types of Pollution
+       ○   Noise
+       ○   Light
+       ○   Thermal
+       ○   Air
+       ○   Water
+       ○   Solid Waste
+       ○   Hazardous
+● Biggest source of pollution
+       ○   Burning fossil fuels
+       ○   Mining
+       ○   Industrial processes
+       ○   Deforestation
+       ○   Hazardous waste
+● Anthropogenic Uses of Water
+     ○ Agriculture
+           ■ Water footprint - the total daily per capita use of freshwater
+     ○ Agriculture is one of the most common uses of water. (70%)
+     ○ Industry (20%)
+     ○ Household Use (10%)
+     ○ The United States is the country that uses the most water globally.
+     ○ Different scenarios regarding geological differences
+           ■ Eg. West v. East
+     ○ China uses the least amount of water globally
+● Irrigation - technological advances have made water use for crops more efficient.
+     ○ Furrow - a trench that is flooded with water
+     ○ Flood - the entire field is flooded with water
+     ○ Spray - an apparatus sprays water across the field
+     ○ Drip - a slow dripping hose is laid on or buried beneath the soil
+● Hydroponic Agriculture
+            ■ The cultivation of plants in greenhouse conditions by immersing roots in a
+                 nutrient-rich solution
+       ○ An alternative to irrigation, hydroponic agriculture is more expensive but has
+         several advantages
+            ■ Requires little to no pesticide use
+            ■ Uses up to 95% less water than traditional irrigation
+            ■ Crops can be grown year-round
+       ○ Water is also used for industrial processes and household use
+            ■ After agriculture, the most common use of water is in industry
+● Industry
+       ○ Water is used mainly for:
+           ■ Generating electricity
+           ■ Cooling down systems
+● Household Use (Anthropogenic Uses)
+     ○ About 10% of water use in the U.S
+          ■ Eg. Normal activities, recreational activities.
+     ○ U.S is the leading user of water for households.
+          ■ Advocacy for reduction in household use of water
+     ○ Gray Water - wastewater from bath, showers, bathrooms and washing machine
+     ○ Contaminated Water - wastewater from toilets, kitchen sinks and dishwashers.
+● Wastewater From Humans + Livestock Could Pose Multiple Problems
+     ○ Water Pollution - the contamination of streams, rivers, lakes, oceans or
+       groundwater with substances produced through anthropogenic activities.
+       Wastewater produced by livestock operations and human activities, including
+       human sewage from toilets and gray water from bathing and washing laundry.
+● Problems w. Wastewater
+     ○ Oxygen depletion
+     ○ Lack of nutrients
+     ○ Disease-causing organisms + contaminants
+● Oxygen Problems
+     ○ Biochemical oxygen demand (BOD) - the amount of oxygen a quantity of water
+       uses over a period of time at specific temperatures
+     ○ Dead zone - an area w. Extremely low oxygen concentration + very little life
+     ○ Anoxic - no oxygen present in an area.
+● Excessive Nutrient Release
+     ○ Eutrophication - a phenomenon which a body of water becomes rich in nutrients
+     ○ Cultural eutrophication - an increase in fertility in a body of water; the result of
+       anthropogenic inputs of nutrients
+     ○ Eutrophication caused by an increase in nutrients
+           ■ Eg. fertilizers
+     ○ Eutrophication can cause rapid growth of algae which eventually dies causing the
+       microbes to increase the BOD
+● Disease-Causing Organisms
+     ○ Wastewater can carry a variety of pathogens
+           ■ Example of Diseases
+                  ● Cholera
+                  ● Typhoid
+                  ● Stomach Flu
+                  ● Diarrhea
+                  ● Hepatitis
+     ○ Indicator species - a species that indicates whether or not disease-causing
+       pathogens are likely to be tested
+     ○ Fecal coliform bacteria - a group of generally harmless microorganisms in
+       human intestines that can serve as an indicator species for potentially harmful
+       microorganisms associated w. contaminated sewage.
+● Wastewater Treatment
+     ○ Septic Systems
+          ■ Septic systems
+            ■ Septic tank
+            ■ Sludge
+            ■ Septage
+            ■ Leach field
+       ○ Sewage Treatment Plants
+            ■ In developed countries, municipalities use centralized sewage treatment
+               plant that receive wastewater from hundreds or even thousands of
+               households
+            ■ In traditional waste treatment plants, there are two phases of treatment;
+               primary and secondary
+● Animal Feedlots and Manure Lagoons
+       ○ Manure from concentrated animal feeding operations is a problem because of
+         volume. It can also contain hormones and antibiotics that are given to the animals
+            ■ Manure lagoons - human-made ponds lined with rubber built to handle
+                 large quantities of manure produced by livestock.
+       ○ After the manure is broken down by bacteria\, it is spread onto fields as fertilizers
+● Heavy Metals and Other Chemicals
+      ○ Three Heavy Metals are of particular concern
+              ■ Lead - found in pipes and other materials in older construction
+              ■ Arsenic - occurs naturally and through human activity such as mining and
+                  industry
+              ■ Mercury - occurs naturally and through human activity; primarily burning
+                  coal
+● Deposition - acids deposited on Earth as rain or snow or as gases and particles that
+  attach to the surface of plants, soil and water
+      ○ Acid deposition occurs when burning coal releases sulfur dioxide and nitrogen
+          dioxide into the air.
+              ■ In the atmosphere, these chemicals are converted to sulfuric acid and nitric
+                  acid, which falls back to Earth as acid deposition
+              ■ Acid deposition reduces the pH of water bodies to levels that are lethal to
+                  many organisms.
+              ■ Many coal-burning facilities have installed coal scrubbers to combat this
+                  problem.
+● Synthetic Organic Compounds and Human-Produced Chemicals
+            ■ Synthetic compounds can enter the water supply from industrial point
+                 sources or from nonpoint sources when they are applied over large areas.
+       ○ Compounds include pesticides, pharmaceuticals, military compounds and
+         industrial compounds.
+       ○ Synthetic organic compounds can be toxic, cause genetic effects and interfere
+         with growth and sexual development.
+● Military Compounds
+       ○ Perchlorates - a group of harmful chemicals used for rocket fuel
+            ■ Sometimes contaminates the soil in regions of the world where military
+                rockets are manufactured, tested or dismantled.
+● Industrial Compounds
+     ○ Industrial compounds - chemicals used in manufacturing
+          ■ It use to be common for manufacturers in the United States to dump
+               industrial compounds directly into bodies of water
+     ○ Polychlorinated biphenyls (PCBs) - a group of industrial compounds used to
+       manufacture plastics and insulate electrical transformers and responsible for many
+       environmental problems
+● Oil Pollution
+     ○ Petroleum products are highly toxic to many marine organisms, including birds,
+       mammals and fish, as well as to the algae and microorganisms that form the base
+       of the aquatic food chain
+     ○ One source of oil in the water comes from drilling from undersea oil using
+       offshore platforms
+     ○ Oil and other petroleum products can also enter the oceans as spills from oil
+       tankers
+● Ways to Remediate Oil
+     ○ Containment: Booms keep the floating oil from spreading, then boats equipped
+       with giant oil vacuums suck up as much oil as possible
+     ○ Chemicals: Chemicals break up the oil on the surface, making it disperse before it
+       hits the shoreline
+     ○ Bacteria: A particular bacterium consumes oil; scientists are currently trying to
+       genetically engineer the bacterium to consume oil even faster.
+● Non-chemical Water Pollution
+     ○ Solid Waste Pollution
+           ■ Solid Waste = Garbage + Sludge produced by sewage treatment plants
+           ■ Garbage on beaches and in the ocean is dangerous to both marine
+              organisms and people
+           ■ In the United States the practice of dumping garbage in the ocean was
+              curtailed in the early 1980s
+           ■ The problem remains in many developing countries.
+     ○ Sediment Pollution
+           ■ 30% of all sediments in our waterways come from natural sources while
+              70% comes from human activities
+           ■ Problems with sedimentation
+           ■ Suspension of soil particles cause waterways to become brown and cloudy
+           ■ Reduced infiltration of sunlight lowers productivity of aquatic plants and
+              algae
+           ■ Sediments clog gills and prevent aquatic organisms from obtaining oxygen
+     ○ Thermal Pollution
+           ■ Thermal Pollution - non-chemical water pollution that occurs when
+              human activities cause a substantial change in the temperature of water
+           ■ Thermal Shock - a dramatic change in water temperature that can kill
+              organisms
+           ■ One common solution is cooling towers that release the excess heat into
+              the atmosphere instead of into the water.
+     ○ Noise Pollution
+               ■ Sounds emitted by ships and submarines can interfere with animal
+                    communication
+               ■ Especially loud sonar can negatively affect species such as whales that
+                    rely on low-frequency, long distance communication.
+               ■ An increased awareness of noise pollution in the ocean has inspired some
+                    shipbuilders to design ships equipped with quieter propellers
+●   Developed countries have addressed the problems of pollution by clearing up polluted
+    areas and by passing legislation to prevent pollution in the future.
+●   Developing countries are still in the process of industrializing and are less able to afford
+    water-quality improvements
+●   Developing countries suffer from the additional pollution but also benefit economically
+    from the additional jobs and industrial spending,
+●   Air Pollution - the introduction of chemicals, particulate matter, or microorganisms into
+    the atmosphere at concentrations high enough to harm plants, animals, and materials such
+    as buildings, or to alter an ecosystem
+                        ● Has many inputs and outputs
+● Classifying Pollutants
+       ○ Primary Pollutants = A polluting compound that comes directly out from its
+         source (smokestack, exhaust pipe or natural emission sources)
+                     ● Examples - CO, CO2, SO2, NO2 and most suspended particulate
+                        matter
+       ○ Secondary Pollutants = A primary pollutant that has undergone transformation
+         in the presence of sunlight, water, oxygen or other compounds
+                     ● Examples - O2, sulfate and nitrate
+             ■ Sulfur Dioxide (SO2)
+                     ● A corrosive gas that comes primarily from combustion of fuels
+                        such as coal and oil
+                     ● A respiratory irritant and can adversely affect plant tissue
+                     ● Releases in large quantities during volcanic eruptions and in much
+                        similar quantities during forest fires.
+             ■ Nitrogen Oxides (NOx)
+                     ● Motor vehicles and stationary fossil fuel combustion are the
+                        primary anthropogenic sources of nitrogen oxides
+                     ● Respiratory irritant, increases susceptibility to respiratory
+                        infections
+                     ● An ozone precursor, leads to formation of photochemical smog
+                     ● Converts to nitric acid in atmosphere which is harmful to aquatic
+                        life and some vegetation
+                     ● Contributes to over-fertilizing terrestrial and aquatic systems
+             ■ Carbon Oxides
+                     ● Carbon monoxide (CO) is a common emission in vehicle exhaust
+                        and most other combustion processes
+                     ● CO can be a significant component of air pollution in urban areas
+                     ● Carbon dioxide (CO2) released by burning fossil fuels has led to
+                        its becoming a major pollutant
+                   ● CO2 recently exceeded a concentration of 400 parts per million in
+                       the atmosphere and appears to be steadily increasing each year.
+           ■ Particulate Matter - Solid or liquid particles suspended in air
+                   ● The sources of particulate matter and is affects
+                           ○ Particulate matter can be natural or anthropogenic
+                           ○ Particulate matter in the atmosphere ranges considerably in
+                               size and can absorb our scatter light, which creates a haze
+                               and reduces the amount of light
+           ■ Haze - Reduces visibility
+           ■ Photochemical oxidant - A class of air pollutants formed as a result of
+               sunlight acting as compounds such as nitrogen oxides
+           ■ Ozone - A secondary pollutant made up of three oxygen atoms bound
+               together
+           ■ Smog - A type of air pollution that is a mixture of oxidants and particulate
+               matter
+           ■ Photochemical Smog - A smog that is dominated by oxidants
+           ■ Sulfurous smog - Smog dominated by sulfur dioxide and sulfate
+               compounds
+           ■ Lead
+                   ● A gasoline additive, also found in coal, oil, and old paint
+                   ● Impairs central nervous system
+                   ● All low concentrations can have measurable effects on learning
+                       and ability to concentrate
+     ○ Volatile Organic Compounds (VOCS) - an organic compound that evaporates at
+       typical atmospheric temperatures.
+                   ● Formed by evaporation of fuels, solvents, paints and improper
+                       combustion of fuels such as gasoline.
+                   ● A precursor to ozone formation.
+     ○ Sources of Air Pollution
+           ■ Natural emissions of pollution includes volcanoes, lightning, forest fires,
+               and plants both living and dead; all releases compounds that can be
+               classified as pollutants
+           ■ Anthropogenic sources include on-road vehicles, power plants, industrial
+               processes, and waste disposal (incinerator)
+     ○ Anthropogenic Emissions
+           ■ In the U.S, emissions from human activity are monitored, regulated and in
+               many cases controlled.
+           ■ Some anthropogenic sources are on-road vehicles, power plants, industrial
+               processes, and incineration
+           ■ The Clean Air Act and its various amendments require that EPA establish
+               standards to control pollutants that are harmful to human health
+           ■ Through the National Ambient Air Quality Standards the EPA
+               periodically specifies concentration limits for each air pollutant.
+● Photochemical Smog and Acid Rain
+     ○ Photochemical smog in the United States
+           ■ The formation of photochemical smog is complex and still not well
+             understood.
+           ■ A number of pollutants are involved and they undergo a series of of
+             complex transformations in the atmosphere
+           ■ Prevalent in Los Angeles, California, United States
+● Pollution Control
+         ■ Ways to address air pollution
+                ● Avoid emissions in the first place
+                ● Use cleaner fuel
+                ● Increase efficiency
+                ● Control pollutants after emissions
+                ● Management of waste pollution
+         ■ Ways of Controlling Emissions
+                ● Remove sulfur dioxide from coal by fluidized bed combustion
+                ● Install catalytic converter on cars
+                ● Use baghouse filters
+                ● Use electrostatic precipitators
+                ● Install scrubbers in smokestacks
+     ○ How People are Implementing Innovative Pollution Control Measures
+         ■ Municipalities have tried a number of strategies
+                ● Reduce gasoline spilled at the pump, restrict evaporation of dry-
+                   cleaning fluids, and the use of lighter fluid
+                ● Reduce use of wood-burning stove and fireplace
+                ● Limit automobiles to every other day uses or charge user fees for
+                   roads during heavy commute times.
+● Breakdown of Stratospheric Ozone
+           ■ When chlorine is present (from CFCs), it can attach to an oxygen atom in
+             an ozone molecule to form chlorine monoxide (ClO) and O2
+                 ● O3+Cl=ClO+O2
+           ■ The chlorine monoxide molecule reacts with a free oxygen atom which
+             pull the oxygen from the CIO to produce free chlorine again
+                 ● ClO+O=Cl+O2
+           ■ A single chlorine atom can catalyze the breakdown of as many as 100,000
+             ozone molecules until finally one chlorine atom finds another and the
+             process is stopped
+           ■ In the process, the ozone molecules are no longer available to absorb
+             incoming UV-B radiation
+           ■ As a result, the UV-B can reach Earth’s surface and cause harm to
+             biological organisms
+                       Unit 9: Global Change
+● Global Warming
+     ○ Greenhouse Gas Concentration
+                 Greenhouse Gas          Pre-Industrial Level      In 2016
+
+                 Carbon Dioxide, CO2     280 ppm                   400 ppm
+
+                 Methane, CH4            715 ppb                   1,840 ppb
+
+                 Nitrous Oxides, N2O     270 ppb                   328 ppb
+● Effects of Climate Change: What’s Coming?
+     ○ Physical Changes
+                 ● Decrease of glaciers and ice sheets
+                 ● Continued rising of average ocean levels
+                 ● Changes in precipitation
+                 ● Increase in frequency and duration of storms
+                 ● Increase in number of hot days
+                 ● Decrease in number of cold days
+     ○ Changes in Biota
+                 ● Increased crop yields in cold environments
+                 ● Loss of croplands due to drought and higher temperatures
+                 ● Cold-tolerant species will need to migrate to cooler climates
+                 ● Heat-tolerant species may spread and invade new habitats
+                 ● Additional deaths from water and insect-borne diseases
+                 ● Commerce, transport, and coastal settlements may be disrupted by
+                    changes in ocean levels and storms
+                 ● Change in marine ecosystems and fishery productivity
+     ○ Adaptations to the Warmer Climate
+                 ● Must occur at many levels of society
+                 ● Develop new technology
+                 ● Continue to reduce emissions from engines
+                 ● Legislative and behavioral changes needed
+                 ● Promote sustainable growth
+● Reducing Climate Change
+     ○ Technological
+                ● Carbon sequestration
+                ● Reduction of emissions from engines
+     ○ Behavioral
+                ● Turning off the lights to conserve electricity
+     ○ Policy
+                ● Enacting new treaties and legislation
+

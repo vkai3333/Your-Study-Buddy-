@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A calm, focused dashboard for planning study sessions and tracking progress."
+    />
+    <meta name="theme-color" content="#5b5bd6" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="./your-study-buddy-icon.png"
+    />
+    <title>Your Study Buddy</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <a class="brand" href="#dashboard" aria-label="Your Study Buddy home">
+          <span class="brand-mark" aria-hidden="true">
+            <img src="./your-study-buddy-icon.png" alt="" />
+          </span>
+          <span>Your Study Buddy</span>
+        </a>
+
+        <nav class="primary-nav" aria-label="Your Study Buddy sections">
+          <a class="nav-item active" href="#dashboard" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z" /></svg>
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-item" href="#courses">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6" /></svg>
+            <span>Textbooks</span>
+          </a>
+          <a class="nav-item" href="#flashcards">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6M9 13h4" /></svg>
+            <span>Study</span>
+          </a>
+          <a class="nav-item" href="#create">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /><path d="M4 4h5M15 4h5M4 20h5M15 20h5" /></svg>
+            <span>Create</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="nav-item settings-button" type="button" id="open-settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.08H9.55V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 4.05 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.08V9.55h.08a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.86-2.86.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.08h4.05v.08a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1 .4h.08v4.05H21a1.7 1.7 0 0 0-1.6 1.1Z" /></svg>
+            <span>Settings</span>
+          </button>
+
+          <div class="profile-card">
+            <div class="avatar" aria-hidden="true">K</div>
+            <div class="profile-copy">
+              <strong>Kai</strong>
+              <span>Student plan</span>
+            </div>
+            <button class="icon-button profile-menu" type="button" aria-label="Open profile menu" data-toast="Profile menu coming soon.">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content" id="dashboard">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="today-label">Thursday, October 8</p>
+            <h1>Good afternoon, Kai <span aria-hidden="true">👋</span></h1>
+            <p class="intro">Keep your momentum going with one focused step.</p>
+          </div>
+          <div class="topbar-actions">
+            <label class="search-field">
+              <span class="sr-only">Search Your Study Buddy</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+              <input type="search" placeholder="Search" autocomplete="off" />
+              <kbd>⌘ K</kbd>
+            </label>
+            <button class="icon-button notification-button" type="button" aria-label="View notifications" data-toast="You’re all caught up.">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+              <span class="notification-dot" aria-hidden="true"></span>
+            </button>
+            <button class="button primary-button" type="button" id="open-library-button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h7v14H4zM13 5h7v14h-7z" /><path d="M7 9h1M16 9h1" /></svg>
+              Browse textbooks
+            </button>
+          </div>
+        </header>
+
+        <section class="stats-grid" aria-label="Study overview">
+          <article class="stat-card">
+            <span class="stat-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9" /></svg></span>
+            <div>
+              <p>Study alarms</p>
+              <strong id="tasks-done-stat">0</strong>
+              <span class="trend">scheduled</span>
+            </div>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 3s1 4-2 6c-2-1-2-3-2-4-3 2-5 5-5 9a8 8 0 0 0 16 0c0-4-2-7-4-9 0 3-1 5-3 6" /></svg></span>
+            <div>
+              <p>Current streak</p>
+              <strong>7 days</strong>
+              <span class="trend">Personal best: 12</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="library-section courses-page" id="courses" aria-labelledby="courses-page-heading" hidden>
+          <header class="courses-page-header">
+            <div><p class="eyebrow">Textbook library</p><h1 id="courses-page-heading">Your textbooks</h1><p class="intro">Open an added textbook to choose a unit, chapter, lesson, or Anki review.</p></div>
+            <button class="button secondary-button" type="button" id="view-all-courses">Browse textbooks</button>
+          </header>
+          <div class="library-heading-row">
+            <div>
+              <p class="section-label">Your library</p>
+              <h2 id="library-heading">My textbooks</h2>
+              <p class="library-intro">Textbooks you add will appear here and stay saved on this Mac.</p>
+            </div>
+            <div class="course-heading-actions">
+              <label class="textbook-search"><span class="sr-only">Search your textbooks</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-courses-search" placeholder="Search your textbooks" autocomplete="off"></label>
+            </div>
+          </div>
+          <div class="course-shelf" id="my-course-shelf" aria-live="polite"></div>
+          <div class="catalog-divider">
+            <div><p class="section-label">Textbook catalog</p><h3>Available textbooks</h3></div>
+            <div class="catalog-search-wrap"><label class="textbook-search"><span class="sr-only">Search textbook catalog</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="catalog-courses-search" placeholder="Search textbook catalog" autocomplete="off"></label><span>Choose Add textbook</span></div>
+          </div>
+          <div class="course-shelf" id="course-shelf" aria-live="polite"></div>
+        </section>
+
+        <section class="flashcards-page" id="flashcards" aria-labelledby="flashcards-page-heading" hidden>
+          <header class="flashcards-page-header">
+            <div><p class="eyebrow">Study decks</p><h1 id="flashcards-page-heading">Study</h1><p class="intro">Study a built-in deck or open one of your own saved sets.</p></div>
+            <button class="button primary-button" type="button" id="flashcards-create-set">+ Create study set</button>
+          </header>
+          <section class="flashcards-library">
+            <div class="saved-decks-heading"><div><p class="section-label">Saved locally</p><h2>My Study Sets</h2><p class="deck-source-copy">Your personal sets and added built-in study decks appear here.</p></div><div class="saved-decks-heading-actions"><span id="flashcards-deck-count">0</span><button type="button" class="button danger-text-button" id="delete-all-study-sets">Delete All</button></div></div>
+            <div id="flashcards-deck-list" class="custom-deck-list flashcards-deck-grid"></div>
+          </section>
+          <section class="flashcards-library built-in-flashcards-library">
+            <div class="saved-decks-heading"><div><p class="section-label">Study library</p><h2>Available study decks</h2><p class="deck-source-copy">Add a built-in collection to My Study Sets.</p></div><span id="built-in-deck-count">2 decks</span></div>
+            <div id="built-in-deck-list" class="custom-deck-list flashcards-deck-grid"></div>
+          </section>
+        </section>
+
+        <section class="create-page" id="create" aria-labelledby="create-page-heading" hidden>
+          <header class="create-page-header">
+            <div>
+              <p class="eyebrow">Your own material</p>
+              <h1 id="create-page-heading">Create</h1>
+              <p class="intro">Turn one set of notes into flashcards, practice questions, and Feynman prompts. Everything stays on this Mac.</p>
+            </div>
+            <button class="button primary-button" type="button" id="new-custom-study-set">+ New study set</button>
+          </header>
+
+          <div class="create-layout">
+            <article class="create-builder">
+              <label class="create-field">Study set name
+                <input id="custom-deck-name" maxlength="80" placeholder="e.g. Cell biology midterm" />
+              </label>
+
+              <section class="create-notes-workspace">
+              <div class="create-method-panel">
+                <section class="anki-note-import" aria-labelledby="anki-note-import-heading">
+                  <div>
+                    <p class="section-label">Anki-compatible import</p>
+                    <h2 id="anki-note-import-heading">Import notes</h2>
+                    <p>Choose an Anki deck package or notes export. Imported material becomes flashcards only.</p>
+                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Supports APKG, UTF-8 TXT, CSV, and TSV files.</p>
+                  </div>
+                  <input id="anki-notes-file" type="file" accept=".apkg,.txt,.csv,.tsv,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
+                  <button class="button secondary-button" type="button" id="choose-anki-notes">Choose file</button>
+                </section>
+                <div class="create-field">
+                  <label for="notes-input">Paste your notes</label>
+                  <div id="notes-input" class="rich-notes-input" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Paste class notes here. Bold text, highlights, headings, and bullet lists will be preserved."></div>
+                  <p class="rich-notes-hint">Formatting from documents and websites is kept when you paste.</p>
+                </div>
+                <button class="button primary-button create-action" type="button" id="generate-note-cards">Generate and save study set</button>
+                <p class="single-pass-note">One pass creates and saves flashcards, practice questions, and Feynman prompts. The set appears in My Study Sets immediately.</p>
+              </div>
+
+              <div class="create-content-tabs" role="tablist" aria-label="Study set content">
+                <button type="button" class="active" role="tab" aria-selected="true" data-create-tab="flashcards">Flashcards <span id="flashcard-tab-count">0</span></button>
+                <button type="button" role="tab" aria-selected="false" data-create-tab="questions">Questions <span id="question-tab-count">0</span></button>
+                <button type="button" role="tab" aria-selected="false" data-create-tab="feynman">Feynman <span id="feynman-tab-count">0</span></button>
+              </div>
+
+              <section class="create-tab-panel" data-create-panel="flashcards">
+                <section class="inline-manual-card" aria-labelledby="manual-card-heading">
+                  <div><p class="section-label">Manual card</p><h2 id="manual-card-heading">Add a card manually</h2></div>
+                  <div class="manual-card-grid">
+                    <label class="create-field">Front<textarea id="manual-card-front" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-front-image-preview" alt="Front image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="front">Add image</button><button type="button" data-remove-manual-image="front" hidden>Remove image</button></span></span></label>
+                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
+                  </div>
+                  <input id="flashcard-image-file" type="file" accept="image/*" hidden>
+                  <p class="flashcard-paste-hint">Copy and paste works for both text and images. Paste while the front or back box is selected.</p>
+                  <button class="button secondary-button create-action" type="button" id="add-manual-card">Add card to this set</button>
+                </section>
+
+                <div class="draft-section">
+                  <div class="draft-heading">
+                    <div><p class="section-label">Editable draft</p><h2><span id="draft-card-count">0</span> cards</h2></div>
+                    <button type="button" class="button text-button" id="clear-draft">Clear flashcards</button>
+                  </div>
+                  <div class="draft-empty" id="draft-empty"><strong>No cards yet</strong><span>Paste notes above to generate your study set.</span></div>
+                  <div class="draft-card-list" id="draft-card-list" aria-live="polite"></div>
+                  <div class="draft-save-row"><p>Generated sets save immediately. After making changes, use Update set above to replace the saved version.</p></div>
+                </div>
+              </section>
+
+              <section class="create-tab-panel generated-question-section" data-create-panel="questions" hidden>
+                <div class="question-builder-heading"><div><p class="section-label">Generated together</p><h2>Practice questions</h2></div><div class="draft-heading-actions"><span><strong id="question-draft-count">0</strong> questions</span><button type="button" class="button text-button" id="clear-question-draft">Clear questions</button></div></div>
+                <p class="question-builder-copy">These come from the same notes pass as your flashcards. Edit them, add your own, then save the whole study set.</p>
+                <div class="manual-question-grid">
+                  <label class="create-field">Question<textarea id="manual-question-prompt" placeholder="What should the learner answer?"></textarea></label>
+                  <label class="create-field">Answer<textarea id="manual-question-answer" placeholder="Correct answer"></textarea></label>
+                  <label class="create-field">Type<select id="manual-question-type"><option value="wh">Who / What / Why / How</option><option value="short_answer">Short answer</option><option value="true_false">True / false</option><option value="cloze">Cloze</option><option value="mcq">Multiple choice</option></select></label>
+                </div>
+                <button class="button secondary-button create-action" type="button" id="add-manual-question">Add question</button>
+                <div class="draft-card-list question-draft-list" id="question-draft-list"></div>
+                <div class="draft-empty" id="question-draft-empty"><strong>No questions yet</strong><span>Generate a study set from notes or add a question manually.</span></div>
+                <div class="draft-save-row"><p>Questions are saved together with the rest of this study set.</p></div>
+              </section>
+
+              <section class="create-tab-panel feynman-draft-section" data-create-panel="feynman" hidden>
+                <div class="question-builder-heading"><div><p class="section-label">Broad recall</p><h2>Feynman prompts</h2></div><div class="draft-heading-actions"><span><strong id="feynman-draft-count">0</strong> prompts</span><button type="button" class="button text-button" id="clear-feynman-draft">Clear Feynman topics</button></div></div>
+                <p class="question-builder-copy">Use these topic phrases to explain an entire process or concept in detail.</p>
+                <div class="manual-feynman-row">
+                  <label class="create-field">Add a Feynman topic<input id="manual-feynman-topic" placeholder="e.g. Photosynthesis or cellular respiration"></label>
+                  <button class="button secondary-button" type="button" id="add-manual-feynman">Add topic</button>
+                </div>
+                <div class="feynman-draft-list" id="feynman-draft-list"></div>
+                <div class="draft-save-row"><p>Feynman prompts are saved together with the rest of this study set.</p></div>
+              </section>
+              </section>
+            </article>
+
+            <aside class="saved-decks" aria-labelledby="saved-decks-heading">
+              <div class="saved-decks-heading"><div><h2 id="saved-decks-heading">My Study Sets</h2></div><span id="saved-deck-count">0</span></div>
+              <div id="custom-deck-list" class="custom-deck-list"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="course-page" id="course-page" aria-labelledby="library-dialog-title" hidden>
+          <header class="course-page-header">
+            <button class="back-to-courses" type="button" id="close-library-button">← Back to textbooks</button>
+            <div><p class="section-label" id="library-dialog-kicker">Textbook</p><h2 id="library-dialog-title">Textbook library</h2></div>
+          </header>
+          <div class="library-dialog-body">
+            <aside class="chapter-sidebar" id="chapter-sidebar" aria-label="Course chapters"></aside>
+            <main class="lesson-view" id="lesson-view" tabindex="-1"></main>
+          </div>
+        </section>
+
+        <section class="custom-study-page" id="custom-study-page" aria-labelledby="custom-study-title" hidden>
+          <div id="custom-study-options-view">
+            <header class="custom-study-page-header">
+              <button type="button" class="back-to-courses" id="close-custom-study">← Back to Create</button>
+              <div><p class="section-label">Choose a study mode</p><h2 id="custom-study-title">My study set</h2></div>
+            </header>
+            <section class="built-in-unit-picker" id="built-in-unit-picker" hidden>
+              <div class="unit-picker-heading"><div><p class="section-label">Choose sections</p><h3>Select what to study</h3></div><button type="button" id="toggle-all-built-in-units">Clear all</button></div>
+              <div class="built-in-unit-grid" id="built-in-unit-grid"></div>
+            </section>
+            <div class="custom-study-options">
+              <div class="custom-study-option-card custom-count-option">
+                <button type="button" class="custom-study-option-main" data-custom-study-mode="regular"><span>Flashcards</span><strong>Regular review</strong><small>Flip through cards without scheduling.</small></button>
+                <label class="mode-count-picker">Cards<input type="number" id="custom-regular-count" min="1" value="20"><small>Random selection</small></label>
+              </div>
+              <div class="custom-study-option-card custom-count-option">
+                <button type="button" class="custom-study-option-main" data-custom-study-mode="anki"><span>Spaced repetition</span><strong>Anki review</strong><small id="custom-anki-due-copy">Review due cards and schedule when they return.</small></button>
+                <div class="anki-daily-summary" aria-label="Today's Anki cards">
+                  <span>Today</span>
+                  <div><strong id="custom-anki-daily-new">0</strong><small>New</small></div>
+                  <div><strong id="custom-anki-daily-review">0</strong><small>Review</small></div>
+                </div>
+              </div>
+              <div class="custom-study-option-card custom-count-option">
+                <button type="button" class="custom-study-option-main" data-custom-study-mode="questions"><span>Practice</span><strong>Questions</strong><small>Answer saved questions from this study set.</small></button>
+                <label class="mode-count-picker">Questions<input type="number" id="custom-questions-count" min="1" value="20"><small>Random selection</small></label>
+              </div>
+              <div class="custom-study-option-card custom-feynman-option">
+                <button type="button" class="custom-study-option-main" data-custom-study-mode="feynman"><span>Explain deeply</span><strong>Feynman prompts</strong><small>Write a detailed explanation for each broad topic.</small></button>
+                <div class="feynman-mode-timer">
+                  <span>Timer</span>
+                  <label>Amount<input type="number" id="custom-feynman-time-amount" min="1" max="120" value="5"></label>
+                  <label>Unit<select id="custom-feynman-time-unit"><option value="seconds">Seconds</option><option value="minutes" selected>Minutes</option></select></label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="custom-review-view" hidden>
+            <header class="custom-study-page-header custom-review-header">
+              <button type="button" class="back-to-courses" id="close-custom-review">← Study modes</button>
+              <div><p class="section-label" id="custom-review-mode-label">Flashcard review</p><h2 id="custom-review-title">My deck</h2></div>
+              <div class="custom-review-time" id="custom-review-time" hidden>00:00</div>
+            </header>
+            <div class="custom-review-shell">
+              <div class="custom-review-meta">
+                <p class="custom-review-progress" id="custom-review-progress">Card 1 of 1</p>
+                <button type="button" id="delete-custom-anki-card" hidden>Remove card</button>
+              </div>
+              <button type="button" class="custom-review-card" id="custom-review-card">
+                <span id="custom-review-side">Front</span>
+                <img id="custom-review-image" class="custom-review-image" alt="" hidden>
+                <strong id="custom-review-content"></strong>
+                <em>Click to reveal</em>
+              </button>
+              <div class="anki-session-counts" id="custom-anki-session-counts" hidden aria-label="Cards remaining in this Anki session">
+                <span class="anki-count-new">0</span><b>+</b><span class="anki-count-learning">0</span><b>+</b><span class="anki-count-review">0</span>
+                <div class="anki-type-markers" aria-hidden="true"><i class="anki-type-marker-new"></i><i class="anki-type-marker-learning"></i><i class="anki-type-marker-review"></i></div>
+                <small>New · Learning · Review</small>
+              </div>
+              <button type="button" class="button primary-button custom-reveal-button" id="custom-review-reveal">Reveal answer</button>
+              <section class="custom-question-practice" id="custom-question-practice" hidden>
+                <span class="custom-question-type" id="custom-question-type">Multiple choice</span>
+                <h3 id="custom-question-prompt"></h3>
+                <div class="custom-question-choices" id="custom-question-choices"></div>
+                <label class="custom-question-response" id="custom-question-response-wrap">Your answer<textarea id="custom-question-response" placeholder="Type your answer here…"></textarea></label>
+                <p class="custom-question-feedback" id="custom-question-feedback" aria-live="polite"></p>
+                <div class="custom-question-actions">
+                  <button type="button" class="button secondary-button" id="custom-question-previous">← Previous</button>
+                  <button type="button" class="button secondary-button" id="check-custom-question">Check answer</button>
+                  <button type="button" class="button primary-button" id="custom-question-next" disabled>Next →</button>
+                </div>
+              </section>
+              <section class="custom-feynman-practice" id="custom-feynman-practice" hidden>
+                <span class="custom-question-type">Feynman topic</span>
+                <h3 id="custom-feynman-prompt"></h3>
+                <div class="custom-feynman-session-timer">
+                  <button type="button" class="button secondary-button" id="start-custom-feynman-timer">Restart timer</button>
+                  <span id="custom-feynman-countdown">05:00</span>
+                </div>
+                <label class="custom-feynman-response">Your explanation<textarea id="custom-feynman-response" placeholder="Type your explanation here…"></textarea></label>
+                <p class="custom-feynman-status" id="custom-feynman-status">Timer running. Keep developing your explanation.</p>
+                <div class="custom-question-actions">
+                  <button type="button" class="button secondary-button" id="custom-feynman-previous">← Previous</button>
+                  <span></span>
+                  <button type="button" class="button primary-button" id="custom-feynman-next">Next →</button>
+                </div>
+              </section>
+              <footer id="custom-regular-controls"><button type="button" class="button secondary-button" id="custom-review-previous">← Previous</button><button type="button" class="button primary-button" id="custom-review-next">Next →</button></footer>
+              <div class="custom-anki-ratings" id="custom-anki-ratings" hidden>
+                <button type="button" data-custom-anki-rating="again"><span>10m</span><strong>Again</strong></button>
+                <button type="button" data-custom-anki-rating="hard"><span>1d</span><strong>Hard</strong></button>
+                <button type="button" data-custom-anki-rating="good"><span>3d</span><strong>Good</strong></button>
+                <button type="button" data-custom-anki-rating="easy"><span>7d</span><strong>Easy</strong></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="custom-delete-page" id="custom-delete-page" aria-labelledby="custom-delete-title" hidden>
+          <div class="custom-delete-card">
+            <span class="custom-delete-icon" aria-hidden="true">!</span>
+            <p class="section-label">Delete study set</p>
+            <h2 id="custom-delete-title">Are you sure?</h2>
+            <p id="custom-delete-message">This study set and its saved progress will be permanently deleted.</p>
+            <div class="custom-delete-summary" id="custom-delete-summary"></div>
+            <div class="custom-delete-actions">
+              <button type="button" class="button secondary-button" id="cancel-custom-delete">Cancel</button>
+              <button type="button" class="button danger-button" id="confirm-custom-delete">Delete permanently</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-page" id="settings-page" aria-labelledby="settings-title" hidden>
+          <header class="settings-page-header">
+            <div><p class="section-label">Preferences</p><h2 id="settings-title">Settings</h2><p>Customize the app and how Anki schedules your cards.</p></div>
+          </header>
+          <form id="settings-form">
+            <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+              <button type="button" class="active" role="tab" aria-selected="true" data-settings-tab="general">General</button>
+              <button type="button" role="tab" aria-selected="false" data-settings-tab="anki">Anki</button>
+            </div>
+            <div class="settings-panel" data-settings-panel="general">
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">Appearance</p><h3>Theme</h3></div><p>Choose how Your Study Buddy looks.</p></div>
+              <div class="theme-options" role="radiogroup" aria-label="Color theme">
+                <label><input type="radio" name="theme" value="light"><span><strong>Light</strong><small>Always use the light theme</small></span></label>
+                <label><input type="radio" name="theme" value="dark"><span><strong>Dark</strong><small>Always use the dark theme</small></span></label>
+              </div>
+            </section>
+            </div>
+            <div class="settings-panel" data-settings-panel="anki" hidden>
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">Anki</p><h3>Daily limits and order</h3></div><p>These options apply to textbook and personal decks.</p></div>
+              <div class="settings-grid">
+                <label>New cards per day<input name="newCardsPerDay" type="number" min="0" max="9999"></label>
+                <label>Maximum reviews per day<input name="maxReviewsPerDay" type="number" min="0" max="9999"></label>
+                <label>New-card order<select name="newCardOrder"><option value="random">Random</option><option value="added">Order added</option></select></label>
+                <label>New/review order<select name="newReviewOrder"><option value="reviews-first">Reviews first</option><option value="mix">Mix new and review</option><option value="new-first">New cards first</option></select></label>
+              </div>
+            </section>
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">New cards</p><h3>Learning steps</h3></div><p>Enter minute steps separated by spaces or commas.</p></div>
+              <div class="settings-grid">
+                <label class="settings-wide">Learning steps (minutes)<input name="learningSteps" type="text" placeholder="1, 10"></label>
+                <label>Graduating interval (days)<input name="graduatingInterval" type="number" min="1" max="36500"></label>
+                <label>Easy interval (days)<input name="easyInterval" type="number" min="1" max="36500"></label>
+                <label>Starting ease (%)<input name="startingEase" type="number" min="130" max="500"></label>
+              </div>
+            </section>
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">Reviews</p><h3>Interval behavior</h3></div><p>Control how quickly mature cards move into the future.</p></div>
+              <div class="settings-grid">
+                <label>Hard interval (%)<input name="hardInterval" type="number" min="100" max="200"></label>
+                <label>Easy bonus (%)<input name="easyBonus" type="number" min="100" max="300"></label>
+                <label>Interval modifier (%)<input name="intervalModifier" type="number" min="10" max="500"></label>
+                <label>Maximum interval (days)<input name="maximumInterval" type="number" min="1" max="36500"></label>
+              </div>
+            </section>
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">Lapses</p><h3>Forgotten cards and leeches</h3></div><p>Choose relearning steps and what happens to repeatedly missed cards.</p></div>
+              <div class="settings-grid">
+                <label class="settings-wide">Relearning steps (minutes)<input name="relearningSteps" type="text" placeholder="10"></label>
+                <label>Minimum interval (days)<input name="minimumLapseInterval" type="number" min="1" max="36500"></label>
+                <label>Leech threshold<input name="leechThreshold" type="number" min="1" max="99"></label>
+                <label>Leech action<select name="leechAction"><option value="tag">Mark as leech</option><option value="suspend">Suspend card</option></select></label>
+              </div>
+            </section>
+            </div>
+            <div class="settings-actions"><button type="button" class="button secondary-button" id="reset-settings">Restore defaults</button><button type="submit" class="button primary-button">Save settings</button></div>
+          </form>
+        </section>
+
+        <div class="dashboard-grid">
+          <div class="primary-column">
+            <section class="continue-card" id="continue-card" aria-labelledby="continue-heading" hidden>
+              <div class="continue-visual" aria-hidden="true">
+                <span class="orbit orbit-one"></span>
+                <span class="orbit orbit-two"></span>
+                <svg viewBox="0 0 72 72"><path d="M16 18h25a13 13 0 0 1 13 13v28H29a13 13 0 0 1-13-13V18Z" /><path d="M29 25v34" /><path d="M37 31h10M37 39h10" /></svg>
+              </div>
+              <div class="continue-content">
+                <div class="card-kicker">Continue learning</div>
+                <div class="continue-title-row">
+                  <div>
+                    <h2 id="continue-heading">Campbell Biology</h2>
+                    <p>Unit 2 · The Cell</p>
+                  </div>
+                  <span class="course-badge">BIO</span>
+                </div>
+                <div class="progress-copy">
+                  <span>Course progress</span>
+                  <strong>68%</strong>
+                </div>
+                <div class="progress-track" role="progressbar" aria-label="Campbell Biology course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+                  <span style="width: 68%"></span>
+                </div>
+                <button class="button light-button" type="button" id="continue-button">
+                  Continue lesson
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                </button>
+              </div>
+            </section>
+
+            <section class="card tasks-card" aria-labelledby="tasks-heading">
+              <div class="card-header"><div><p class="section-label">Reminders</p><h2 id="tasks-heading">Study alarms</h2></div><button class="button text-button" type="button" id="add-task-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create alarm</button></div>
+              <p class="alarm-intro">Schedule a notification on this Mac to remind you when it is time to study.</p>
+              <ul class="task-list alarm-list" id="task-list" aria-live="polite"></ul>
+            </section>
+
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+      <a class="active" href="#dashboard" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z" /></svg><span>Home</span></a>
+      <a href="#courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></svg><span>Textbooks</span></a>
+      <a href="#flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6" /></svg><span>Study</span></a>
+      <a href="#create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Create</span></a>
+      <button type="button" data-toast="Profile menu coming soon."><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M5 21a7 7 0 0 1 14 0" /></svg><span>Profile</span></button>
+    </nav>
+
+    <dialog class="task-dialog" id="task-dialog" aria-labelledby="task-dialog-title">
+      <form method="dialog" id="task-form">
+        <div class="dialog-header">
+          <div>
+            <p class="section-label">Study reminder</p>
+            <h2 id="task-dialog-title">Create an alarm</h2>
+          </div>
+          <button class="icon-button" type="button" id="close-dialog" aria-label="Close dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+        </div>
+        <label>Alarm name<input id="task-name" name="taskName" required maxlength="60" placeholder="e.g. Review biology" /></label>
+        <label>Description<textarea id="alarm-description" name="description" maxlength="240" placeholder="e.g. Review Chapter 6 and complete today’s Anki cards"></textarea></label>
+        <div class="alarm-date-time"><label>Date<input id="alarm-date" name="date" type="date" required /></label><label>Time<input id="alarm-time" name="time" type="time" required /></label></div>
+        <div class="dialog-actions">
+          <button class="button secondary-button" type="button" id="cancel-task">Cancel</button>
+          <button class="button primary-button" type="submit">Schedule alarm</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./vocabulary-data.js"></script>
+    <script src="./vanders-data.js"></script>
+    <script src="./atkins-data.js"></script>
+    <script src="./raven-data.js"></script>
+    <script src="./zumdahl-data.js"></script>
+    <script src="./central-science-data.js"></script>
+    <script src="./source-expansions.js"></script>
+    <script src="./atkins-details.js"></script>
+    <script src="./aphug-data.js"></script>
+    <script src="./apworld-data.js"></script>
+    <script src="./apes-data.js"></script>
+    <script src="./apeuro-data.js"></script>
+    <script src="./apgov-data.js"></script>
+    <script src="./sat-vocabulary-data.js"></script>
+    <script src="./appsych-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

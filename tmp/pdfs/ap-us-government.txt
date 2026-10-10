@@ -1,0 +1,1243 @@
+AP US Government Study Guide
+From Simple Studies, https://simplestudies.edublogs.org & @simplestudiesinc on Instagram
+Unit 1
+The Enlightenment Period
+● The Enlightenment period yielded many ideas that influenced the making of the
+American government.
+● Some of the famous philosophers of the Enlightenment periods:
+○ John Locke, John-Jacques Rousseau, and Thomas Hobbes.
+● Some of the most important ideas yielded from this period:
+○ Social Contract - A contract between the government and the governed. With this
+contract, the governed understands that they must give up some of their natural
+rights in exchange for protection from the government, alongside other benefits.
+○ Natural Rights - The rights given to every person. These rights can not be taken
+away by the government. If these rights are violated, then the people have the
+right to revolt.
+○ Popular Sovereignty - The idea that the people should have the main voice in the
+government, and the government should be held accountable to the people. The
+power is in the people.
+○ Republicanism - A representative form of government that is limited.
+Models of Democracy
+As you know, America is a democracy. However, there are different models of representative
+democracy that exist, and an aspect of each form of democracy is evident in our government.
+These different models of democracy include:
+● Participatory Democracy - Citizens have the power to decide on a policy, but the
+politicians that are elected by the people implement the people’s decisions.
+● Pluralist Democracy - Nobody dominates policymaking, but instead, different groups of
+people compete for influence in the government.
+● Elite Democracy - A small group of people makes decisions for everybody; these people
+are usually wealthy and well-educated.
+
+Articles of Confederation
+When the United States was first formed, we used the Articles of Confederation.
+● Under the Articles of Confederation, the states were not very united and the national
+government was very weak. The Framers made it like this because they were coming
+from a very abusive and powerful monarchy under King George III’s rule in Britain,
+causing the American people to want safeguards to make sure the government wouldn’t
+abuse their powers.
+● Weaknesses in the Articles of Confederation were highlighted in Shay’s Rebellion - a
+violent revolt of farmers led by Daniel Shay. Due to the government’s weakness and lack
+of control, they didn’t have enough power to successfully control this revolt. Weaknesses
+of the Articles of Confederation include:
+○ Each state was very independent, even having its own currency, so there were
+often conflicts between states.
+○ Congress could not levy taxes, which left the national government underfunded.
+○ Congress could not regulate commerce.
+○ One vote was given to each state in Congress.
+○ There was no executive branch to enforce the decisions made.
+○ Amendments to the Articles required 13/13 votes, and laws required 9/13 votes to
+pass.
+○ States could tax other states’ goods.
+○ Almost every state had its own militia.
+● However, the transition from the Articles of Confederation to the Constitution did not go
+unopposed. The Federalists supported the ratification of the Constitution, whereas the
+Anti-Federalists opposed it, as they believed it gave the national government too much
+power.
+○ Through this debate, many ideas about what the American government should
+look like came about. We can see these ideas in the Federalist and Anti-Federalist
+papers.
+● We now operate on a Madisonian representative democracy, which includes the
+following principles:
+
+○ Federalism - Having shared powers between the national, state, and local
+governments.
+○ Checks and balances - Having systems incorporated into the government that
+prevent it from abusing its power and becoming too powerful.
+■ Ex: The presidential veto checks the power of the legislative branch by
+requiring approval from the President before a law is passed.
+○ Separation of Powers - Having authority and jurisdiction divided up in the
+government.
+○ Popular Sovereignty - The power is in the people.
+○ Limited government - The government cannot do anything it wants because it is
+restricted by a written document (in America’s case, it’s the Constitution!)
+Compromises made in the ratification of the Constitution
+● The Great (Connecticut) Compromise - This merged Virginia and New Jersey plan,
+creating a bicameral legislature. In one house, the number of representatives each state
+gets is based on their population. In the other house, the number of representatives for
+each state is the same.
+● The Electoral College - Body that determines how the President and Vice President gets
+elected. Electors from each state vote for the President and Vice President and the
+number of electors each state gets is determined by the number of representatives they
+have in Congress.
+● Three-Fifths Compromise - Each slave was counted as 3/5ths of a person when it came to
+determining representation in Congress.
+● Compromise on the importation of slaves - No new slaves can be imported into America
+after 1808.
+Constitutional Basis of Federalism
+● Enumerated powers - The powers explicitly given to Congress in the Constitution.
+● Implied Powers - Powers not expressed in the Constitution but are understood as powers
+given to the federal government.
+● Inherent powers - Powers of the President
+
+● Reserved powers - Powers reserved for the states. (10th amendment)
+● Privileges and Immunities Clause - States can’t discriminate against people based on
+what state they are from. (Ex: tax rate can’t be different for non-citizens of states)
+● Full Faith and Credit Clause - States must trust documents that come from other states.
+(Ex: Drivers license, Marriage)
+● Extradition - If you commit a crime and flee to a different state, the state you fled to must
+bring you back to the state you committed the crime in.
+● Any powers not given to the federal government are reserved to the state governments, as
+is stated in the 10th amendment. The 14th amendment also gives powers to the federal
+government because it says that states may not make a law that abridges the citizens’
+rights. This gives the federal government the power to decide which state laws abridge
+the rights of the citizens.
+Federalism in Action
+● Fiscal Federalism
+○ Grants-in-aid - Money given to the states by the federal government that doesn’t
+have to be paid back.
+○ Categorical grants - Grants that are given to the states for a specific reason.
+○ Block Grants - Grants given to the states for a broad use
+○ Mandates - When the federal government requires governments to do something.
+● Dual Federalism - The federal and state government are independent of each other and
+have separate duties (1789-1932)
+● Cooperative Federalism - The levels of government work together to get different goals
+done (1933- 1962)
+● New Federalism (includes fiscal federalism) - Instead of having centralized federalism
+where the power is mostly in the federal government, devolution is occurring, and there
+has been a movement to return some of the power back to the states (1963- Present)
+Key Federalism Clauses
+● Commerce clause - The government can regulate interstate commerce.
+
+● Necessary and Proper Clause - The government can stretch its enumerated powers in
+order to perform its job.
+Key Federalism Cases
+● McCulloch v. Maryland - Maryland tried to tax the Second Bank of the United States in
+an attempt to close it. The owner of the bank refused to pay the tax and Maryland sued.
+Maryland argued that they could tax any business in the state and that the federal
+government was expanding their powers too far, since they shouldn't be able to open a
+national bank. McCulloch, the cashier of the Baltimore branch of the bank, argued that
+under the necessary and proper clause, the government could create a bank. Plus,
+according to the supremacy clause, taxing is state interference with a federal law, which
+is illegal. The Supreme Court voted unanimously in favor of McCulloch.
+● United States v. Lopez - Congress passed the Gun-Free School Zones Act, which
+prohibited people from carrying a gun in a school zone. Lopez was found with a gun in a
+school zone, and the case reached the Supreme Court. Lopez argued that Congress never
+had the authority to pass the law in the first place, and the US argued that through the
+elastic (necessary and proper) and commerce clauses, Congress had the power to pass
+that law. The Supreme Court ruled in favor of Lopez, stating that guns were not related to
+commerce, and therefore Congress didn’t have the power to pass that law.
+Key Federalism Legislation
+● Unfunded Mandates Reform Act - Legislation that aimed to minimize the effect of
+unfunded mandates (mandatory things that states have to do without receiving money
+from the federal government) on state and local governments.
+● Supplemental Nutrition Assistance Program - provides money for low-income families
+for food (food stamps).
+● Temporary Assistance for Needy Families (TANF) - A temporary social welfare program
+that provides money for basic needs for income families but requires beneficiaries to be
+in a program that prepares them for work.
+● National Voter Registration Act (Motor Voter Act) - Allowed people to register to vote
+when they got their driver's license. Also required states to develop a mail voter
+registration option. Its goal was to make it easier for people to vote.
+
+● Clean Air Act - Established the Environmental Protection Agency (EPA), the agency
+which would develop standards for releasing hazardous emissions into the air. It also
+required that states had to meet the standards pushed by the EPA while giving citizens the
+right to sue against anybody that violates the standards set by the EPA.
+● Americans with Disabilities Act - An act passed to stop discrimination against people
+with disabilities. Also mandated that educational institutions and employers make
+accommodations for people with disabilities.
+● Brady Bill - A bill to reduce gun violence by requiring federal background checks when
+buying firearms.
+● No Child Left Behind Act - Provided money to low-income students so that they were
+able to attain extra assistance.
+
+Unit 2
+Article One of the Constitution - The Legislative Branch
+● Congress (or the Legislative Branch) is a bicameral legislature (composed of the Senate
+and the House of Representatives), a system created by the Great Compromise - a
+compromise between the small and large states.
+● Many powers that weren’t given to the federal government under the Articles of
+Confederation were given to Congress in the Constitution.
+● Each chamber of Congress has different powers and abilities that the other chamber may
+not have. Enumerated powers are powers of Congress. They are listed in Article 1 of the
+Constitution.
+Structure of Congress
+Senate House of Representatives
+● With the 17th amendment, Senators are ● The House of Representatives is the
+now elected to the Senate, holding their lower chamber of Congress and is
+offices for 6 years, which means that 1/3 known to be closer to the people.
+of the Senate is up for reelection at a time. ● State representation in the House is
+● Each state has 2 senators. determined by the census that’s
+● The Senate is the upper house and is meant conducted every 10 years.
+to be more elite. They have the following ○ It is determined by the
+powers that the lower house doesn’t: number of people in each
+○ Confirming Presidential district.
+appointments ● The Representatives are up for
+○ Ratifying treaties made by the reelection every 2 years. They have
+President. the following powers that the Senate
+○ Holding impeachment trials doesn’t have:
+○ Impeaching a public officer
+○ Introducing tax and revenue
+bills.
+
+Introducing bills and creating laws
+● A bill can be introduced into either chamber of Congress.
+○ *Note that Appropriation bills are only able to be introduced in the House.
+● Once a bill is introduced, it goes to a committee, and that committee votes on whether it
+will get to be voted on by the whole chamber or not.
+○ If the bill dies in the committee, a motion to discharge the committee can be filed
+to pull that bill out of the committee. If a bill makes it out of the committee, there
+are different procedures, depending on the chamber of Congress.
+Senate House of Representatives
+● After a Bill comes out of a committee, it ● The debate in the House is more
+goes straight to the Senate floor, where formal because there are more
+debates are held. To end the debate, all people.
+Senators have to vote on the bill (unanimous ● Once a bill is out of the committee,
+consent). it goes to the Rules Committee
+● If a Senator doesn’t want a bill to go to vote, ● The Rules Committee decides if a
+they may filibuster. To end a filibuster, bill will be voted on as a committee
+cloture must be done. of the whole or as the House of
+Representatives.
+Important vocab in the process of law-making
+● Filibuster - Where a member holds the Senate floor to prevent a bill from going to vote.
+● Cloture - Used to end a filibuster. You need 3/5ths of the Senate’s votes to have
+successful cloture (60 votes).
+● Rules Committee - decides how a proposed bill will be voted on and debated (i.e. Will
+amendments are added? Is the bill even going to be debated? etc.)
+● Committee of the Whole - simplifies the rules of debate and opens the conversation
+● Discharge Petition - Filed to get a bill out of the committee and take it straight to the floor
+
+Types of Committees
+● Standing - Committees that are always in operation (ex: Ways and Means Committee)
+● Conference - A committee formed with members from both the Senate and the House to
+iron out differences in similar legislation.
+● Select - Created for a specific purpose and will eventually end.
+● Joint - A committee with people from both the Senate and the House, that is created for a
+specific reason.
+Congressional Spending
+● Discretionary spending - Programs in which Congress and the President have to renew
+spending for it every year.
+● Mandatory spending - programs in which the government has already made a
+commitment to pay.
+Congressional Actions
+● Pork barrel legislation - When Congressmen negotiate for legislation that helps their
+specific district but not the whole country.
+● Logrolling - When Congressmen agree to support each other's bills.
+● Ideological Divisions within Congress - People often vote along party lines, making it
+harder for legislation to be passed due to partisan differences (deadlock).
+○ Congress has become increasingly more partisan, which has caused less
+legislation to be passed successfully in Congress.
+● Gerrymandering - Redistricting strategically to ensure one party gets more representation
+in that district, a process that can lead to a majority to have representation in Congress.
+● Redistricting - The redrawing of district lines for representation.
+● Reapportionment - The delegation of representatives to different districts based on
+population. This determines which states get more representation.
+● Elections that have tend to lead to a “divided government” - When the Congress is
+controlled by a different party than the White House. This can lead to a gridlock, which is
+when no legislation is passed because the two parties can not come to an agreement.
+
+● Congressional refusal to confirm appointments of “lame duck” presidents of the opposite
+party - When the next President has been chosen and the current president’s term is
+almost up, they usually try to appoint people to governmental positions so their political
+ideologies continue, even though they are technically out of office.
+○ If Congress has a majority of the opposite party, then they may not want to
+confirm anyone, which will cause vacant spots in the government.
+● Congressional Models for voting
+○ Trustee model - When representative votes based on what they think is right, even
+if it is different from what their constituents want.
+○ Delegate model - When representative votes based on what his constituents want,
+even when other representatives don't agree with what the constituents want.
+Important Court Decisions
+● Baker v. Carr: Tennessee residents were upset that the government had not redistricted in
+quite some time so the districts didn’t reflect the current population, causing residents in
+rural areas’ votes to count more than people in urban areas. The Supreme Court ruled that
+they could make decisions on the fairness of districts under the equal protection clause of
+the 14th amendment to make sure everyone’s vote had the same weight.
+● Shaw v. Reno: North Carolina residents were mad about a majority-minority district and
+the case reached the Supreme Court where the government ruled that race can’t be the
+predominant factor in redistricting because that violates the 14th amendment.
+
+Article Two of the Constitution - The Executive Branch
+● Informal Powers of the President
+○ Chief Political / Party Leader - Presidents can endorse people in their party, acting as
+a spokesperson for their party.
+○ Head of State - The President represents the nation by receiving ambassadors and
+performing many ceremonial roles.
+○ Chief Legislator - The President proposes legislation that he wants to see passed. He
+can also veto bills.
+○ Chief Economic Planner -The President proposes the budget and has to approve it.
+○ Bully Pulpit -
+■ The internet allows the President to utilize the bully pulpit more efficiently to
+communicate with the American people quicker and more directly. It is also
+easier to mobilize and grassroots campaigns. However, it is harder for the
+President to control the news.
+■ The President can use the bully pulpit to get support for their agenda which
+will make it easier for the President to get legislation passed that they support
+through.
+○ The government gives tasks to different departments. They use civil servants in
+more than 200 independent agencies to carry out laws, do administrative work,
+and issue regulations on the public.
+● Formal Powers of the President - Powers are explicitly given to the President in the
+Constitution
+○ Chief Executive - The President makes sure that the laws that are passed are obeyed.
+He can issue executive orders and employ many people to carry out laws.
+○ Chief Diplomat - The President must negotiate with foreign nations. He also has the
+power to make and enforce treaties.
+○ Commander in Chief - The President can make war. He can also use nuclear
+weapons.
+
+Structures of the Executive Branch
+● Cabinet - A group of advisors that aid the President on numerous topics that he may not
+be as knowledgeable in.
+○ The cabinet includes the Secretaries of Agriculture, Commerce, Defense,
+Education, Energy, Health and Human Services, Homeland, Housing and Urban
+Development, and the Vice President.
+● Ambassadors - Diplomats that travel to other countries as the United States’
+representatives and negotiate for the President.
+● White House Staff - Assistants to the President that counsel him on many things;
+led by the Chief of Staff.
+Federalist No. 70
+● Hamilton advocates for a unitary executive so that one energetic person has the power to
+make quick decisions, as well as be held accountable to the people. This can not happen
+with multiple people in the executive branch because there will always be differences in
+opinion and blame will be passed around.
+● Hamilton also supported the idea of paying the President as a way of keeping him
+motivated, and the President needs just enough power to not prevent tyranny.
+22nd Amendment-
+Limited the ability of
+Congress to increase
+their pay.
+The internet allows the President to utilize the bully pulpit more
+efficiently while also communicating with the American people
+quicker and more directly. It is also easier to mobilize and
+grassroots campaigns. However, it is harder for the President to
+control the news.
+The President can use the bully pulpit to get support for their
+agenda which will make it easier for the President to get
+legislation passed that they support through.
+The government gives tasks to different departments. They use
+
+civil servants in more than 200 independent agencies to carry out
+laws, do administrative work, and issue regulations on the public.
+Bureaucracy Interactions with the President and
+Congress
+- Writing and enforcing regulation - They issue regulations
+to enforce the law and executive orders that were issued by
+the President and Congress.
+- Issuing fines - They issue fines to punish the public for not
+obeying the law that the bureaucracy enforces.
+- Testifying before Congress - They may testify before
+Congress to give insight on a specific topic that they are
+experts on because they work directly in that subject
+- Iron triangles- The relationship between Congress, the
+federal bureaucracy, and interest groups during policy
+creation. Congress gives funding to the bureaucracy, the
+bureaucracy implements the policy that Congress passes,
+and interest groups lobby Congress for policies that they
+want to see passed.
+Civil Service- Hiring
+government workers based
+on competition, tests, and
+merit
+Merit- People getting jobs
+based on their achievements
+and ability rather than
+partisan loyalty.
+Pendleton Act- Attempted to
+stop patronage. It made it
+illegal to hire or fire
+someone for political
+reasons.
+Congress gives the federal
+bureaucracy administrative
+discretion in implementing
+its laws. This means they
+
+have the power to
+determine how they are
+going to implement the law.
+With this, they are able to
+come up with regulations
+and punishments for not
+obeying the law without
+approval.
+Discretionary and rule- Independent Executive Independent Government
+making authority to Agency Regulatory Corporation
+implement policy are An agency established by Commission Government
+given to bureaucratic Congress with separate Established to owned
+agencies such as: status outside of the regulate a specific businesses to
+- Department of executive branch. They are economic activity. provide a service
+Homeland usually established to serve They work that can’t be
+Security a specific purpose. independently of the trusted to the
+Department of executive branch and private sector.
+Transportation Congress
+Example:
+- Department of
+Social Security
+Veterans Affairs
+Administration, CIA, Example:
+Department of
+NASA, EPA Federal Reserve Example:
+Education
+Board, Federal US postal
+- Environmental
+Communications, Service, Amtrak
+Protection
+Commission
+Agency
+- Federal Elections
+Commission
+(FEC)
+- Securities and
+Exchange
+Commission
+(SEC)
+
+Congressional Oversight
+Oversight and methods used by Congress to
+ensure that legislation is implemented as
+intended are represented by:
+Committee hearings- They use committee
+hearings to make sure everything is
+running well in a specific department and
+there is nothing fishy going on.
+Power of the purse- Allocating money to
+ensure that its laws have the funding it
+needs to survive. Also they might cut
+funding for something if they feel their
+laws aren’t being implemented ,right.
+If the President is of the opposite party as
+Senate, the Senate might not confirm any
+presidential appointment , by using their
+Congressional oversight.
+The President utilizes a number of tools to
+ensure that the bureaucracy is doing its job. For
+example, he can appoint heads of departments,
+can control their budget, or issue an executive
+order to push an agency to enforce the rules a
+certain way.
+What is the difference between:
+Majority Opinion- what majority of the judges believe; this is the ruling that is enforced.
+Dissenting Opinion- the opinion of the judges that completely disagrees with the majority
+opinion.
+Concurring Opinion- the opinion of the judges that agree with the majority’s ruling but for a
+different reason.
+Writ of Certiorari- a writ that demands a lower court to send the files over to review a case.
+Rule of Four- at least 4 Supreme Court judges have to want to hear a case for it to be heard
+by the Supreme Court.
+
+NUMBER NUMBER POLICY
+COURT JURISDICTION
+OF OF IMPLICATIONS
+COURTS JUDGES
+94 700 Original Jurisdiction Minor implications or
+none.
+District
+Court
+13 160 Appellate Jurisdiction Their decisions set
+Courts of the precedent for all
+Appeal the courts within that
+district
+1 (court of 9 Original and Appellate Their decisions set
+last Jurisdiction but most the precedent for the
+Supreme resolve) cases heard by the entire nation, and
+Court Supreme Court are unifies all decisions.
+based on appellate
+jurisdiction.
+
+Unit 3
+Bill of Rights
+The Bill of Rights is the first 10 amendments of the constitution that protect individual liberties
+and rights of the people of the United States that the government cannot take away from its
+citizens. The government's job and purpose is to protect these rights since they are “god-given”.
+They are also meant to protect rights, not give them.
+Civil Liberties - the limitations that are put on the government; actions the government
+can’t take as they may interfere with your personal freedom. Ex. 1st amendment
+Civil Rghts - guarantees of equal citizenship and protects citizens from discrimination by
+majorities. Ex. the right to vote
+First Amendment - Freedom of Religion
+The First Amendment prevents the federal government from supporting an established religion
+and protects citizens’ free exercise of religion. This amendment is split into two parts: the
+establishment clause and the free exercise clause. The establishment clause prevents the
+US from using religion as a guiding point for laws to be made and makes sure that they don’t
+endorse any specific religion.. The free exercise clause does not allow anyone to be prevented
+from being part of a certain religion. It does not mean that any religious practice is
+okay. There are limits to what certain parts of a religion that could be practiced. An example
+could be a sacrifice. The police can arrest you for holding sacrifices.
+An example of a SCOTUS case would be Wisconsin v. Yoder (1972). In this case, the state of
+Wisconsin fined Amish families that refused to send their children to school after the eighth
+grade. Yoder argued that it went against the free exercise clause of the First Amendment because
+higher education went against their religious beliefs. The court ruled in favor of the Amish
+families, saying their First Amendment right outweighed the state’s want to push their
+attendance.
+First Amendment - Freedom of Speech
+Part of the First Amendment allows for people to speak as they please. However, this right does
+have restrictions. It was made initially to allow constituents to freely express their grievances
+with the government. However, this does not mean you are allowed to speak freely to anyone
+else. There are limits such as obscenity, clear and present danger, plus time place and manner
+restrictions.
+A very important SCOTUS case involving this issue was Schenck v. United States. Schenck was
+an anti-war activist who sent out 15,000 flies telling men to resist the draft for the first world
+war. He was arrested under the Espionage Act, which prohibited interference with military
+
+operations. Schenck argued that it went against his First Amendment right, eventually leading
+this case to the Supreme Court. The Supreme Court ended up voting against Schneck, saying his
+freedom of speech did not apply because of time, place, and manner restrictions.
+Another important Supreme Court case was Tinker v. Des Moines Independent Community
+School District. In this case, Iowa students were trying to wear black armbands in order to
+protest the Vietnam war. The court ruled in favour of Tinker because it was a form of symbolic
+speech which does not go against the First Amendment because the school system is part of the
+government so they were essentially protesting the government, something that is completely
+allowed.
+First Amendment - Freedom of the Press
+This part of the First Amendment prevents Congress from making any laws allowing censorship
+of the press, essentially trying to prevent them from publishing information. Just like freedom of
+speech, there are limitations to freedom of the press such as libel, which is lying about what
+someone or something did that leads to a damaged reputation.
+An important case that deals with this idea is New York Times v. United States. The United
+States wanted to restrain the New York Times from publishing the history of the Pentagon
+Papers, documents that included classified information on Vietnam. The case made its way all
+the way up to the Supreme Court, where they ruled in favor of the New York Times, saying that
+publication did not pose an immediate threat to the country.
+Second Amendment - Right to Bear Arms
+The Second Amendment allows the people the individual right to have firearms. This is one of
+the most argued rights because of the limitations that are trying to be placed on this subject.
+Selective Incorporation
+The 14 amendment of the constitution talks about how the national government cannot take away
+your rights but it doesn’t mention anything about this same thing applying to the state
+governments, meaning that the Bill of Rights didn’t apply to the state governments. Over time,
+the
+Supreme Court has made rulings on certain court cases to make sure that the Bill of Rights
+applies to the state governments as well. However, not every part of the Bill of Rights has been
+applied to the states through selective incorporation. Major court cases involving selective
+incorporation include Tinker v. Des Moines, where the Supreme Court ruled symbolic speech is
+valid in schools and cannot be punished as it applies to all levels of government. Another good
+example would be the case of Roe v. Wade. In this case, the Supreme Court ruled that a
+woman’s ability to get an abortion in the first trimester could not be prohibited because it falls
+
+under the right to privacy which could not be limited by states. This made it unconstitutional for
+states to make abortions illegal.
+Due process in the Right to Privacy
+The Supreme Court has interpreted that the due process clause of the 14th amendment prevents
+state governments from taking away people's rights to privacy. The right to privacy is not
+explicitly
+mentioned in the Constitution but over time, the Supreme Court has begun to include it in its
+rulings such as in Roe v. Wade. There are limitations to this idea especially when it comes to
+public safety.
+Social Movements and Equal Protection
+During the 1960s, the Civil Rights Movement was in full swing, pushing for social justice for
+black and other minorities. The social movement led to a change in policies that our government
+makes. For example, the Civil Rights Act of 1964, which prevented discrimination based off of
+sex, gender, race and other factors.
+Government Responses to Social Movements
+The pressure from social movements causes the government to make changes legislatively. An
+example being the Civil Rights Act of 1964, an act preventing the discrimination of a person
+based off of sex, gender, race, and other factors. The Supreme Court in
+cases such as Brown v. Board of Education invalidated previous actions the government had
+used in order to
+discriminate against certain groups of people. This case made it so that segregation could be
+looked at as unconstitutional because it goes against the equal protection clause of the
+constitution.
+Balancing Minority and Majority Rights
+Depending on the ideological standpoint of the Supreme Court, the cases that they deal with may
+have major effects on minorities and majorities. An example would be with the separate but
+equal doctrine. In the case of Plessy v. Ferguson, the Supreme Court ruled that separate
+facilities for coloured people didn’t go against the 14th amendment because it was separate but
+still
+equal. That idea was overruled with Brown v. Board of Education, as the Supreme Court ad
+ruled just because the facilities are separate doesn't mean that they are actually equal, essentially
+violating the 14th amendment.
+
+Affirmative Action
+Starting in the 1960sm the government began using affirmative action to help minorities have
+equal opportunities in the United States. Since then, the Supreme Court has been making rulings
+on affirmative action to determine whether or not it is constitutional. The Court has had
+mixed feelings about idea based on the fact that it is constitutional because the
+constitution only mentions things about how race classifications influences cannot harm a
+minority but is unconstitutional because it’s helping to promote the benefits of specific groups to
+get ahead.
+
+Unit 4: American Political Ideologies and Beliefs Vocabulary
+Ideology- Beliefs that shape political opinion and policies
+Political Socialization- The process where people learn and develop their political values and
+opinions
+Agents of Socialization - Things that influence the development of one’s political views (ie.
+family, what you learn in class, etc.)
+Political Culture - A nation’s core beliefs on how their economic, political, and social life
+should be carried out
+Liberalism - A political ideology where people believe in less government control over political
+and social issues, but more government control over economics.
+Conservatism - A political ideology where people believe the government should have more
+control over political and social issues, but less control over economics (laissez-faire)
+Libertarianism - A political ideology where people believe the government should have little to
+no government control on political/social issues and the economy
+Totalitarianism - A political ideology where people believe the government should have as
+much control as possible on political/social issues and the economy.
+Socialism - A political ideology where people believe that the government should control the
+means of production within the US and a better equal distribution of wealth
+Laissez-Faire/Capitalism - The belief that the government should allow free market to dictate
+pricing, production, and demand
+Political Efficacy- The belief that your voice in government matters (voting, reaching out to
+senators, etc.)
+Tracking Polls - Polls monitoring the changes in public opinion overtime
+Random Sampling- When anyone has the chance to be selected to participate in a poll
+Quota Sampling - When pollsters target a specific population of people to participate in a poll
+Public Opinion Poll - Surveys put out by the government to get an idea of what the people want
+to see from the government
+Push Polls - Polls typically asking questions in a negative way that are made to change the
+public opinion about candidates
+
+4.1: American Attitudes About Government and Politics
+People have different core values and different views towards how they feel the government
+should act. This makes up the different ideologies within American politics. America itself has
+core values and beliefs, which is known as a political culture. There are 5 elements of a country’s
+political culture:
+Equality (egalitarianism) - equal vote, equal chance to participate
+Liberty - Freedom (doesn’t including the harming of others or breaking of laws)
+Democracy - Government accountable to the people (popular sovereignty) Individual
+Responsibility - Responsible for your own actions and well-being Civic Duty- Being a part of
+the community
+As those are the core values of America’s political culture, there are two other beliefs that often
+fall under America's political culture as well: Laissez-Faire/Capitalism and factors of production
+largely privately-held.
+4.2: Political Socialization
+As people grow older, they will develop their own political views. This happens through political
+socialization which is basically when people learn more about politics and start to form their
+opinions on how they feel the government should be run. Things people are surrounded with can
+influence how people develop their political views. These are called agents of socialization.
+Some examples are:
+● If a child grows up in a home where they are only exposed to conservative beliefs, they
+are more likely to grow up and be conservative
+● If a person surrounds themselves with friends who have liberal beliefs, they are more
+likely to hold liberal beliefs
+● If a child grows up in a town that preaches conservatism, they are more likely to become
+a conservative as they grow older
+● When learning about politics in school, if a student finds that they disagree with
+conservatives views, they are more likely to become a liberal
+4.3: Changes in Ideology
+There are many parts of one’s identity that may also depict their ideology. For example, women
+tend to be more liberal while men tend to be conservative. Racial minorities are more likely to be
+liberal while caucasions are more likely to be conservative. You can say that these are
+stereotypes of what a liberal or conservative may look like, however, with data from polls and
+surveys, you can see who is more likely to be which ideology based on their personal identity.
+
+Remember though, these are not standards you have to fit. Women can be conservative, white
+people can be liberal, etc. Ideologies can even change overtime with these stereotypes. For
+example, people ages 18-30 are more likely to be liberals while people older than 65 are more
+likely to be conservative. In fact, there is something called the mitigating factor where as you get
+older, you may find yourself becoming more conservative (potentially becoming a moderate).
+4.4: Influence of Political Events on Ideology
+Events within a country tend to put mistrust between the government and the people within it.
+Examples include the Great Depression, the Watergate Scandal, Vietnam War, and Kent-State
+made the people believe less in the government which then lowers the political efficacy within
+the country. People will start to vote less and turn away from politics. Certain events can also
+bring up the political efficacy within a country like Reagan’s presidency. People had more trust
+in Reagan when he was in office so everyone started to get more involved in politics. Even
+events like 9/11 can raise the amount of political efficacy. It all depends on how the government
+handles the situation at hand.
+4.5: Measuring Public Opinion
+Public opinion polls are put out so that the government can get a general idea of what the people
+want the government to do and/or what general direction they want the government to go in.
+Sometimes they use quota sampling to target how a certain population of people feels about
+politics, such as making sure 60% of the people answering a poll are women. They will also use
+random sampling to give everyone an equal chance of participating in a poll. These polls play a
+vital part in the political process of America as they help the government to figure out what their
+priorities are in terms of what the people want to see from them.
+4.6: Evaluating Public Opinion Data
+The government looks over public opinion polls and then makes changes to what they feel they
+can do. The government can also be seen putting out tracking polls to see how the views are
+changing. For example, a school may make the students answer a poll about their school every
+three months to see if the students’ opinions of their school are changing over the course of the
+year. The government will do this to either determine who may be winning an election, how
+popular a president is, or what people think about the general direction of the country. When
+seeing the poll results, push polls may be put out to sway the opinions of the people.
+4.7: Ideologies of Political Parties
+Different ideologies are associated with different political parties. Views of conservatism are
+considered the right and views of liberalism are considered the left when it comes to the political
+spectrum. The right tends to be aligned with the Republican party while the left is associated
+with the Democratic party. This is because of the different views and values these parties have.
+
+For example, people on the left tend to be “pro-choice,” a view often seen by Democrats.
+However, Republicans tend to be “pro-life,” like people on the right. People on the left may not
+want to vote for someone who is a republican because being “pro-choice” is an important value
+to them. Some people vote based on the candidate’s alignment to their views regardless of
+political party affiliation, but most people tend to stay within their political party to ensure that
+the candidate will appoint others that have the same views as them, and push for policy that they
+completely agree with.
+4.8: Ideology and Policy Making
+Liberals are typically more focused on domestic policy when it comes to policy making. They
+want to focus on and fix the problems within our own country such as education, healthcare, and
+financial aid. Conservatives are typically more focused on foreign policy. They want to focus on
+the country’s relationships with other countries. This would include focusing on international
+trade, keeping the peace between nations, or fixing broken bonds with other countries.
+4.9: Ideology and Economic Policy Making
+When it comes to economic policy, conservatives tend to believe in laissez-faire economics and
+are against the government heavily regulating the economy. When making economics policies
+they will most likely advocate for deregulation of the economy, less taxes, and be more in favor
+of private and big businesses. Liberals typically believe in having more regulations on the
+economy. They don’t want big businesses to have more power within the economy and they
+would advocate for more taxes placed on the economy, specifically on bigger businesses.
+4.10: Ideology and Social Policy
+For social policy, conservatives typically do not agree with social change and want to maintain a
+“status quo.” For example, they do not typically agree with same-sex marriage so they may
+advocate against it. They would try to keep the social aspect of the society “traditional.” On the
+other hand, liberals believe in addressing social issues such as poverty/homelessness and using
+government intervention to enhance the rights of the people. They do advocate for social change
+so they wouldn’t advocate against things like same-sex marriage or gender equality.
+Unit 5
+Voting Rights and Models of Voting Behavior
+In the beginning of American history, only land-owning white males were allowed to vote.
+Through amendments to the Constitution and legislation, suffrage has been extended to all
+citizens of the United States of America. Amendments and legislation that has extended suffrage
+include:
+
+- 15th Amendment: Gave suffrage to African American men.
+- 17th Amendment: Gave the people the right to directly elect Senators instead of Senators
+being elected by the state legislature.
+- 19th Amendment: Gave women suffrage.
+- 1965 Voting Rights Act: Banned practices like poll taxes, literacy tests, and grandfather
+clauses, that were created to purposefully disenfranchise people of color (specifically
+those in the South). Federal examiners were also used to monitor elections.
+- 26th Amendment: Gave 18 year olds suffrage.
+- Motor Voter Act: Made it easier for voter registration by giving people the opportunity to
+register to vote when they get/renew their driver’s license.
+Models of Voting Behavior
+- Rational Choice Theory: When somebody votes based on the candidate who will bring
+you the best benefits.
+- Retrospective Voting: When somebody votes based on what a candidate has done in the
+past and their track record.
+- Prospective Voting: When somebody votes based on how they think somebody will
+perform in the office they are running for.
+- Party-line Voting: When a person votes for someone based on their party affiliation.
+Voter Turnout
+Voter turnout is the amount of people eligible to vote that actually end up voting. This turnout
+depends on people’s sense of political efficacy. Voter turnout is dependent upon a lot of stuff,
+like the type of election, and state laws regarding voting. Demographics can help predict voter
+turnout. (ex: older people tend to have higher voter turnout than younger people.)
+Political Parties
+Linkage Institutions: Institutions that connect the people to the government. They consist of:
+- Media: The media can inform constituents who the people in office are as well current
+affairs.
+- Interest Groups: Interest groups are a group of people fighting for a similar cause.
+People can contribute to interest groups who lobby Congress and influence government
+decisions.
+- Elections: In elections, the people can vote contestants in and out of the government,
+which gives the people a voice in who is representing them.
+- Political Parties: The parties establish a platform in which people with similar views can
+join forces. They also help candidates run for office and try to push people to run for
+office. Representatives who are a part of certain parties can often vote with their party.
+
+How and Why Political Parties Change & Adapt
+Candidate-Centered Politics is the reason that parties have had to change. This phenomenon
+occurs when people would rather focus on the candidate as a person rather than what party they
+belong to.
+Examples:
+- Donald Trump originally did not have a lot of support from the Republican party when he
+first ran. People liked him not for his party affiliation but for who he was.
+- Bernie Sanders had not been a Democrat long before he ran.
+The cause of this change is the primary system. In the past, party leaders chose the candidates,
+but now, the primary system allows for the people to choose the candidates. Campaign finance
+laws have also made it easier for candidates to raise money on their own.
+- Critical Elections: Polarized voters around new issues, this usually comes before a
+realignment.
+- Realignment: A drastic shift in people’s party affiliation
+- Party Dealignment: When people do not identify with a specific party.
+Third Party Politics
+In the US, we have a two party system. Currently, our two major parties are the Republican and
+Democratic party. Third parties have never won a Presidential election and they usually don’t get
+a lot of representation because:
+- We have a winner-take-all system, meaning whoever gets the majority of votes takes all
+of the votes.
+- The two major parties incorporate messages that minor parties advocate.
+You may be wondering if these parties don’t get good representation in our government, why do
+they exist? Well, here’s a brief overview explaining why.
+- They talk about new ideas, and push the major parties to talk about issues they’ve never
+addressed.
+- They give people who don’t quite fit in with the two major parties an option.
+However, these third parties can also be an issue as:
+- They can take away votes from the two major party candidates which can sway an
+election.
+Interest Groups Influencing Policy Making
+Interest groups lobby Congress members to pass legislation that is favorable to them. They are a
+part of the iron triangle which consists of Congressional committees, interest groups, and the
+bureaucracy.
+
+Lobbyists try to influence legislation that congressmen pass that will be favorable to them.
+Groups Influencing Policy Outcomes
+- Social movements can help to put issues people want to see addressed on the agenda (ex.
+protests)
+- While policies are being formulated, interest groups may write legislation for Congress,
+or influence legislation while it is being formulated.
+- While legislation is being voted on, political parties come into play. If the legislation is a
+part of what a political party believes, congressmen will vote on it based on their party
+affiliation.
+- Bureaucratic agencies decide how to implement the law and have administrative
+discretion in how laws are practiced.
+- While bureaucratic agencies are making the rules on how a policy is implemented,
+interest groups will try to influence the bureaucratic agency for rules that will favor the
+interest groups.
+Electing a President
+Incumbency Advantage: Candidates who have previously held the office are called incumbents.
+They tend to hold an advantage over a person who has never held that office before because:
+- They have already held the office and have very good name recognition
+- They already have a bully pulpit that they can rally up.
+- They already have experience in the office.
+To be the President you must be at least 35 years old, a natural born citizen, and you must be a
+resident in the USA for at least 14 years.
+Steps to the Presidency:
+
+1. Primaries and Caucuses. Primaries and caucuses choose the candidates for the major
+political parties. In a primary, the people cast their ballots for the candidates they want to
+run for president.
+a. Closed Primary- A primary where people can only vote for the candidates in the
+political party they are registered with.
+b. Open Primary- People not affiliated with a political party are able to participate
+in this primary. A caucus is where people group up based on the candidate they
+want to see in the presidency.
+2. National Convention. Each major party holds a national convention where the
+presidential candidate chooses their running mate.
+3. Campaigning. Throughout this whole process, the candidate is campaigning,
+fundraising, and much more to push their message and gain more supporters.
+4. General Election. People across the nation vote for who they want to be their President.
+But instead of voting for the actual President and Vice President, they are voting for
+people called electors who represent the person you want to be the President and Vice
+President.
+5. Electoral College. Each state receives a select number of representatives based on their
+representation in Congress. Each elector votes, and the candidate that gets more han 270
+votes wins the election.
+Congressional Elections
+The incumbency advantage also applies to Congressional elections. 95% incumbents get
+reelected to Congress. Because:
+- Members of Congress can mail stuff for free, therefore they can spend less money on
+sending out mail to their constituents.
+- They already have staff to do things for them.
+- They have name recognition because they already
+Gerrymandering can also be done to help a candidate win an election. This is when redistricting
+is done to reflect the population so that everyone’s vote can be equal.
+Modern Campaigns
+The cost of elections in coming years has increased a lot. For a campaign you have to pay for:
+- Campaign Staff
+- Campaign Ads
+- Polls
+- Social Media has become increasingly popular and candidates can reach voters easier.
+Campaign Finance
+FEC- Federal Elections Committee. They regulate Campaign Finances
+PAC- Political Action Committee. Can be started by a corporation, but the corporation can not
+give funds to the PAC directly from its treasury. They can have limitations on how much money
+they can take and how much money they can give.
+
+Hard money- Money going straight to a candidate. The amount of hard money that can be given
+is regulated by the FEC.
+Soft Money- Money that is not going straight to a candidate but instead benefits the candidate. It
+can not be done in coordination with the candidate. There is no limit on soft money.
+BCRA(2002)- Bipartisan Campaign Reform Act, This legislation increased the use of soft
+money in elections , by limiting corporations ability to finance electioneering communications.
+Citizens United v. FEC (2010)- Citizens United wanted to run an ad on Hillary Clinton before
+the primary which went against BCRA. Citizens United argued the part of BCRA that restricted
+electioneering communications violated their free speech rights in the First Amendment. The
+Supreme Court ruled that a part of BCRA did in fact violate the free speech clause in the First
+Amendment.
+Super PACS can spend an unlimited amount of money on electioneering campaigns and take an
+unlimited amount of money, as long as the money is independent from the candidate.
+The Media
+The media acts as a linkage institution by connecting the people to the government. The media
+gets money from ads. The media tend to lean to the left but with anything there are exceptions.
+- The media is protected by the Constitution by freedom of speech and freedom of the
+press.
+- The Freedom of Information Act (FOIA) allows the people through the media to request
+information from the government.
+The Media plays many different roles, such as:
+- Gatekeeper: The media decides what becomes a big story or not.
+- Scorekeeper: The media keeps track of who’s winning in an election. They also decide
+who in Washington is a “good guy” and who is a “bad guy”
+- Watchdog: The media reports on mistakes that politicians make and hold them
+accountable for their mistakes.
+- Agenda Setter: The media decides which issues are big and even sways the opinion of the
+public.
+Different Demographics get their news in different ways. Media viewing trends:
+- Older people tend to receive their news through the newspaper.
+- Middle Aged people tend to get their news from the TV and radio.
+- Younger people tend to get their news from social media and the internet.
+Coverage of the government
+- The President tends to be the main focus of the media, because he is perceived to be the
+face of the government. The President has a Press Secretary, who gives information to the
+press in the press room in the White House.
+- Because Congress is so big and there are so many people it is harder to cover Congress.
+Coverage on Congress tends to be negative and focus on conflict.
+- When the media covers elections they use horse race journalism which focuses on who is
+winning, scandals, and personalities instead of the policies.
+
+Regulations of Media
+- Print Media is mostly exempt from government regulation, with the exception of
+obscenity.
+- The electronic media is regulated more because airwaves are public and regulated dby the
+FCC\
+Libel - Written defamation of a person
+Slander- spoken defamation of a person
+Important Rules
+Equal Time Rule- Broadcast stations must give equal time on air to each candidate.
+
+The Declaration of Independence
+Author: Mostly Thomas Jefferson, but also John Adams, Roger Sherman Benjamin Franklin,
+Robert Livingston Date: Approved July 4,1776
+Big Idea: Important Quotes and their meaning
+America was tired of Britain mistreating them, so “We hold these truths to be self-evident, that
+the Declaration was written to “break up” with all men are created equal, that they are
+them. In the letter there is a list of grievances endowed by their Creator with certain
+Britain has committed.Among those grievances unalienable Rights, that among these are
+was taxation without representation. They also Life, Liberty and the pursuit of Happiness.
+talk about their natural rights, and justify cutting — That to secure these rights, Governments
+ties with Britain by saying that when the are instituted among Men, deriving their just
+government violates those natural rights the powers from the consent of the governed, —
+people have the right to revolt. Also included are That whenever any Form of Government
+big ideals of American government like consent becomes destructive of these ends, it is the
+of the governed, popular sovereignty, and natural Right of the People to alter or to abolish it,
+rights. and to institute new Government, laying its
+foundation on such principles and organizing
+its powers in such form, as to them shall
+seem most likely to effect their Safety and
+Happiness.”- All men should be equal, and
+have natural rights that the government can
+not violate. Life, Liberty, and the pursuit of
+happiness are among these rights. When
+these rights are violated it is the rights the
+people can revolt and make a new
+government.
+The Articles of Confederation
+Author: John Dickinson Date (Approximate): Ratified in 1781
+Big Idea: Important Quotes and their Meaning
+The first Constitution of the United States. It - Each state retains its sovereignty,
+established a confederation of States where freedom, and independence, and every
+the national government had very little power, jurisdiction, and right, which is
+power. The states were more like not by this Confederation expressly
+
+independent countries next to each other than delegated to the United States, in
+one united nation. The national government Congress assembled.- This is the opposite
+had very little power. It was also very hard of the Constitution where there is the
+for the national government to raise money Supremacy clause and the national
+because they didn’t have the power to collect government’s word holds more weight,
+taxes. They could only ask the states to give and powers that don’t go to the national
+it money, which seldom happened. So, the government go to the states.
+national government was broke and couldn’t - The said States hereby severally enter
+pay back its debt. The national government into a firm league of friendship with each
+also only had one branch and couldn’t make other, for their common defense, the
+any quick decisions. If the government security of their liberties, and their mutual
+wanted to make any unified decisions and general welfare, binding themselves
+delegates from each state had together to to assist each other, against all force
+make these decisions. The national offered to, or attacks made upon them, or
+government also couldn’t raise an army or any of them, on account of religion,
+navy. sovereignty, trade, or any other pretense
+whatever.- Shows the states were not
+really a united nation but more states next
+to each other with a treaty.
+Federalist #51
+Author: James Madison Date (Approximate): February 8, 1788
+Big Idea: Supporting Details (quotes and paraphrases):
+The government should have a separation of - “...each department should have a will of
+powers and checks and balances. This its own; and consequently should be so
+Federalist paper argues why the Constitution constituted that the members of each
+is the best form of government to deal with should have as little agency as possible in
+the evils of people, and how it prevents an the appointment of the members of the
+abuse of power from the government. others. Were this principle rigorously
+Madison argues that because of the adhered to, it would require that all the
+Federalism that the Constitution provides, appointments for the supreme executive,
+plus the separation of powers into branches legislative, and judiciary magistracies
+the many different governments will offer should be drawn from the same fountain
+
+extra protection against abuse of power of authority, the people, through channels
+because the different governments will all having no communication whatever with
+offer checks on each other. one another.” - Each branch of
+government should be independent from
+one another and all appointments should
+stem from the people. In the passage after
+that he says except for the judiciary for
+special reasons.
+- If men were angels, no government would
+be necessary. If angels were to govern
+men, neither external nor internal controls
+on government would be necessary. In
+framing a government which is to be
+administered by men over men, the great
+difficulty lies in this: you must first enable
+the government to control the governed;
+and in the next place oblige it to control
+itself.- If there was no evil government
+wouldn’t even be needed, and if people
+ruling over people couldn’t be evil there
+wouldn’t be a need for checks on the
+government. When creating a government
+with people you have to make sure the
+government and control the people while
+also controlling itself.
+- But it is not possible to give to each
+department an equal power of self-
+defense. In republican government, the
+legislative authority necessarily
+predominates. The remedy for this
+inconveniency is to divide the legislature
+into different branches;
+
+Brutus 1
+Author: Unknown (Anti Federalists) Date (Approximate): 1787
+Big Idea: Important Quotes
+The Constitution is basically making America - “It appears from these articles that there
+just one state and giving the central is no need of any intervention of the
+government too much power , which makes state governments, between the
+the states irrelevant. America is just too big Congress and the people, to execute any
+which makes it impossible to have a one power vested in the general
+representation that will “speak their government, and that the constitution
+sentiments”. Also, if there is a body that can and laws of every state are nullified and
+represent the people it will become too large declared void,”- The elastic clause in the
+making it impossible to get anything done. government and the whole Constitution
+(Kind of against a pluralist democracy). For a basically makes the states governments
+republic to work everyone should have similar purposeless.
+sentiments and interests. Also the people in - “The government then, so far as it
+power will become above the control of the extends, is a complete one, and not a
+people and end up abusing the people for the confederation. It is as much one
+betterment of themselves and end up complete government as that of New-
+oppressing the people.( Against elitist York or Massachusetts, has as absolute
+democracy). and perfect powers to make and execute
+A LARGE POWERFUL CENTRALIZED all laws…” The government has too
+GOVERNMENT IS TOO REMOVED FROM much power and can do what it wants
+THE PEOPLE AND THEIR INDIVIDUAL under the Constitution.
+NEEDS.
+
+Federalist #10.
+Author: James Madison Date (Approximate): November 23,1787
+Big Idea: Important Quotes
+Factions are really bad, but the - “AMONG the numerous advantages
+Constitution is best equipped to deal with promised by a well constructed Union, none
+the evils produced by factions. This is deserves to be more accurately developed
+because it establishes a Large Republic than its tendency to break and control the
+which provides the following benefits: violence of faction.”
+- Better candidates because they - There are again two methods of removing the
+will have to appeal to more causes of faction: the one, by destroying the
+people for their vote liberty which is essential to its existence; the
+- A less chance that the majority other, by giving to every citizen the same
+can oppress the minority because opinions, the same passions, and the same
+there is more variety in opinions. interests.
+Factions are inevitable because people - If a faction consists of less than a majority,
+are going to have differences in opinions relief is supplied by the republican principle,
+and will divide themselves into groups which enables the majority to defeat its
+with people that have similar beliefs. As sinister views by regular vote. It may clog the
+they divide themselves up into classes administration, it may convulse the society;
+based on land and money. but it will be unable to execute and mask its
+Two ways to control factions: violence under the forms of the Constitution.
+1. Remove their causes which is
+impossible because you would
+have to destroy liberty. Or give
+people the same opinions which is
+impossible
+2. Control the effects(causes can’t
+be controlled so it’s best to
+control effects.
+The Constitution best deals with the
+effects of factions because by the
+republican principles a majority won’t be
+able to suffocate the minority.
+
+Federalist #70
+Author: Alexander Hamilton Date (Approximate): March 18,1788
+Big Idea: Important Quotes
+Explains how the president should be and how - “Energy in the Executive is a leading
+the executive and presidency should be under character in the definition of good
+the Constitution. They envision an energetic government. It is essential to the
+strong leader because that will make a good protection of the community against
+office and you don’t want a feeble foreign attacks;”- The framers are
+administration because it will cause a feeble saying that a good President should be
+execution of the law. He wants a unified energetic in order to to protect the
+executive, instead of having a council. He government and be a good leader.
+advocates for the accountability of the President.
+Having one person as President will make that
+one person held accountable to the people as
+opposed to having multiple people where the
+blame can be pushed around. He even uses
+Rome as an example of this. There should be a
+powerful unitary executive branch in order to
+fight tyranny of the majority. He also argues the
+President needs enough power to prevent
+tyranny. Also one person can make quick
+decisions when needed.
+Federalist #78
+Author: Alexander Hamilton Date (Approximate): May 28,1788
+Big Idea: Important Quotes
+Discusses how the Judicial branch should
+operate. - The judiciary, on the contrary, has no
+Hamilton say the following: influence over either the sword or the
+- Judges should be appointed just like purse; no direction either of the strength
+officers of the Union or of the wealth of the society; and can
+- Judges should hold their jobs through take no active resolution whatsoever. It
+good behavior in order to keep them may truly be said to have neither FORCE
+impartial in judging the laws. This is nor WILL, but merely judgment;- The
+
+so that the judges do not have to judiciary is weak.
+worry about pleasing anybody so that - “all judges who may be appointed by the
+they can keep their jobs, but to just United States are to hold their offices
+focus on the Constitutionality of the DURING GOOD BEHAVIOR; which is
+law. conformable to the most approved of the
+- The judiciary is the least dangerous State constitutions and among the rest, to
+branch because it has no influence that of this State...And it is the best
+over the purse or the sword. It also expedient which can be devised in any
+has no power to execute its decisions, government, to secure a steady, upright,
+it can only judge. and impartial administration of the
+- The independence of the judiciary is laws.”- All judges should hold their
+very vital to the judiciary offices during good behavior because it is
+the best tool to have an impartial
+government.
+Letter from Birmingham Jail
+Author: Martin Luther King Jr. Date (Approximate): April 16, 1963
+Big Idea: Important Quotes
+Dr. King is responding to criticism on his method of - Injustice anywhere is a threat to
+using nonviolent protesting to try and create change. justice everywhere.
+He says that the black people of Birmingham have - In any nonviolent campaign there
+tried to negotiate with the leaders of Birmingham are four basic steps: collection of
+but these negotiations have led to nothing. Then, the facts to determine whether
+they sat down with the economic leaders of injustices exist; negotiation; self
+Birmingham and they agreed to take down racially purification; and direct action. We
+humiliating signs off of store fronts. Though they have gone through all these steps
+agreed to this the store owners had lied and never in Birmingham.
+took down these humiliating signs. So they sat and - Nonviolent direct action seeks to
+they planned and decided how they and when they create such a crisis and foster such
+would take action in a nonviolent . protest . It was a tension that a community which
+not a random protest. has constantly refused to negotiate
+- He believes tension is needed in order to is forced to confront the issue. It
+move forward and get stuff done, not violent seeks to dramatize the issue that it
+
+tension but constructive tension. can no longer be ignored.
+- He wanted to negotiate and having tension - My friends, I must say to you that
+will open the doors to negotiation we have not made a single gain in
+- Privileged don’t normally give up their civil rights without determined
+privilege voluntarily, they also never think it legal and nonviolent pressure.
+is timely for the oppressed to protest and Lamentably, it is an historical fact
+they don’t want them to. that privileged groups seldom give
+- He also explains that segregation is wrong up their privileges voluntarily.
+and why - “We have waited for more than
+- He outlines what he ha to go through just 340 years for our constitutional
+being African American and God given rights...
+The Constitution of the United States
+Big Idea: Preamble
+Establishes the American government, - We the People of the United States, in
+influenced heavily by Enlightenment Order to form a more perfect Union,
+philosophers. The key principles to the establish Justice, insure domestic
+American government include natural rights Tranquility, provide for the common
+which the government can not take away, defense, promote the general Welfare,
+republicanism, and a social contract which is and secure the Blessings of Liberty to
+between a government and the people. Also ourselves and our Posterity, do ordain
+consent of the governed is included. A lot of and establish this Constitution for the
+the things mentioned in the Federalists paper United States of America.-.
+were also included in the Constitution.
+
+The US Constitution
+Article Big Idea Details
+Article I (1) How Congress will A bicameral legislature with one house decided based
+work on population and the other each state has the same
+amount of representation. The house has the power to
+impeach, the Senate can hold trials for
+impeachment.Congress can alter time,place and
+manner of elections. Representatives can’t be arrested
+in the Capitol or on their way to the Capitol. All bills
+raising revenue have to come from the House. Lists the
+enumerated powers. Necessary and proper clause:
+Congress can make any laws relating to any
+enumerated powers necessary and proper to executing
+their job
+Article II (2) The President Establishes a 4 year term and requirements to be
+President. Commander in chief, Grant Pardons, State of
+the Union, Adjourn/Convene Congress, Electoral
+college, Grant Pardons/ Reprieves
+Article III The Courts The Supreme Court is the highest Court. Judges hold
+(3) their offices through good behavior. Judicial power
+extends to all cases under the Constitution. Everybody
+should have a trial by jury except for impeachment
+trials.
+Article IV Federalism Full faith and credit clause: Each state shall treat the
+(4) judicial proceedings, judicial acts and records of
+another state with full faith and credit. Privileges and
+Immunities: Each citizen shall enjoy the full privileges
+and immunities in every state. Extradition, Process for
+admitting new states into the union. Every State shall
+receive a republican form of government and
+protection from invasions
+Article V (5) Amending the To amend the Constitution 2/3rds of both houses of
+Constitution Congress must agree and 2/3rd of the states must agree.
+Article VI National government All Senators, Representatives, and Judges must be
+(6) bound to the Constitution by oath.
+
+Article VII Ratification If 9 states agree to the ratification of the Constitution it
+(7) will be the law
+Amendments 1- right to religion,
+speech, press,
+assembly, petition
+2- bear arms
+3- quartering soldiers
+4- searches and
+seizures
+5- due process; double
+jeopardy; self-
+incrimination; takings
+clause (eminent
+domain)
+6- rights of the
+accused (fair/speedy
+trial; attorney)
+7- jury trial
+8- excessive bail, cruel
+and unusual
+punishment
+9- non-enumerated
+rights (just ‘cause it’s
+not in there, doesn’t
+mean we don’t have it)
+10- rights reserved to
+the states
+11- suits against a state
+(can’t do it)
+12- election of
+president and VP
+together (changed
+Electoral College)
+13- abolition of
+slavery
+14- protection of rights
+(citizenship; due
+process; equal
+protection)
+
+15- voting rights for
+African American men
+16- federal income tax
+17- direct election of
+senators
+18- prohibition
+19- women’s suffrage
+20- commencement of
+president terms and
+succession (moved
+inauguration to 1/20)
+21- repeal 18th (repeal
+prohibition)
+22- presidential term
+limits (2 terms/10
+years)
+23- DC gets
+presidential vote
+24- no poll tax for
+federal elections
+25- presidential
+vacancy, disability,
+inability
+26- voting age to 18
+27- Congressional
+compensation (doesn’t
+take effect until after
+an election)
