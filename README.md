@@ -1,5 +1,4 @@
 # Your Study Buddy
-# Your Study Buddy
 
 **Your Study Buddy** is a completely free, open-source, and fully offline study application for macOS and Windows. Unlike many modern study tools, it does not rely on AI assistants or require an internet connection.
 
