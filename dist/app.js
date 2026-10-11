@@ -36,6 +36,9 @@ const state = {
   pendingCustomDeleteId: null,
   pendingBuiltInDeleteId: null,
   pendingDeleteAllStudySets: false,
+  pendingReturnAllBuiltIn: false,
+  editingStudyFolderId: null,
+  movingStudyDeckId: null,
   customStudyReturnView: "flashcards",
   customDeleteReturnView: "flashcards",
   courseReturnView: "courses",
@@ -53,11 +56,12 @@ const state = {
   manualFrontImage: "",
   manualBackImage: "",
   pendingCardImageTarget: null,
-  pendingDrawingTarget: null,
-  pendingMathTarget: null,
-  drawingTool: "pen",
-  drawingHistory: [],
+  textbookCatalogPage: 0,
+  studyCatalogPage: 0,
 };
+
+const TEXTBOOKS_PER_PAGE = 8;
+const STUDY_DECKS_PER_PAGE = 12;
 
 const SETTINGS_KEY = "your-study-buddy-settings-v1";
 const DEFAULT_SETTINGS = {
@@ -116,7 +120,13 @@ const builtInEuropeanHistoryDecks = window.AP_EUROPEAN_HISTORY_DECKS || [];
 const builtInGovernmentDecks = window.AP_US_GOVERNMENT_DECKS || [];
 const builtInSatVocabularyDecks = window.SAT_VOCABULARY_DECKS || [];
 const builtInPsychologyDecks = window.AP_PSYCHOLOGY_DECKS || [];
-const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks];
+const builtInUsHistoryDecks = window.AP_US_HISTORY_DECKS || [];
+const builtInArtHistoryDecks = window.AP_ART_HISTORY_DECKS || [];
+const builtInComputerSciencePrinciplesDecks = window.AP_CSP_DECKS || [];
+const builtInBiologyDecks = window.AP_BIOLOGY_DECKS || [];
+const builtInStatisticsDecks = window.AP_STATISTICS_DECKS || [];
+const builtInChemistryDecks = window.AP_CHEMISTRY_DECKS || [];
+const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks];
 const builtInFlashcardCollections = [{
   id: "aphug",
   name: "AP Human Geography",
@@ -156,6 +166,48 @@ const builtInFlashcardCollections = [{
   unitLabel: "sections",
   catalogLabel: "AP course",
   units: builtInPsychologyDecks,
+}, {
+  id: "apush",
+  name: "AP U.S. History",
+  description: "American Pageant glossary vocabulary for Periods 1–5 and APUSHReview vocabulary for Periods 6–9, with broad Feynman topics spanning all nine CED periods.",
+  unitLabel: "periods",
+  catalogLabel: "AP course",
+  units: builtInUsHistoryDecks,
+}, {
+  id: "apart",
+  name: "AP Art History",
+  description: "Image-first artwork identification cards with descriptions organized into the nine units covered by the supplied study guide.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInArtHistoryDecks,
+}, {
+  id: "apcsp",
+  name: "AP Computer Science Principles",
+  description: "Core vocabulary organized by the five AP CSP Big Ideas, with broad prompts for explaining major computing concepts.",
+  unitLabel: "Big Ideas",
+  catalogLabel: "AP course",
+  units: builtInComputerSciencePrinciplesDecks,
+}, {
+  id: "apbiology",
+  name: "AP Biology",
+  description: "A focused vocabulary collection aligned to the eight-unit AP Biology framework effective fall 2025.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInBiologyDecks,
+}, {
+  id: "apstats",
+  name: "AP Statistics",
+  description: "Vocabulary, procedures, and equation-image cards aligned to the five-unit AP Statistics framework effective fall 2026, with especially detailed sampling and experimental-design coverage.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInStatisticsDecks,
+}, {
+  id: "apchem",
+  name: "AP Chemistry",
+  description: "Vocabulary, concepts, and formula-image cards aligned to the nine-unit AP Chemistry framework, with equation applications and broad Feynman topics.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInChemistryDecks,
 }];
 
 const courses = [
@@ -320,10 +372,10 @@ photosynthesisChapter.cards = vocabularyDeck([
   ["crassulacean acid metabolism (CAM)", "A water-saving pathway that fixes carbon dioxide at night and releases it for the Calvin cycle during the day."],
   ["CAM plant", "A plant that opens its stomata mainly at night and separates initial carbon fixation from the Calvin cycle by time."],
 ], [
-  ["How do the light reactions and Calvin cycle depend on each other?", "The light reactions supply ATP and NADPH to the Calvin cycle; the Calvin cycle returns ADP, phosphate, and NADP+ for reuse."],
-  ["How do photosystem II and photosystem I differ?", "Photosystem II begins linear flow by extracting electrons from water at P680; photosystem I re-energizes electrons at P700 so NADPH can form."],
-  ["How do linear and cyclic electron flow differ?", "Linear flow uses both photosystems and produces ATP, NADPH, and oxygen. Cyclic flow uses photosystem I and produces additional ATP only."],
-  ["How do C4 and CAM plants limit photorespiration?", "C4 plants separate initial carbon fixation and the Calvin cycle by location; CAM plants separate them by time."],
+  ["light reactions and Calvin cycle", "The light reactions supply ATP and NADPH to the Calvin cycle; the Calvin cycle returns ADP, phosphate, and NADP+ for reuse."],
+  ["photosystem II vs. photosystem I", "Photosystem II begins linear flow by extracting electrons from water at P680; photosystem I re-energizes electrons at P700 so NADPH can form."],
+  ["linear vs. cyclic electron flow", "Linear flow uses both photosystems and produces ATP, NADPH, and oxygen. Cyclic flow uses photosystem I and produces additional ATP only."],
+  ["C4 vs. CAM pathways", "C4 plants separate initial carbon fixation and the Calvin cycle by location; CAM plants separate them by time."],
 ]);
 courses[0].cardCount = courses[0].chapters.reduce((total, unit) => total + unit.miniUnits.reduce((unitTotal, chapter) => unitTotal + chapter.cards.length, 0), 0);
 
@@ -332,15 +384,7 @@ function lesson(title, summary, takeaways, cards, quiz) {
 }
 
 function vocabularyDeck(entries, processCards = []) {
-  const cards = entries.map(([term, definition], index) => {
-    switch (index % 5) {
-      case 0: return [definitionQuestion(term, definition), definition];
-      case 1: return [`Describe ${term}.`, definition];
-      case 2: return [`Which term does this definition describe? ${definition}`, term];
-      case 3: return [functionQuestion(term, definition), definition];
-      default: return [definitionQuestion(term, definition), definition];
-    }
-  });
+  const cards = entries.map(([term, definition]) => [term, definition]);
   return cards.concat(processCards);
 }
 
@@ -351,13 +395,105 @@ function prepareTextbookVocabulary(entries, source, chapterNumber) {
     "campbell:6:chromatin": "DNA and associated proteins that make up eukaryotic chromosomes.",
     "campbell:49:nucleus": "A cluster of neuron cell bodies within the central nervous system.",
   };
-  const termCorrections = { "netic drift": "genetic drift" };
+  const termCorrections = { "netic drift": "genetic drift", "sponse": "response" };
+  const contextualTerms = {
+    "campbell:51:communication": "animal communication",
+  };
+  // The source glossary repeats broad cross-references in many chapters. Keep
+  // those terms where the concept is actually introduced so a chapter deck is
+  // not padded with context-free cards such as "electron" or "communication."
+  const campbellHomeChapters = {
+    electron: 2,
+    communication: 51,
+    science: 1,
+    inquiry: 1,
+    hypothesis: 1,
+    experiment: 1,
+    organism: 1,
+    organelle: 6,
+    cell: 6,
+    nucleus: 6,
+    molecule: 2,
+    matter: 2,
+    energy: 8,
+    protein: 5,
+    transport: 7,
+    species: 24,
+    variation: 23,
+    adaptation: 22,
+    bacteria: 27,
+    archaea: 27,
+    ecology: 52,
+    ecosystem: 55,
+    community: 54,
+    temperature: 3,
+    climate: 52,
+    fruit: 38,
+    family: 26,
+    class: 26,
+    nerve: 48,
+    brain: 49,
+    heart: 42,
+    plasma: 42,
+    density: 53,
+    liver: 41,
+    testes: 46,
+    vertebrate: 34,
+    invertebrate: 33,
+    flower: 38,
+    chromosome: 12,
+    cytoplasm: 6,
+    "cell division": 12,
+    "life cycle": 13,
+    fertilization: 13,
+    meiosis: 13,
+    mitosis: 12,
+    tissue: 40,
+    organ: 40,
+    element: 2,
+    mineral: 37,
+    absorption: 41,
+    digestion: 41,
+    nutrition: 41,
+    technology: 20,
+    genomics: 21,
+    "amino acid": 5,
+    nucleotide: 5,
+    allele: 14,
+    phenotype: 14,
+    genotype: 14,
+    zygote: 13,
+    "ecological niche": 54,
+    competition: 54,
+    photosynthesis: 10,
+    "cellular respiration": 9,
+    "signal transduction": 11,
+    "plasma membrane": 7,
+    "active transport": 7,
+    osmosis: 7,
+    diffusion: 7,
+    hydrolysis: 5,
+    enzyme: 8,
+    substrate: 8,
+    stability: 8,
+    "chemical reaction": 2,
+    "feedback regulation": 8,
+  };
+  const campbellChapterExclusions = {
+    41: new Set(["substrate", "enzyme", "heart", "vertebrate", "breathing", "phylogeny", "trachea"]),
+    44: new Set(["acid", "nucleic acid", "feces", "sensor", "solution", "temperate broadleaf forest"]),
+  };
   const seen = new Set();
   return entries.map(([rawTerm, rawDefinition]) => {
-    const term = (termCorrections[rawTerm] || rawTerm).replace(/\s+/g, " ").trim();
+    const rawNormalized = rawTerm.replace(/\s+/g, " ").trim();
+    const contextualKey = `${source}:${chapterNumber}:${rawNormalized.toLowerCase()}`;
+    if (source === "campbell" && campbellHomeChapters[rawNormalized.toLowerCase()] && campbellHomeChapters[rawNormalized.toLowerCase()] !== chapterNumber) return null;
+    if (source === "campbell" && campbellChapterExclusions[chapterNumber]?.has(rawNormalized.toLowerCase())) return null;
+    const term = (contextualTerms[contextualKey] || termCorrections[rawNormalized] || rawNormalized).replace(/\s+/g, " ").trim();
     const key = `${source}:${chapterNumber}:${term.toLowerCase()}`;
     const definition = (contextualDefinitions[key] || rawDefinition)
       .replace(/^\)\s*/, "")
+      .replace(/\babout n 1\/2,000\b/gi, "about 1/2,000")
       .replace(/\bknowl edge\b/gi, "knowledge")
       .replace(/\bpolypeps tides\b/gi, "polypeptides")
       .replace(/\bthree[- ]dimensional\b/gi, "three-dimensional")
@@ -365,7 +501,7 @@ function prepareTextbookVocabulary(entries, source, chapterNumber) {
       .replace(/\s+/g, " ")
       .trim();
     return [term, definition];
-  }).filter(([term, definition]) => {
+  }).filter(Boolean).filter(([term, definition]) => {
     const normalized = term.toLowerCase();
     if (!term || !definition || seen.has(normalized)) return false;
     seen.add(normalized);
@@ -375,27 +511,10 @@ function prepareTextbookVocabulary(entries, source, chapterNumber) {
 
 function expandedVocabulary(source, chapterNumber, entries) {
   const additions = window.TEXTBOOK_VOCABULARY_EXPANSIONS?.[source]?.[chapterNumber] || [];
-  return entries.concat(additions);
-}
-
-function definitionQuestion(term, definition) {
-  const pluralEnding = /\b(acids|alleles|animals|attractions|bases|biomes|bonds|carbohydrates|cells|chromosomes|communities|ecosystems|enzymes|forces|genes|hormones|interactions|ions|lipids|molecules|neurons|observations|organisms|organelles|plants|populations|proteins|reactions|systems|tissues)\b/i;
-  const irregularPlural = /^(data|fungi|nuclei|ova|stimuli)$/i.test(term);
-  const plural = term.includes(" and ") || pluralEnding.test(term) || irregularPlural;
-  if (plural) return `What are ${term}?`;
-  const domainName = /^(Archaea|Bacteria|Eukarya)$/i.test(term) && /^[A-Z]/.test(term);
-  const bareConcept = /(?:tion|sion|sis|ism|ics|ity|ence|ance|logy|metry|pathy|genesis|chemistry|energy|matter|heat|water|science|technology|inquiry|DNA|RNA|ATP)$/i.test(term);
-  const adjective = /^(?:aerobic|anaerobic|abiotic|biotic|hydrophilic|hydrophobic|hypertonic|hypotonic|isotonic|endothermic|exothermic)$/i.test(term);
-  if (domainName || bareConcept || adjective) return `What is ${term}?`;
-  const countable = /^(?:A|An|One|Any)\b/.test(definition) || /\b(cell|community|ecosystem|molecule|organelle|organism|species)$/i.test(term);
-  if (!countable) return `What is ${term}?`;
-  const article = /^[aeio]/i.test(term) || /^h(?:erb|our)/i.test(term) ? "an" : "a";
-  return `What is ${article} ${term}?`;
-}
-
-function functionQuestion(term, definition) {
-  const hasBiologicalFunction = /\b(cell|channel|complex|enzyme|hormone|membrane|molecule|organelle|organ|pigment|protein|pump|receptor|structure|tissue)\b/i.test(`${term} ${definition}`);
-  return hasBiologicalFunction ? `What is the function of ${term}?` : `How does ${term} work?`;
+  const glossaryEntries = source === "vanders" ? (window.VANDERS_GLOSSARY_VOCABULARY?.[chapterNumber] || []) : [];
+  // Campbell additions are hand-checked against the chapter text. Put them
+  // first so their complete definitions replace damaged glossary extraction.
+  return source === "campbell" ? additions.concat(entries) : entries.concat(additions, glossaryEntries);
 }
 
 function vocabularyQuizzes(entries, seed, count = 5) {
@@ -425,17 +544,6 @@ function vocabularyQuizzes(entries, seed, count = 5) {
 
 function miniUnit(number, title, topicList) {
   const topics = topicList.split("|");
-  const cards = [];
-  topics.forEach((topic) => {
-    cards.push([`What is ${topic}?`, `Define ${topic} in one sentence, then identify where it occurs and its direct biological role in ${title}.`]);
-    cards.push([`Why is ${topic} important?`, `Connect ${topic} to the chapter's main process, focusing on the biological result it helps produce.`]);
-    if (topic.length > 17 || topic.includes(" and ") || topic.includes("-")) {
-      cards.push([`How does ${topic} work?`, `Trace ${topic} from its starting conditions through its key mechanism to its outcome.`]);
-    }
-  });
-  for (let index = 0; index < topics.length - 1; index += 2) {
-    cards.push([`How are ${topics[index]} and ${topics[index + 1]} connected?`, `Explain the relationship between ${topics[index]} and ${topics[index + 1]}, including one similarity or causal link and one meaningful distinction.`]);
-  }
   return {
     number,
     title,
@@ -443,7 +551,9 @@ function miniUnit(number, title, topicList) {
     focusAreas: topics,
     summary: `This chapter develops six connected ideas: ${topics.join(", ")}. Use the lesson to build a mechanism-first explanation rather than memorizing isolated terms.`,
     takeaways: topics.slice(0, 4).map((topic) => `Explain ${topic} and connect it to the chapter's central biological problem.`),
-    cards,
+    // Campbell chapters are populated from the textbook glossary below. Keep
+    // this empty so no generic question-style fallback cards can leak in.
+    cards: [],
     quiz: { question: `Which term describes ${topics[0]}?`, options: [topics[0], topics[1], topics[2], topics[3]], answer: 0 },
   };
 }
@@ -472,31 +582,11 @@ function companionChapter(spec, source) {
   };
 }
 
-function expandCourseToAnkiTarget(course, target = 1000) {
+function normalizeCourseVocabularyCards(course) {
   const chapters = course.chapters.flatMap((unit) => unit.miniUnits);
-  const candidateDecks = chapters.map((chapter) => {
-    const vocabulary = chapter.textbookVocabulary || [];
-    return vocabulary.flatMap(([term, definition]) => {
-      if (!term || !definition) return [];
-      return [
-        [`Which term does this definition describe? ${definition}`, term],
-        [`What is the function or significance of ${term}?`, definition],
-      ];
-    });
+  chapters.forEach((chapter) => {
+    chapter.cards = vocabularyDeck(chapter.textbookVocabulary || []).concat(chapter.equations || []);
   });
-  let total = chapters.reduce((sum, chapter) => sum + chapter.cards.length, 0);
-  let candidateIndex = 0;
-  while (total < target && candidateDecks.some((deck) => candidateIndex < deck.length)) {
-    chapters.forEach((chapter, chapterIndex) => {
-      if (total >= target) return;
-      const candidate = candidateDecks[chapterIndex][candidateIndex];
-      if (candidate && !chapter.cards.some((card) => card[0] === candidate[0])) {
-        chapter.cards.push(candidate);
-        total += 1;
-      }
-    });
-    candidateIndex += 1;
-  }
 }
 
 function atkinsEquationApplicationCard(prompt, equation, chapter) {
@@ -602,7 +692,7 @@ const vandersCourse = {
     }),
   })),
 };
-expandCourseToAnkiTarget(vandersCourse);
+normalizeCourseVocabularyCards(vandersCourse);
 vandersCourse.cardCount = vandersCourse.chapters.reduce((total, unit) => total + unit.miniUnits.reduce((unitTotal, chapter) => unitTotal + chapter.cards.length, 0), 0);
 courses.push(vandersCourse);
 
@@ -626,7 +716,7 @@ const atkinsCourse = {
     }),
   })),
 };
-expandCourseToAnkiTarget(atkinsCourse);
+normalizeCourseVocabularyCards(atkinsCourse);
 atkinsCourse.cardCount = atkinsCourse.chapters.reduce((total, unit) => total + unit.miniUnits.reduce((unitTotal, chapter) => unitTotal + chapter.cards.length, 0), 0);
 courses.push(atkinsCourse);
 
@@ -650,7 +740,7 @@ const ravenCourse = {
     }),
   })),
 };
-expandCourseToAnkiTarget(ravenCourse);
+normalizeCourseVocabularyCards(ravenCourse);
 ravenCourse.cardCount = ravenCourse.chapters.reduce((total, unit) => total + unit.miniUnits.reduce((unitTotal, chapter) => unitTotal + chapter.cards.length, 0), 0);
 courses.push(ravenCourse);
 
@@ -674,7 +764,7 @@ const zumdahlCourse = {
     }),
   })),
 };
-expandCourseToAnkiTarget(zumdahlCourse);
+normalizeCourseVocabularyCards(zumdahlCourse);
 zumdahlCourse.cardCount = zumdahlCourse.chapters.reduce((total, unit) => total + unit.miniUnits.reduce((unitTotal, chapter) => unitTotal + chapter.cards.length, 0), 0);
 courses.push(zumdahlCourse);
 
@@ -700,6 +790,36 @@ const centralScienceCourse = {
 };
 centralScienceCourse.cardCount = centralScienceCourse.chapters.reduce((total, unit) => total + unit.miniUnits.reduce((unitTotal, chapter) => unitTotal + chapter.cards.length, 0), 0);
 courses.push(centralScienceCourse);
+
+function textbookFlashcardCollection(course) {
+  return {
+    id: `textbook-${course.id}`,
+    name: course.title,
+    description: `${course.description} Select individual units before starting a study session.`,
+    unitLabel: "units",
+    catalogLabel: "Textbook",
+    units: course.chapters.map((unit, unitIndex) => ({
+      id: `textbook-${course.id}-unit-${unitIndex + 1}`,
+      name: `${course.title} · ${unit.title}`,
+      shortName: unit.title,
+      builtIn: true,
+      sourceTitle: course.sourceTitle,
+      cards: unit.miniUnits.flatMap((chapter) => (chapter.cards || []).map((card, cardIndex) => Array.isArray(card) ? {
+        id: `textbook-${course.id}-${chapter.number}-c${cardIndex + 1}`,
+        front: card[0],
+        back: card[1],
+        ...(card[2] ? { equation: card[2] } : {}),
+      } : card)),
+      questions: [],
+      feynmanPrompts: unit.miniUnits.flatMap((chapter) => feynmanPrompts(chapter).map((prompt, promptIndex) => ({
+        id: `textbook-${course.id}-${chapter.number}-f${promptIndex + 1}`,
+        prompt,
+      }))),
+    })),
+  };
+}
+
+builtInFlashcardCollections.push(...courses.map(textbookFlashcardCollection));
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -735,13 +855,13 @@ function showAppView(view) {
   $("#course-page").hidden = !showingCourse;
   $("#flashcards").hidden = !showingFlashcards;
   $("#create").hidden = !showingCreate;
-  $("#export-page").hidden = !showingExport;
+  $("#export").hidden = !showingExport;
   $("#custom-study-page").hidden = !showingCustomStudy;
   $("#custom-delete-page").hidden = !showingCustomDelete;
   $("#study-guide-page").hidden = !showingStudyGuide;
   $("#settings-page").hidden = !showingSettings;
   $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingExport || showingCustomStudy || showingCustomDelete || showingStudyGuide || showingSettings; });
-  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingExport ? "#export" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
+  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingExport ? "#export" : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
   $$(".primary-nav .nav-item, .mobile-nav a").forEach((item) => {
     const active = item.getAttribute("href") === activeHref;
     item.classList.toggle("active", active);
@@ -751,6 +871,7 @@ function showAppView(view) {
   if (showingSettings) populateSettingsForm();
   if (showingCreate || showingFlashcards) renderCustomDecks();
   if (showingExport) renderExportPage();
+  if (view === "dashboard") renderActiveAnkiDecks();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -789,16 +910,36 @@ function setDateGreeting() {
   $("#today-label").textContent = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 }
 
+function renderLibraryPagination(selector, currentPage, itemCount, pageSize, onChange) {
+  const container = $(selector);
+  if (!container) return;
+  if (itemCount <= pageSize) { container.innerHTML = ""; return; }
+  const pageCount = Math.max(1, Math.ceil(itemCount / pageSize));
+  const page = Math.min(Math.max(0, currentPage), pageCount - 1);
+  container.innerHTML = `<button type="button" data-page="first" ${page === 0 ? "disabled" : ""}>First</button><button type="button" data-page="previous" ${page === 0 ? "disabled" : ""}>Previous</button><span>Page ${page + 1} of ${pageCount}</span><button type="button" data-page="next" ${page >= pageCount - 1 ? "disabled" : ""}>Next</button><button type="button" data-page="last" ${page >= pageCount - 1 ? "disabled" : ""}>Last</button>`;
+  $$('[data-page]', container).forEach((button) => button.addEventListener("click", () => {
+    const destination = button.dataset.page === "first" ? 0 : button.dataset.page === "previous" ? page - 1 : button.dataset.page === "next" ? page + 1 : pageCount - 1;
+    onChange(Math.min(Math.max(0, destination), pageCount - 1));
+  }));
+}
+
 function renderCourseShelf(filter = "") {
   const query = filter.trim().toLowerCase();
   const matches = courses.filter((course) => `${course.title} ${course.code} ${course.level} ${course.sourceTitle || ""} ${course.description}`.toLowerCase().includes(query));
-  $("#course-shelf").innerHTML = matches.map((course) => `
+  const pageCount = Math.max(1, Math.ceil(matches.length / TEXTBOOKS_PER_PAGE));
+  state.textbookCatalogPage = Math.min(state.textbookCatalogPage, pageCount - 1);
+  const pageMatches = matches.slice(state.textbookCatalogPage * TEXTBOOKS_PER_PAGE, (state.textbookCatalogPage + 1) * TEXTBOOKS_PER_PAGE);
+  $("#course-shelf").innerHTML = pageMatches.map((course) => `
     <article class="course-tile catalog-course">
       <div class="course-cover ${course.color}"><span>${course.icon}</span><small>${course.code}</small></div>
       <div class="course-tile-copy"><span>${course.level} · ${course.duration}</span><h3>${course.title}</h3><p>${course.description}</p><small class="book-status connected">● Ready to add</small></div>
       <button class="button course-add" type="button" data-add-course="${course.id}" ${isEnrolled(course.id) ? "disabled" : ""}>${isEnrolled(course.id) ? "Added" : "Add textbook"}</button>
     </article>`).join("") || '<p class="empty-search">No available textbooks match that search.</p>';
   $$('[data-add-course]').forEach((button) => button.addEventListener("click", () => addCourse(button.dataset.addCourse)));
+  renderLibraryPagination("#textbook-catalog-pagination", state.textbookCatalogPage, matches.length, TEXTBOOKS_PER_PAGE, (page) => {
+    state.textbookCatalogPage = page;
+    renderCourseShelf($("#catalog-courses-search").value);
+  });
   renderMyCourses($("#my-courses-search").value);
 }
 
@@ -1181,6 +1322,63 @@ function dailyAnkiPlan(cards, scope) {
   };
 }
 
+function activeAnkiSummary(cards, scope) {
+  const plan = dailyAnkiPlan(cards, scope);
+  return {
+    total: plan.queue.length,
+    newCount: plan.newCards.length,
+    learningCount: plan.learningCards.length,
+    reviewCount: plan.reviewCards.length,
+  };
+}
+
+function dashboardAnkiEntries() {
+  const removed = removedAnkiCardKeys();
+  const textbookEntries = courses.filter((course) => isEnrolled(course.id)).map((course) => {
+    const cards = course.chapters.flatMap((unit, unitIndex) => unit.miniUnits.flatMap((chapter, miniIndex) => chapter.cards.map((card, cardIndex) => ({ card, key: `${course.id}-${unitIndex}-${miniIndex}-${cardIndex}` })).filter((item) => !removed.has(item.key))));
+    const summary = activeAnkiSummary(cards.map((item) => prepareAnkiSessionCard(item.card, item.key)), `course:${course.id}`);
+    return { id: course.id, name: course.title, kind: "Textbook", target: "course", ...summary };
+  });
+  const personalEntries = loadCustomDecks().map((deck) => {
+    const cards = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(deck.id, card.id)));
+    return { id: deck.id, name: deck.name, kind: "Personal set", target: "deck", ...activeAnkiSummary(cards, `deck:${deck.id}`) };
+  });
+  const builtInEntries = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((original) => {
+    const collection = effectiveBuiltInCollection(original);
+    const cards = collection.units.flatMap((unit) => unit.cards || []).map((card) => prepareAnkiSessionCard(card, customAnkiKey(collection.id, card.id)));
+    return { id: collection.id, name: collection.name, kind: "Built-in deck", target: "deck", ...activeAnkiSummary(cards, `deck:${collection.id}`) };
+  });
+  return [...textbookEntries, ...personalEntries, ...builtInEntries].filter((entry) => entry.total > 0).sort((a, b) => b.reviewCount + b.learningCount - (a.reviewCount + a.learningCount) || a.name.localeCompare(b.name));
+}
+
+function renderActiveAnkiDecks() {
+  const list = $("#active-anki-list");
+  if (!list) return;
+  const entries = dashboardAnkiEntries();
+  const total = entries.reduce((sum, entry) => sum + entry.total, 0);
+  $("#active-anki-total").textContent = `${total} due`;
+  list.innerHTML = entries.length ? entries.map((entry) => `<article class="active-anki-item"><div class="active-anki-copy"><small>${escapeHtml(entry.kind)}</small><strong>${escapeHtml(entry.name)}</strong><div class="active-anki-counts"><span><b>${entry.newCount}</b> new</span><span><b>${entry.learningCount}</b> learning</span><span><b>${entry.reviewCount}</b> review</span></div></div><button class="button primary-button active-anki-start" type="button" data-dashboard-anki="${escapeHtml(entry.id)}" data-dashboard-anki-target="${entry.target}">Study now</button></article>`).join("") : '<div class="active-anki-empty">No Anki cards are due today. Add a textbook or study deck to begin a daily review.</div>';
+  $$('[data-dashboard-anki]', list).forEach((button) => button.addEventListener("click", () => openDashboardAnki(button.dataset.dashboardAnki, button.dataset.dashboardAnkiTarget)));
+}
+
+function openDashboardAnki(id, target) {
+  if (target === "course") {
+    openCourse(id, 0, "anki");
+    state.selectedAnkiDecks = allAnkiDeckKeys();
+    renderLesson();
+    startAnkiReview();
+    return;
+  }
+  const collection = getBuiltInCollection(id);
+  if (collection) {
+    state.selectedBuiltInCollectionId = null;
+    state.selectedBuiltInUnitIds = collection.units.map((unit) => unit.id);
+  }
+  state.customStudyReturnView = "dashboard";
+  openCustomStudyOptions(id);
+  startCustomReview("anki");
+}
+
 function ankiSessionTypeForSchedule(schedule) {
   if (!schedule.lastReviewed && !schedule.repetitions) return "new";
   if ((Number(schedule.intervalDays) || 0) < 1 || schedule.lastRating === "again") return "learning";
@@ -1387,11 +1585,17 @@ function feynmanPrompts(chapter) {
     10: ["Photosynthesis", "Light reactions", "Photosystems", "The Calvin cycle", "C4 vs. CAM pathways"],
     13: ["Meiosis", "Mitosis", "Crossing over", "Mitosis vs. meiosis"],
   };
-  if (chapter.source === "campbell" && customPrompts[chapter.number]) return customPrompts[chapter.number];
   const sectionTopics = chapter.focusAreas || [];
   const vocabularyTopics = (chapter.textbookTerms || chapter.topics || []).filter((term) => /(?:cycle|system|pathway|transport|growth|development|evolution|respiration|photosynthesis|reproduction|regulation|equilibrium|structure|mechanism|theory|model|metabolism|signaling|inheritance|ecology|diversity|interaction|reaction|synthesis|division|immunity|circulation)/i.test(term));
   const areas = [...new Set([...sectionTopics, ...vocabularyTopics])];
-  const termCount = (chapter.textbookTerms || chapter.topics || []).length;
+  const termCount = chapter.cards?.length || (chapter.textbookTerms || chapter.topics || []).length;
+  if (["campbell", "vanders", "raven"].includes(chapter.source)) {
+    const candidates = customPrompts[chapter.number] || areas;
+    const targetCount = Math.max(1, Math.round(termCount / 10));
+    const count = Math.min(candidates.length, targetCount);
+    const chosen = Array.from({ length: count }, (_, index) => candidates[Math.round(index * (candidates.length - 1) / Math.max(1, count - 1))]);
+    return [...new Set(chosen)].map(formatFeynmanTopic);
+  }
   const count = Math.min(areas.length, termCount <= 8 ? 2 : termCount <= 10 ? 3 : termCount <= 12 ? 4 : termCount <= 14 ? 5 : 6);
   const chosen = Array.from({ length: count }, (_, index) => areas[Math.round(index * (areas.length - 1) / Math.max(1, count - 1))]);
   return [...new Set(chosen)].map(formatFeynmanTopic);
@@ -1597,6 +1801,7 @@ function addStudyAlarm(title, description, timestamp) {
 }
 
 const CUSTOM_DECKS_KEY = "your-study-buddy-custom-decks";
+const STUDY_FOLDERS_KEY = "your-study-buddy-study-folders";
 
 function makeLocalId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -1621,6 +1826,221 @@ function storeCustomDecks(decks) {
     return false;
   }
 }
+
+function loadStudyFolders() {
+  try {
+    const folders = JSON.parse(localStorage.getItem(STUDY_FOLDERS_KEY) || "[]");
+    return Array.isArray(folders) ? folders.filter((folder) => folder?.id && folder?.name && Array.isArray(folder.deckIds)).map((folder) => ({
+      ...folder,
+      color: /^#[0-9a-f]{6}$/i.test(folder.color || "") ? folder.color : "#d9b66f",
+      expanded: Boolean(folder.expanded),
+    })) : [];
+  } catch {
+    localStorage.removeItem(STUDY_FOLDERS_KEY);
+    return [];
+  }
+}
+
+function storeStudyFolders(folders) {
+  localStorage.setItem(STUDY_FOLDERS_KEY, JSON.stringify(folders));
+}
+
+function removeDecksFromFolders(deckIds) {
+  const removed = new Set(deckIds);
+  storeStudyFolders(loadStudyFolders().map((folder) => ({ ...folder, deckIds: folder.deckIds.filter((id) => !removed.has(id)) })));
+}
+
+function createStudyFolder() {
+  state.editingStudyFolderId = null;
+  $("#folder-editor-title").textContent = "Create a folder";
+  $("#folder-editor-name").value = "";
+  $("#folder-editor-color").value = "#d9b66f";
+  $("#save-folder-editor").textContent = "Create folder";
+  $("#folder-editor-dialog").showModal();
+  $("#folder-editor-name").focus();
+}
+
+function toggleStudyFolder(folderId) {
+  const folders = loadStudyFolders();
+  const folder = folders.find((item) => item.id === folderId);
+  if (!folder) return;
+  folder.expanded = !folder.expanded;
+  storeStudyFolders(folders);
+  renderCustomDecks();
+}
+
+function setStudyFolderColor(folderId, color) {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+  const folders = loadStudyFolders();
+  const folder = folders.find((item) => item.id === folderId);
+  if (!folder) return;
+  folder.color = color;
+  storeStudyFolders(folders);
+  renderCustomDecks();
+}
+
+function assignDeckToFolder(deckId, folderId) {
+  const folders = loadStudyFolders().map((folder) => ({ ...folder, deckIds: folder.deckIds.filter((id) => id !== deckId) }));
+  const destination = folders.find((folder) => folder.id === folderId);
+  if (destination) destination.deckIds.push(deckId);
+  storeStudyFolders(folders);
+  renderCustomDecks();
+}
+
+function renameStudyFolder(folderId) {
+  const folders = loadStudyFolders();
+  const folder = folders.find((item) => item.id === folderId);
+  if (!folder) return;
+  state.editingStudyFolderId = folderId;
+  $("#folder-editor-title").textContent = "Edit folder";
+  $("#folder-editor-name").value = folder.name;
+  $("#folder-editor-color").value = folder.color;
+  $("#save-folder-editor").textContent = "Save changes";
+  $("#folder-editor-dialog").showModal();
+  $("#folder-editor-name").focus();
+}
+
+function saveStudyFolderEditor() {
+  const name = $("#folder-editor-name").value.trim();
+  const color = $("#folder-editor-color").value;
+  if (!name) return;
+  const folders = loadStudyFolders();
+  const existing = folders.find((folder) => folder.id === state.editingStudyFolderId);
+  if (existing) {
+    existing.name = name;
+    existing.color = color;
+  } else {
+    folders.push({ id: makeLocalId("folder"), name, color, expanded: false, deckIds: [] });
+  }
+  storeStudyFolders(folders);
+  $("#folder-editor-dialog").close();
+  state.editingStudyFolderId = null;
+  renderCustomDecks();
+  showToast(existing ? `${name} updated.` : `${name} created.`);
+}
+
+function openMoveDeckDialog(deckId) {
+  const folders = loadStudyFolders();
+  const current = folders.find((folder) => folder.deckIds.includes(deckId))?.id || "";
+  state.movingStudyDeckId = deckId;
+  $("#move-deck-folder").innerHTML = `<option value="">No folder</option>${folders.map((folder) => `<option value="${folder.id}" ${folder.id === current ? "selected" : ""}>${escapeHtml(folder.name)}</option>`).join("")}`;
+  $("#move-deck-dialog").showModal();
+}
+
+function deleteStudyFolder(folderId) {
+  const folders = loadStudyFolders();
+  const folder = folders.find((item) => item.id === folderId);
+  if (!folder || !window.confirm(`Delete the folder “${folder.name}”? Its study sets will remain in My Study Sets.`)) return;
+  storeStudyFolders(folders.filter((item) => item.id !== folderId));
+  renderCustomDecks();
+  showToast(`${folder.name} deleted. Its study sets were not deleted.`);
+}
+
+function exportableStudyDecks() {
+  const personal = loadCustomDecks().map((deck) => ({ id: deck.id, name: deck.name, cards: deck.cards, group: "Personal sets" }));
+  const builtIn = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((collection) => {
+    const effective = effectiveBuiltInCollection(collection);
+    return { id: effective.id, name: effective.name, cards: effective.units.flatMap((unit) => unit.cards), group: "Built-in sets" };
+  });
+  const folders = loadStudyFolders().map((folder) => {
+    const deck = findStudyDeck(`folder:${folder.id}`);
+    return deck ? { id: deck.id, name: folder.name, cards: deck.cards, group: "Folders" } : null;
+  }).filter((deck) => deck?.cards?.length);
+  return [...folders, ...personal, ...builtIn].filter((deck) => deck.cards.length);
+}
+
+function renderExportPage() {
+  const select = $("#export-deck-select");
+  const decks = exportableStudyDecks();
+  const previous = select.value;
+  if (!decks.length) {
+    select.innerHTML = '<option value="">No flashcard sets available</option>';
+    select.disabled = true;
+    $("#export-study-set").disabled = true;
+    $("#export-selection-summary").textContent = "Create or add a study set before exporting.";
+    return;
+  }
+  select.disabled = false;
+  $("#export-study-set").disabled = false;
+  const groups = [...new Set(decks.map((deck) => deck.group))];
+  select.innerHTML = groups.map((group) => `<optgroup label="${escapeHtml(group)}">${decks.filter((deck) => deck.group === group).map((deck) => `<option value="${escapeHtml(deck.id)}">${escapeHtml(deck.name)} · ${deck.cards.length} cards</option>`).join("")}</optgroup>`).join("");
+  if (decks.some((deck) => deck.id === previous)) select.value = previous;
+  updateExportSummary();
+}
+
+function selectedExportDeck() {
+  return exportableStudyDecks().find((deck) => deck.id === $("#export-deck-select").value);
+}
+
+function updateExportSummary() {
+  const deck = selectedExportDeck();
+  $("#export-selection-summary").textContent = deck ? `${deck.cards.length} flashcards will be exported from ${deck.name}.` : "Choose a study set.";
+}
+
+function exportDelimitedText(deck, format) {
+  const separator = format === "csv" ? "," : "\t";
+  const quote = (value) => {
+    const text = String(value || "").replace(/\r?\n/g, "<br>");
+    return format === "csv" ? `"${text.replace(/"/g, '""')}"` : text.replace(/\t/g, " ");
+  };
+  const rows = format === "csv" ? [["Front", "Back"]] : [];
+  rows.push(...deck.cards.map((card) => [card.front || "", card.back || ""]));
+  return rows.map((row) => row.map(quote).join(separator)).join("\n");
+}
+
+function safeExportName(name) {
+  return String(name || "Study deck").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim() || "Study deck";
+}
+
+function browserDownload(name, format, text) {
+  const blob = new Blob([text], { type: format === "csv" ? "text/csv;charset=utf-8" : "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeExportName(name)}.${format}`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportSelectedStudyDeck() {
+  const deck = selectedExportDeck();
+  if (!deck) { showToast("Choose a flashcard set to export."); return; }
+  const format = $('input[name="exportFormat"]:checked')?.value || "apkg";
+  const payload = {
+    name: safeExportName(deck.name),
+    format,
+    cards: deck.cards.map((card) => ({ front: String(card.front || ""), back: String(card.back || "") })),
+  };
+  $("#export-status").textContent = `Preparing ${payload.cards.length} cards…`;
+  if (window.desktopApp?.exportStudyDeck) {
+    const result = await window.desktopApp.exportStudyDeck(payload);
+    if (result?.error) { $("#export-status").textContent = result.error; showToast("The deck could not be exported."); return; }
+    if (result?.canceled) { $("#export-status").textContent = "Export canceled."; return; }
+    $("#export-status").textContent = `${payload.cards.length} cards exported as ${format.toUpperCase()}.`;
+    showToast(`${deck.name} exported.`);
+    return;
+  }
+  const handler = window.webkit?.messageHandlers?.studyExport;
+  if (handler) {
+    handler.postMessage(payload);
+    $("#export-status").textContent = "Choose where to save the exported deck…";
+    return;
+  }
+  if (format === "apkg") {
+    $("#export-status").textContent = "APKG export is available in the Mac and Windows desktop apps.";
+    showToast("Open the desktop app to export APKG files.");
+    return;
+  }
+  browserDownload(deck.name, format, exportDelimitedText(deck, format));
+  $("#export-status").textContent = `${payload.cards.length} cards exported as ${format.toUpperCase()}.`;
+}
+
+window.receiveStudyExportResult = (result) => {
+  if (result?.error) { $("#export-status").textContent = result.error; showToast("The deck could not be exported."); return; }
+  if (result?.canceled) { $("#export-status").textContent = "Export canceled."; return; }
+  $("#export-status").textContent = `${result.count || 0} cards exported as ${String(result.format || "file").toUpperCase()}.`;
+  showToast("Flashcards exported.");
+};
 
 function readFlashcardImage(file) {
   return new Promise((resolve, reject) => {
@@ -1687,113 +2107,6 @@ function handleCardPaste(event, target) {
   if (!file) return;
   event.preventDefault();
   acceptCardImage(file, target);
-}
-
-function confirmImageRemoval(button, removeImage) {
-  if (button.dataset.confirmingRemove === "true") {
-    delete button.dataset.confirmingRemove;
-    removeImage();
-    return;
-  }
-  button.dataset.confirmingRemove = "true";
-  const originalLabel = button.textContent;
-  button.textContent = "Click again to remove";
-  button.classList.add("confirming-remove");
-  window.setTimeout(() => {
-    if (!button.isConnected || button.dataset.confirmingRemove !== "true") return;
-    delete button.dataset.confirmingRemove;
-    button.textContent = originalLabel;
-    button.classList.remove("confirming-remove");
-  }, 2500);
-}
-
-function cardTextArea(target) {
-  if (!target) return null;
-  if (target.kind === "manual") return $(`#manual-card-${target.side}`);
-  return $(`[data-draft-${target.side}="${target.index}"]`);
-}
-
-function openDrawingTool(target) {
-  state.pendingDrawingTarget = target;
-  state.drawingTool = "pen";
-  state.drawingHistory = [];
-  $$('[data-drawing-tool]').forEach((button) => button.classList.toggle("active", button.dataset.drawingTool === "pen"));
-  const canvas = $("#flashcard-drawing-canvas");
-  const context = canvas.getContext("2d");
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  const property = target.side === "front" ? "frontImage" : "backImage";
-  const existing = target.kind === "manual"
-    ? (target.side === "front" ? state.manualFrontImage : state.manualBackImage)
-    : state.customDraft[target.index]?.[property];
-  const remember = () => { state.drawingHistory = [canvas.toDataURL("image/png")]; };
-  if (existing) {
-    const image = new Image();
-    image.onload = () => {
-      const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
-      const width = image.naturalWidth * scale;
-      const height = image.naturalHeight * scale;
-      context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
-      remember();
-    };
-    image.onerror = remember;
-    image.src = existing;
-  } else remember();
-  $("#drawing-dialog-title").textContent = `Draw on the ${target.side}`;
-  $("#drawing-dialog").showModal();
-}
-
-function closeDrawingTool() {
-  $("#drawing-dialog").close();
-  state.pendingDrawingTarget = null;
-  state.drawingHistory = [];
-}
-
-function readableMathSyntax(value) {
-  const symbols = { "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\Delta": "Δ", "\\delta": "δ", "\\theta": "θ", "\\lambda": "λ", "\\mu": "μ", "\\pi": "π", "\\sigma": "σ", "\\Sigma": "Σ", "\\times": "×", "\\div": "÷", "\\pm": "±", "\\le": "≤", "\\ge": "≥", "\\rightarrow": "→", "\\rightleftharpoons": "⇌" };
-  let text = String(value || "").trim();
-  Object.entries(symbols).forEach(([syntax, symbol]) => { text = text.split(syntax).join(symbol); });
-  text = text.replace(/\\sqrt\{([^{}]+)\}/g, "√($1)").replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)");
-  const superscript = { 0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹","+":"⁺","-":"⁻" };
-  const subscript = { 0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"₈",9:"₉","+":"₊","-":"₋" };
-  text = text.replace(/\^\{?([0-9+-]+)\}?/g, (_, chars) => [...chars].map((char) => superscript[char] || char).join(""));
-  text = text.replace(/_\{?([0-9+-]+)\}?/g, (_, chars) => [...chars].map((char) => subscript[char] || char).join(""));
-  return text;
-}
-
-function updateMathPreview() {
-  $("#math-preview").textContent = readableMathSyntax($("#math-expression").value) || "Your expression will appear here.";
-}
-
-function openMathTool(target) {
-  const textarea = cardTextArea(target);
-  state.pendingMathTarget = { ...target, start: textarea?.selectionStart ?? textarea?.value.length ?? 0, end: textarea?.selectionEnd ?? textarea?.value.length ?? 0 };
-  $("#math-expression").value = "";
-  $("#math-dialog-title").textContent = `Insert math on the ${target.side}`;
-  updateMathPreview();
-  $("#math-dialog").showModal();
-  $("#math-expression").focus();
-}
-
-function closeMathTool() {
-  $("#math-dialog").close();
-  state.pendingMathTarget = null;
-}
-
-function insertMathIntoCard() {
-  const target = state.pendingMathTarget;
-  const expression = readableMathSyntax($("#math-expression").value);
-  if (!target || !expression) { showToast("Enter a math expression first."); return; }
-  const textarea = cardTextArea(target);
-  if (!textarea) return;
-  const before = textarea.value.slice(0, target.start);
-  const after = textarea.value.slice(target.end);
-  const spacingBefore = before && !/\s$/.test(before) ? " " : "";
-  const spacingAfter = after && !/^\s/.test(after) ? " " : "";
-  textarea.value = `${before}${spacingBefore}${expression}${spacingAfter}${after}`;
-  textarea.dispatchEvent(new Event("input", { bubbles: true }));
-  closeMathTool();
-  textarea.focus();
-  showToast("Math inserted into the card.");
 }
 
 function cleanNoteLine(line) {
@@ -2075,13 +2388,7 @@ function generateCardsFromNotes(notes) {
       || expanded.match(/^\s*\d+(?:\.\d+)+\.?\s+(.+?)\s*$/);
     const bulletMatch = expanded.match(/^(\s*)(?:[-*•]|\d+[.)])\s+(.+?)\s*$/);
     if (headingMatch) return { sourceIndex, kind: "heading", depth: -1, text: cleanNoteLine(headingMatch[1]).replace(/^\d+(?:\.\d+)*\.?\s*/, ""), children: [] };
-    if (bulletMatch) {
-      const boldTerm = bulletMatch[2].match(/^\*\*([^*]{2,70})\*\*\s*(?:[-–—,:]\s*)?(.{3,})$/);
-      const boldFront = cleanNoteLine(boldTerm?.[1] || "");
-      const phraseLooksLikeTerm = boldTerm && !/^(?:decreases?|increases?|shifts?|protects?|ensures?|prevents?|requires?|allows?|prohibits?|limits?|reinforces?|shows?|explains?|argues?|ruled?|held?)\b/i.test(boldFront) && !/[.!?]$/.test(boldFront);
-      const text = phraseLooksLikeTerm ? `${boldFront}: ${cleanNoteLine(boldTerm[2])}` : cleanNoteLine(bulletMatch[2]);
-      return { sourceIndex, kind: "bullet", depth: Math.floor(bulletMatch[1].length / 2), text, children: [] };
-    }
+    if (bulletMatch) return { sourceIndex, kind: "bullet", depth: Math.floor(bulletMatch[1].length / 2), text: cleanNoteLine(bulletMatch[2]), children: [] };
     const plainText = cleanNoteLine(expanded);
     return plainText ? { sourceIndex, kind: "plain", depth: 0, text: plainText, children: [] } : null;
   }).filter((line) => line?.text);
@@ -2231,7 +2538,6 @@ function cardTopic(card) {
     /^Describe what\s+(.+?)\s+(?:causes?|produces?|creates?|converts?|contains?|consists? of|includes?|requires?)\.$/i,
     /^What is\s+(?:an?\s+|the\s+)?(.+?)\?$/i,
     /^When does\s+(.+?)\s+occur\?$/i,
-    /^Which term does this definition describe\?\s*(.+)$/i,
   ];
   for (const pattern of patterns) {
     const match = card.front.match(pattern);
@@ -2384,7 +2690,7 @@ function renderCustomDraft() {
   $("#flashcard-tab-count").textContent = state.customDraft.length;
   empty.hidden = state.customDraft.length > 0;
   updateCustomSaveButtons();
-  list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="front" data-image-index="${index}">Draw</button><button type="button" data-math-draft="front" data-image-index="${index}">Math syntax</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="back" data-image-index="${index}">Draw</button><button type="button" data-math-draft="back" data-image-index="${index}">Math syntax</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
+  list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftFront)].front = input.value; }));
   $$('[data-draft-back]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftBack)].back = input.value; }));
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("paste", (event) => handleCardPaste(event, { kind: "draft", side: "front", index: Number(input.dataset.draftFront) })));
@@ -2393,15 +2699,10 @@ function renderCustomDraft() {
     state.pendingCardImageTarget = { kind: "draft", side: button.dataset.chooseDraftImage, index: Number(button.dataset.imageIndex) };
     $("#flashcard-image-file").click();
   }));
-  $$('[data-draw-draft]', list).forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "draft", side: button.dataset.drawDraft, index: Number(button.dataset.imageIndex) })));
-  $$('[data-math-draft]', list).forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "draft", side: button.dataset.mathDraft, index: Number(button.dataset.imageIndex) })));
   $$('[data-remove-draft-image]', list).forEach((button) => button.addEventListener("click", () => {
-    confirmImageRemoval(button, () => {
-      const card = state.customDraft[Number(button.dataset.imageIndex)];
-      if (card) card[button.dataset.removeDraftImage === "front" ? "frontImage" : "backImage"] = "";
-      renderCustomDraft();
-      showToast("Image removed. Choose Update set to save the change.");
-    });
+    const card = state.customDraft[Number(button.dataset.imageIndex)];
+    if (card) card[button.dataset.removeDraftImage === "front" ? "frontImage" : "backImage"] = "";
+    renderCustomDraft();
   }));
   $$('[data-remove-draft]', list).forEach((button) => button.addEventListener("click", () => {
     state.customDraft.splice(Number(button.dataset.removeDraft), 1);
@@ -2437,7 +2738,7 @@ function resetCustomDraft() {
   renderManualImagePreview("back");
   $("#manual-feynman-topic").value = "";
   $("#anki-notes-file").value = "";
-  $("#anki-import-status").textContent = "Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV files.";
+  $("#anki-import-status").textContent = "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Generate and save study set";
   renderCustomDraft();
@@ -2446,22 +2747,51 @@ function resetCustomDraft() {
   selectCreateContentTab("flashcards");
 }
 
+function personalDeckMarkup(deck, folders) {
+  return `<article class="custom-deck-item personal-deck-item"><button type="button" class="deck-wrench" data-edit-custom="${deck.id}" aria-label="Edit ${escapeHtml(deck.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5-5l2.1 2.1-2.4 2.4-2.1-2.1a4 4 0 0 0 5 5l-7.5 7.5a2 2 0 1 0 2.8 2.8l7.5-7.5a4 4 0 0 0 5-5L18 8.6 15.6 6.2l2.1-2.1Z" /></svg></button><div class="built-in-deck-label">Personal set</div><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-move-deck="${deck.id}">Move</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`;
+}
+
+function builtInAddedDeckMarkup(collection, folders) {
+  return `<article class="custom-deck-item built-in-deck-item added-built-in-deck"><div class="built-in-deck-label">Built-in · ${collection.units.length} ${collection.unitLabel || "units"}</div><h3>${escapeHtml(collection.name)}</h3><p>${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman topics</p><div class="custom-deck-actions"><button type="button" data-study-built-in-collection="${collection.id}">Study</button><button type="button" data-move-deck="${collection.id}">Move</button><button type="button" data-edit-built-in-collection="${collection.id}">Edit</button><button type="button" class="remove-built-in-deck" data-delete-built-in-collection="${collection.id}">Delete</button></div></article>`;
+}
+
 function renderCustomDecks() {
-  const decks = loadCustomDecks();
-  const addedCollections = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((collection) => effectiveBuiltInCollection(collection));
-  $("#saved-deck-count").textContent = decks.length;
-  $("#flashcards-deck-count").textContent = decks.length + addedCollections.length;
+  const allDecks = loadCustomDecks();
+  const allAddedCollections = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((collection) => effectiveBuiltInCollection(collection));
+  const studyQuery = ($("#my-study-sets-search")?.value || "").trim().toLowerCase();
+  const matchesStudyQuery = (deck) => !studyQuery || `${deck.name} ${deck.description || ""}`.toLowerCase().includes(studyQuery);
+  const decks = allDecks.filter(matchesStudyQuery);
+  const addedCollections = allAddedCollections.filter(matchesStudyQuery);
+  const validIds = new Set([...allDecks.map((deck) => deck.id), ...allAddedCollections.map((collection) => collection.id)]);
+  const folders = loadStudyFolders().map((folder) => ({ ...folder, deckIds: [...new Set(folder.deckIds)].filter((id) => validIds.has(id)) }));
+  storeStudyFolders(folders);
+  const filedIds = new Set(folders.flatMap((folder) => folder.deckIds));
+  $("#saved-deck-count").textContent = allDecks.length;
+  $("#flashcards-deck-count").textContent = allDecks.length + allAddedCollections.length;
   const creatorMarkup = decks.length ? decks.map((deck) => `<article class="custom-deck-item"><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`).join("") : '<div class="custom-deck-empty">Your saved study sets will appear here.</div>';
-  const personalMarkup = decks.map((deck) => `<article class="custom-deck-item personal-deck-item"><button type="button" class="deck-wrench" data-edit-custom="${deck.id}" aria-label="Edit ${escapeHtml(deck.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5-5l2.1 2.1-2.4 2.4-2.1-2.1a4 4 0 0 0 5 5l-7.5 7.5a2 2 0 1 0 2.8 2.8l7.5-7.5a4 4 0 0 0 5-5L18 8.6 15.6 6.2l2.1-2.1Z" /></svg></button><div class="built-in-deck-label">Personal set</div><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`).join("");
-  const addedMarkup = addedCollections.map((collection) => `<article class="custom-deck-item built-in-deck-item added-built-in-deck"><div class="built-in-deck-label">Built-in · ${collection.units.length} ${collection.unitLabel || "units"}</div><h3>${escapeHtml(collection.name)}</h3><p>${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman topics</p><div class="custom-deck-actions"><button type="button" data-study-built-in-collection="${collection.id}">Study</button><button type="button" data-edit-built-in-collection="${collection.id}">Edit</button><button type="button" class="remove-built-in-deck" data-delete-built-in-collection="${collection.id}">Delete</button></div></article>`).join("");
+  const deckById = new Map([...decks.map((deck) => [deck.id, { type: "personal", value: deck }]), ...addedCollections.map((collection) => [collection.id, { type: "built-in", value: collection }])]);
+  const cardMarkup = (record) => record.type === "personal" ? personalDeckMarkup(record.value, folders) : builtInAddedDeckMarkup(record.value, folders);
+  const folderMarkup = folders.map((folder) => {
+    const records = folder.deckIds.map((id) => deckById.get(id)).filter(Boolean);
+    if (studyQuery && !folder.name.toLowerCase().includes(studyQuery) && !records.length) return "";
+    return `<section class="study-folder ${folder.expanded ? "expanded" : ""}" style="--folder-color:${folder.color}"><div class="study-folder-tab"><button type="button" class="study-folder-toggle" data-toggle-folder="${folder.id}" aria-expanded="${folder.expanded}"><span class="folder-shape-icon" aria-hidden="true"></span><span><span class="section-label">Folder</span><strong>${escapeHtml(folder.name)}</strong><small>${records.length} ${records.length === 1 ? "study set" : "study sets"}</small></span><span class="folder-chevron" aria-hidden="true">⌄</span></button><div class="study-folder-actions"><button type="button" class="button primary-button" data-study-folder="${folder.id}" ${records.length ? "" : "disabled"}>Study folder</button><label class="folder-color-control" title="Change folder color"><input type="color" value="${folder.color}" data-folder-color="${folder.id}" aria-label="Change ${escapeHtml(folder.name)} color"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.3a2.2 2.2 0 0 0 1.4-3.9 1.8 1.8 0 0 1 1.1-3.2H18a3 3 0 0 0 3-3C21 6.5 17 3 12 3Z"/><circle cx="7.5" cy="10" r="1"/><circle cx="10" cy="6.8" r="1"/><circle cx="14" cy="6.8" r="1"/><circle cx="17" cy="10" r="1"/></svg></label><button type="button" class="button secondary-button" data-rename-folder="${folder.id}">Rename</button><button type="button" class="button danger-text-button" data-delete-folder="${folder.id}">Delete</button></div></div><div class="study-folder-contents" ${folder.expanded ? "" : "hidden"}><div class="custom-deck-list flashcards-deck-grid">${records.length ? records.map(cardMarkup).join("") : '<div class="custom-deck-empty">Move study sets into this folder using the Folder menu on a set.</div>'}</div></div></section>`;
+  }).join("");
+  const unfiledRecords = [...decks.filter((deck) => !filedIds.has(deck.id)).map((deck) => ({ type: "personal", value: deck })), ...addedCollections.filter((collection) => !filedIds.has(collection.id)).map((collection) => ({ type: "built-in", value: collection }))];
   $("#custom-deck-list").innerHTML = creatorMarkup;
-  $("#flashcards-deck-list").innerHTML = personalMarkup + addedMarkup || '<div class="custom-deck-empty">Add flashcards from the library below, or create your own study set.</div>';
+  $("#study-folder-list").innerHTML = folderMarkup;
+  $("#flashcards-deck-list").innerHTML = unfiledRecords.length ? unfiledRecords.map(cardMarkup).join("") : (folders.length ? '<div class="custom-deck-empty">All of your study sets are organized into folders.</div>' : '<div class="custom-deck-empty">Add flashcards from the library below, or create your own study set.</div>');
   $$('[data-study-custom]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(button.dataset.studyCustom)));
   $$('[data-edit-custom]').forEach((button) => button.addEventListener("click", () => { showAppView("create"); editCustomDeck(button.dataset.editCustom); }));
   $$('[data-delete-custom]').forEach((button) => button.addEventListener("click", () => deleteCustomDeck(button.dataset.deleteCustom)));
   $$('[data-study-built-in-collection]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(button.dataset.studyBuiltInCollection)));
   $$('[data-edit-built-in-collection]').forEach((button) => button.addEventListener("click", () => { showAppView("create"); editBuiltInCollection(button.dataset.editBuiltInCollection); }));
   $$('[data-delete-built-in-collection]').forEach((button) => button.addEventListener("click", () => deleteBuiltInCollection(button.dataset.deleteBuiltInCollection)));
+  $$('[data-move-deck]').forEach((button) => button.addEventListener("click", () => openMoveDeckDialog(button.dataset.moveDeck)));
+  $$('[data-study-folder]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(`folder:${button.dataset.studyFolder}`)));
+  $$('[data-toggle-folder]').forEach((button) => button.addEventListener("click", () => toggleStudyFolder(button.dataset.toggleFolder)));
+  $$('[data-folder-color]').forEach((input) => input.addEventListener("change", () => setStudyFolderColor(input.dataset.folderColor, input.value)));
+  $$('[data-rename-folder]').forEach((button) => button.addEventListener("click", () => renameStudyFolder(button.dataset.renameFolder)));
+  $$('[data-delete-folder]').forEach((button) => button.addEventListener("click", () => deleteStudyFolder(button.dataset.deleteFolder)));
   renderBuiltInDecks();
 }
 
@@ -2469,14 +2799,30 @@ function renderBuiltInDecks() {
   const list = $("#built-in-deck-list");
   if (!list) return;
   $("#built-in-deck-count").textContent = `${builtInFlashcardCollections.length} ${builtInFlashcardCollections.length === 1 ? "deck" : "decks"}`;
-  list.innerHTML = builtInFlashcardCollections.map((collection) => {
+  const returnAllButton = $("#return-all-built-in-decks");
+  if (returnAllButton) returnAllButton.disabled = addedFlashcardCollectionIds().length === 0;
+  const query = ($("#built-in-study-search")?.value || "").trim().toLowerCase();
+  const apOnly = query === "ap" || query.startsWith("ap ");
+  const matches = builtInFlashcardCollections.filter((collection) => {
+    const isApCourse = collection.catalogLabel === "AP course" || /^AP\b/i.test(collection.name);
+    const searchable = `${collection.name} ${collection.catalogLabel || ""} ${collection.description || ""} ${collection.units.map((unit) => unit.shortName || unit.name).join(" ")}`.toLowerCase();
+    return (!apOnly || isApCourse) && searchable.includes(query);
+  });
+  const pageCount = Math.max(1, Math.ceil(matches.length / STUDY_DECKS_PER_PAGE));
+  state.studyCatalogPage = Math.min(state.studyCatalogPage, pageCount - 1);
+  const pageMatches = matches.slice(state.studyCatalogPage * STUDY_DECKS_PER_PAGE, (state.studyCatalogPage + 1) * STUDY_DECKS_PER_PAGE);
+  list.innerHTML = pageMatches.map((collection) => {
     const added = isFlashcardCollectionAdded(collection.id);
     const cardCount = collection.units.reduce((total, unit) => total + unit.cards.length, 0);
     const feynmanCount = collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0);
     const topicSummary = feynmanCount ? `${cardCount} study cards · ${feynmanCount} Feynman topics.` : `${cardCount} study cards.`;
     return `<article class="custom-deck-item built-in-deck-item flashcard-catalog-item"><div class="flashcard-catalog-icon" aria-hidden="true">⌖</div><div class="flashcard-catalog-copy"><div class="built-in-deck-label">${escapeHtml(collection.catalogLabel || "AP course")} · ${collection.units.length} ${escapeHtml(collection.unitLabel || "units")}</div><h3>${escapeHtml(collection.name)}</h3><p>${topicSummary} ${escapeHtml(collection.description)}</p></div><button type="button" class="button course-add" data-add-flashcard-collection="${collection.id}" ${added ? "disabled" : ""}>${added ? "Added" : "Add study deck"}</button></article>`;
-  }).join("");
+  }).join("") || '<div class="custom-deck-empty">No built-in study decks match that search.</div>';
   $$('[data-add-flashcard-collection]').forEach((button) => button.addEventListener("click", () => addFlashcardCollection(button.dataset.addFlashcardCollection)));
+  renderLibraryPagination("#study-catalog-pagination", state.studyCatalogPage, matches.length, STUDY_DECKS_PER_PAGE, (page) => {
+    state.studyCatalogPage = page;
+    renderBuiltInDecks();
+  });
 }
 
 function addedFlashcardCollectionIds() {
@@ -2497,70 +2843,6 @@ function effectiveBuiltInCollection(collection) {
   const override = loadBuiltInCollectionOverrides()[collection.id];
   if (!override) return collection;
   return { ...collection, name: override.name || collection.name, units: override.units || collection.units, customized: true };
-}
-
-function exportableStudySets() {
-  const personal = loadCustomDecks().map((deck) => ({ ...deck, exportId: `personal:${deck.id}` }));
-  const builtIn = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((collection) => effectiveBuiltInCollection(collection)).map((collection) => ({
-    exportId: `built-in:${collection.id}`, name: collection.name,
-    cards: collection.units.flatMap((unit) => unit.cards || []),
-    questions: collection.units.flatMap((unit) => unit.questions || []),
-    feynmanPrompts: collection.units.flatMap((unit) => unit.feynmanPrompts || []),
-  }));
-  return [...personal, ...builtIn];
-}
-
-function cleanExportText(value) {
-  const wrapper = document.createElement("div");
-  wrapper.innerHTML = String(value || "");
-  return (wrapper.textContent || wrapper.innerText || "").trim();
-}
-
-function delimitedExport(cards, delimiter) {
-  const quote = (value) => `"${cleanExportText(value).replace(/"/g, '""')}"`;
-  return [["Front", "Back"], ...cards.map((card) => [card.front, card.back])].map((row) => row.map(quote).join(delimiter)).join("\r\n");
-}
-
-function renderExportPage() {
-  const select = $("#export-deck-select");
-  const decks = exportableStudySets();
-  const previous = select.value;
-  select.innerHTML = decks.length ? decks.map((deck) => `<option value="${escapeHtml(deck.exportId)}">${escapeHtml(deck.name)}</option>`).join("") : '<option value="">No study sets available</option>';
-  if (decks.some((deck) => deck.exportId === previous)) select.value = previous;
-  select.disabled = !decks.length;
-  $("#export-study-set").disabled = !decks.length;
-  updateExportSummary();
-}
-
-function updateExportSummary() {
-  const deck = exportableStudySets().find((item) => item.exportId === $("#export-deck-select").value);
-  $("#export-summary").textContent = deck ? `${deck.cards.length} flashcards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman topics` : "Create or add a study set before exporting.";
-}
-
-async function exportSelectedStudySet() {
-  const deck = exportableStudySets().find((item) => item.exportId === $("#export-deck-select").value);
-  if (!deck) { showToast("Choose a study set first."); return; }
-  const format = document.querySelector('input[name="export-format"]:checked')?.value || "apkg";
-  const cards = deck.cards.map((card) => ({ front: cleanExportText(card.front), back: cleanExportText(card.back), frontImage: card.frontImage || "", backImage: card.backImage || "" }));
-  const payload = { name: deck.name, format, cards, questions: deck.questions || [], feynmanPrompts: deck.feynmanPrompts || [] };
-  if (window.desktopApp?.exportStudySet) {
-    const result = await window.desktopApp.exportStudySet(payload);
-    if (result?.error) { showToast(result.error); return; }
-    if (!result?.canceled) showToast(`${deck.name} exported.`);
-    return;
-  }
-  if (window.webkit?.messageHandlers?.studyExport) {
-    window.webkit.messageHandlers.studyExport.postMessage(payload);
-    showToast("Choose where to save your study set.");
-    return;
-  }
-  if (format === "apkg") { showToast("APKG export is available in the desktop app."); return; }
-  const content = format === "csv" ? delimitedExport(cards, ",") : format === "tsv" ? delimitedExport(cards, "\t") : JSON.stringify(payload, null, 2);
-  const blob = new Blob([content], { type: format === "json" ? "application/json" : "text/plain;charset=utf-8" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob); link.download = `${deck.name.replace(/[^a-z0-9._-]+/gi, "-") || "study-set"}.${format}`; link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 500);
-  showToast(`${deck.name} exported.`);
 }
 
 function getBuiltInCollection(collectionId) {
@@ -2584,6 +2866,7 @@ function addFlashcardCollection(collectionId) {
 function removeFlashcardCollection(collectionId, event) {
   event?.stopPropagation();
   localStorage.setItem("study-desk-added-flashcard-collections", JSON.stringify(addedFlashcardCollectionIds().filter((id) => id !== collectionId)));
+  removeDecksFromFolders([collectionId]);
   renderCustomDecks();
   const collection = getBuiltInCollection(collectionId);
   showToast(`${collection?.name || "Flashcards"} removed from My study sets.`);
@@ -2597,6 +2880,20 @@ function collectionStudyDeck(collection) {
 }
 
 function findStudyDeck(deckId) {
+  if (deckId.startsWith("folder:")) {
+    const folder = loadStudyFolders().find((item) => item.id === deckId.slice(7));
+    if (!folder) return null;
+    const memberDecks = folder.deckIds.map((id) => findStudyDeck(id)).filter(Boolean);
+    return {
+      id: deckId,
+      name: folder.name,
+      folderStudy: true,
+      builtIn: false,
+      cards: memberDecks.flatMap((deck) => deck.cards.map((card) => ({ ...card, sourceDeckId: deck.id }))),
+      questions: memberDecks.flatMap((deck) => (deck.questions || []).map((question) => ({ ...question, sourceDeckId: deck.id }))),
+      feynmanPrompts: memberDecks.flatMap((deck) => (deck.feynmanPrompts || []).map((prompt) => ({ ...prompt, sourceDeckId: deck.id }))),
+    };
+  }
   const personalDeck = loadCustomDecks().find((deck) => deck.id === deckId);
   if (personalDeck) return personalDeck;
   const collection = getBuiltInCollection(deckId);
@@ -2689,7 +2986,7 @@ function editCustomDeck(deckId) {
   state.customImportSource = deck.sourceImport || null;
   $("#custom-deck-name").value = deck.name;
   setNotesContent(deck.sourceNotes || "", deck.sourceNotesHtml || "");
-  $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name}` : "Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV files.";
+  $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name} · flashcards only` : "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Update set";
   renderCustomDraft();
@@ -2728,6 +3025,7 @@ function deleteCustomDeck(deckId) {
   state.pendingCustomDeleteId = deckId;
   state.pendingBuiltInDeleteId = null;
   state.pendingDeleteAllStudySets = false;
+  state.pendingReturnAllBuiltIn = false;
   $("#custom-delete-title").textContent = `Delete “${deck.name}”?`;
   $("#custom-delete-message").textContent = "Are you sure? This study set and its saved review progress will be permanently deleted.";
   $("#custom-delete-summary").textContent = `${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts`;
@@ -2742,6 +3040,7 @@ function deleteBuiltInCollection(collectionId) {
   state.pendingCustomDeleteId = null;
   state.pendingBuiltInDeleteId = collectionId;
   state.pendingDeleteAllStudySets = false;
+  state.pendingReturnAllBuiltIn = false;
   $("#custom-delete-title").textContent = `Delete “${collection.name}”?`;
   $("#custom-delete-message").textContent = "Are you sure? This deck will be removed from My study sets. You can add the original built-in deck again from the Study library.";
   $("#custom-delete-summary").textContent = `${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman prompts`;
@@ -2758,6 +3057,7 @@ function deleteAllStudySets() {
   state.pendingCustomDeleteId = null;
   state.pendingBuiltInDeleteId = null;
   state.pendingDeleteAllStudySets = true;
+  state.pendingReturnAllBuiltIn = false;
   $("#custom-delete-title").textContent = "Delete all study sets?";
   $("#custom-delete-message").textContent = "Are you sure? Every personal set, added built-in deck, and their saved Anki progress will be permanently removed.";
   $("#custom-delete-summary").textContent = `${total} ${total === 1 ? "study set" : "study sets"}`;
@@ -2765,9 +3065,34 @@ function deleteAllStudySets() {
   showAppView("custom-delete");
 }
 
+function returnAllBuiltInDecks() {
+  const addedCollections = addedFlashcardCollectionIds();
+  if (!addedCollections.length) { showToast("All built-in decks are already in the library."); return; }
+  state.customDeleteReturnView = "flashcards";
+  state.pendingCustomDeleteId = null;
+  state.pendingBuiltInDeleteId = null;
+  state.pendingDeleteAllStudySets = false;
+  state.pendingReturnAllBuiltIn = true;
+  $("#custom-delete-title").textContent = "Return all built-in decks?";
+  $("#custom-delete-message").textContent = "The decks will move out of My Study Sets and become available in the Study library again. Personal study sets and saved deck edits will remain unchanged.";
+  $("#custom-delete-summary").textContent = `${addedCollections.length} ${addedCollections.length === 1 ? "built-in deck" : "built-in decks"}`;
+  $("#confirm-custom-delete").textContent = "Return to library";
+  showAppView("custom-delete");
+}
+
 function confirmCustomDeckDeletion() {
+  if (state.pendingReturnAllBuiltIn) {
+    removeDecksFromFolders(addedFlashcardCollectionIds());
+    localStorage.setItem("study-desk-added-flashcard-collections", "[]");
+    state.pendingReturnAllBuiltIn = false;
+    showAppView("flashcards");
+    renderCustomDecks();
+    showToast("All built-in decks returned to the Study library.");
+    return;
+  }
   if (state.pendingDeleteAllStudySets) {
     storeCustomDecks([]);
+    storeStudyFolders([]);
     localStorage.setItem("study-desk-added-flashcard-collections", "[]");
     storeBuiltInCollectionOverrides({});
     const schedules = ankiSchedules();
@@ -2801,6 +3126,7 @@ function confirmCustomDeckDeletion() {
   const deck = decks.find((item) => item.id === deckId);
   if (!deck) { state.pendingCustomDeleteId = null; showAppView(state.customDeleteReturnView); return; }
   storeCustomDecks(decks.filter((item) => item.id !== deckId));
+  removeDecksFromFolders([deckId]);
   const schedules = ankiSchedules();
   Object.keys(schedules).filter((key) => key.startsWith(`custom:${deckId}:`)).forEach((key) => delete schedules[key]);
   localStorage.setItem("study-desk-anki-schedules", JSON.stringify(schedules));
@@ -2823,8 +3149,8 @@ function openCustomStudyOptions(deckId) {
   if (!$("#flashcards").hidden) state.customStudyReturnView = "flashcards";
   else if (!$("#create").hidden) state.customStudyReturnView = "create";
   state.selectedCustomDeckId = deckId;
-  state.selectedCustomDeckBuiltIn = Boolean(deck.builtIn);
-  $("#close-custom-study").textContent = state.customStudyReturnView === "flashcards" ? "← Back to Study" : "← Back to Create";
+  state.selectedCustomDeckBuiltIn = Boolean(deck.builtIn || deck.folderStudy);
+  $("#close-custom-study").textContent = state.customStudyReturnView === "dashboard" ? "← Back to dashboard" : state.customStudyReturnView === "flashcards" ? "← Back to Study" : "← Back to Create";
   renderBuiltInUnitPicker(collection);
   refreshCustomStudyOptions();
   $("#custom-study-options-view").hidden = false;
@@ -2863,11 +3189,11 @@ function refreshCustomStudyOptions() {
   const deck = findStudyDeck(state.selectedCustomDeckId);
   if (!deck) return;
   $("#custom-study-title").textContent = deck.name;
-  const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(deck.id, card.id)));
+  const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id)));
   const dailyPlan = dailyAnkiPlan(candidates, `deck:${deck.id}`);
   const dueCount = dailyPlan.queue.length;
   const reviewCount = dailyPlan.learningCards.length + dailyPlan.reviewCards.length;
-  const futureDue = deck.cards.map((card) => ankiScheduleFor(customAnkiKey(deck.id, card.id)).due).filter((due) => due > Date.now()).sort((a, b) => a - b)[0];
+  const futureDue = deck.cards.map((card) => ankiScheduleFor(customAnkiKey(card.sourceDeckId || deck.id, card.id)).due).filter((due) => due > Date.now()).sort((a, b) => a - b)[0];
   $("#custom-anki-due-copy").textContent = !deck.cards.length ? "Select at least one unit." : dueCount ? `${dueCount} cards are in today's session.` : futureDue ? `Nothing is due now. Next review ${relativeDueTime(futureDue)}.` : "No flashcards are available.";
   $("#custom-anki-daily-new").textContent = dailyPlan.newCards.length;
   $("#custom-anki-daily-review").textContent = reviewCount;
@@ -2914,7 +3240,7 @@ function startCustomReview(mode) {
     state.customReviewCards = (deck.feynmanPrompts || []).map((item) => ({ id: item.id, front: cleanCustomFeynmanPrompt(item.prompt), back: "Review your explanation and add any important details you missed." }));
   } else if (mode === "anki") {
     const scope = `deck:${deck.id}`;
-    const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(deck.id, card.id)));
+    const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id)));
     const plan = dailyAnkiPlan(candidates, scope);
     state.customReviewCards = plan.queue;
     markDailyNewCardsStarted(scope, plan.newCards);
@@ -3174,6 +3500,8 @@ function deleteCurrentCustomAnkiCard() {
 }
 
 const taskDialog = $("#task-dialog");
+const folderEditorDialog = $("#folder-editor-dialog");
+const moveDeckDialog = $("#move-deck-dialog");
 
 applyTheme();
 setDateGreeting();
@@ -3183,6 +3511,7 @@ renderCustomQuestionDraft();
 renderCustomFeynmanDraft();
 renderCustomDecks();
 restoreTasks();
+renderActiveAnkiDecks();
 $$(".task-item input[type='checkbox']").forEach(wireTaskCheckbox);
 
 $("#open-library-button").addEventListener("click", () => showAppView("courses"));
@@ -3197,6 +3526,17 @@ $("#add-task-button").addEventListener("click", () => {
 });
 $("#close-dialog").addEventListener("click", () => taskDialog.close());
 $("#cancel-task").addEventListener("click", () => taskDialog.close());
+$("#close-folder-editor").addEventListener("click", () => folderEditorDialog.close());
+$("#cancel-folder-editor").addEventListener("click", () => folderEditorDialog.close());
+$("#folder-editor-form").addEventListener("submit", (event) => { event.preventDefault(); saveStudyFolderEditor(); });
+$("#close-move-deck").addEventListener("click", () => { state.movingStudyDeckId = null; moveDeckDialog.close(); });
+$("#cancel-move-deck").addEventListener("click", () => { state.movingStudyDeckId = null; moveDeckDialog.close(); });
+$("#move-deck-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (state.movingStudyDeckId) assignDeckToFolder(state.movingStudyDeckId, $("#move-deck-folder").value);
+  state.movingStudyDeckId = null;
+  moveDeckDialog.close();
+});
 $("#task-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const title = $("#task-name").value.trim();
@@ -3216,26 +3556,10 @@ $(".search-field input").addEventListener("input", (event) => {
   showAppView("courses");
 });
 $("#my-courses-search").addEventListener("input", (event) => renderMyCourses(event.currentTarget.value));
-$("#catalog-courses-search").addEventListener("input", (event) => renderCourseShelf(event.currentTarget.value));
+$("#catalog-courses-search").addEventListener("input", (event) => { state.textbookCatalogPage = 0; renderCourseShelf(event.currentTarget.value); });
 
 function importDeckName(fileName) {
-  return fileName.replace(/\.(apkg|pdf|pptx|txt|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported flashcards";
-}
-
-function loadImportedDocument(payload) {
-  if (!payload?.text?.trim()) throw new Error("No readable text was found in this document.");
-  if ((state.customDraft.length || state.customQuestionDraft.length || state.customFeynmanDraft.length) && !window.confirm("Replace the current notes and draft with this document?")) return;
-  state.editingCustomDeckId = null; state.editingBuiltInCollectionId = null;
-  state.customDraft = []; state.customQuestionDraft = []; state.customFeynmanDraft = [];
-  state.customImportSource = { name: payload.name, type: payload.extension, importedAt: Date.now() };
-  $("#custom-deck-name").value = importDeckName(payload.name);
-  setNotesContent(payload.text);
-  renderCustomDraft(); renderCustomQuestionDraft(); renderCustomFeynmanDraft();
-  $("#anki-import-status").textContent = `Extracted ${payload.name}. Review the notes below, then choose Generate and save study set.`;
-  $("#anki-notes-file").value = "";
-  $("#choose-anki-notes").disabled = false;
-  $("#notes-input").scrollIntoView({ behavior: "smooth", block: "center" });
-  showToast("Document text imported. Review it before generating your study set.");
+  return fileName.replace(/\.(apkg|txt|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported flashcards";
 }
 
 function saveImportedFlashcards({ fileName, type, cards, skipped = 0 }) {
@@ -3269,7 +3593,7 @@ async function importAnkiNotesFile(file) {
   if (!["txt", "csv", "tsv"].includes(extension)) {
     if (extension === "apkg") status.textContent = "The desktop app is opening this APKG package locally…";
     else {
-      status.textContent = ["pdf", "pptx"].includes(extension) ? "PDF and PowerPoint extraction is available in the Mac and Windows desktop apps." : "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
+      status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
       showToast("That file type is not supported.");
     }
     return;
@@ -3300,20 +3624,12 @@ window.receiveAnkiPackageImportError = (message) => {
   $("#anki-import-status").textContent = message;
   showToast("This APKG package could not be imported.");
 };
-window.receiveDocumentImport = (payload) => { try { loadImportedDocument(payload); } catch (error) { window.receiveAnkiPackageImportError(error?.message || "This document could not be read."); } };
-window.receiveDocumentImportStatus = (message) => {
-  $("#anki-import-status").textContent = message;
-  $("#choose-anki-notes").disabled = true;
-};
-window.receiveDocumentImportError = (message) => {
-  $("#anki-import-status").textContent = message || "This PDF or PowerPoint could not be imported.";
-  $("#anki-notes-file").value = "";
-  $("#choose-anki-notes").disabled = false;
-  showToast("This document could not be imported.");
-};
 
-function handleStudyFileResult(result) {
+$("#choose-anki-notes").addEventListener("click", async () => {
+  if (!window.desktopApp?.chooseStudyFile) { $("#anki-notes-file").click(); return; }
   const status = $("#anki-import-status");
+  status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
+  const result = await window.desktopApp.chooseStudyFile();
   if (!result || result.canceled) return;
   if (result.error) { status.textContent = result.error; showToast("This file could not be imported."); return; }
   try {
@@ -3323,45 +3639,12 @@ function handleStudyFileResult(result) {
     } else if (result.kind === "text") {
       const parsed = parseAnkiNotes(result.name, result.text);
       saveImportedFlashcards({ fileName: result.name, type: result.extension, cards: parsed.cards });
-    } else if (result.kind === "document") loadImportedDocument(result);
+    }
   } catch (error) {
     status.textContent = error?.message || "This file could not be imported.";
-    showToast("I couldn’t find readable study material in that file.");
+    showToast("I couldn’t find readable flashcards in that file.");
   }
-}
-
-async function importDroppedStudyFile(file) {
-  const extension = String(file?.name || "").split(".").pop().toLowerCase();
-  if (!file || !["apkg", "pdf", "pptx", "txt", "csv", "tsv"].includes(extension)) { showToast("Drop an APKG, PDF, PPTX, TXT, CSV, or TSV file."); return; }
-  $("#anki-import-status").textContent = `Reading ${file.name}…`;
-  if (window.desktopApp?.readDroppedStudyFile) { handleStudyFileResult(await window.desktopApp.readDroppedStudyFile(file)); return; }
-  if (["txt", "csv", "tsv"].includes(extension)) { await importAnkiNotesFile(file); return; }
-  if (window.webkit?.messageHandlers?.studyDroppedFile) {
-    const reader = new FileReader();
-    reader.onerror = () => window.receiveDocumentImportError("The dropped file could not be read.");
-    reader.onload = () => window.webkit.messageHandlers.studyDroppedFile.postMessage({ name: file.name, data: String(reader.result || "") });
-    reader.readAsDataURL(file);
-    return;
-  }
-  showToast("Drop PDF, PowerPoint, and APKG files into the desktop app.");
-}
-
-$("#choose-anki-notes").addEventListener("click", async () => {
-  if (!window.desktopApp?.chooseStudyFile) {
-    const input = $("#anki-notes-file");
-    input.value = "";
-    input.click();
-    return;
-  }
-  const status = $("#anki-import-status");
-  status.textContent = "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
-  const result = await window.desktopApp.chooseStudyFile();
-  handleStudyFileResult(result);
 });
-const studyFileDropZone = $("#study-file-drop-zone");
-["dragenter", "dragover"].forEach((type) => studyFileDropZone.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation(); studyFileDropZone.classList.add("drag-over"); }));
-["dragleave", "drop"].forEach((type) => studyFileDropZone.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation(); studyFileDropZone.classList.remove("drag-over"); }));
-studyFileDropZone.addEventListener("drop", (event) => { const file = event.dataTransfer?.files?.[0]; if (file) importDroppedStudyFile(file); });
 $("#notes-input").addEventListener("paste", (event) => {
   const clipboard = event.clipboardData;
   if (!clipboard) return;
@@ -3436,12 +3719,7 @@ $$('[data-choose-manual-image]').forEach((button) => button.addEventListener("cl
   state.pendingCardImageTarget = { kind: "manual", side: button.dataset.chooseManualImage };
   $("#flashcard-image-file").click();
 }));
-$$('[data-draw-manual]').forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "manual", side: button.dataset.drawManual })));
-$$('[data-math-manual]').forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "manual", side: button.dataset.mathManual })));
-$$('[data-remove-manual-image]').forEach((button) => button.addEventListener("click", () => confirmImageRemoval(button, () => {
-  applyCardImage({ kind: "manual", side: button.dataset.removeManualImage }, "");
-  showToast("Image removed.");
-})));
+$$('[data-remove-manual-image]').forEach((button) => button.addEventListener("click", () => applyCardImage({ kind: "manual", side: button.dataset.removeManualImage }, "")));
 $("#manual-card-front").addEventListener("paste", (event) => handleCardPaste(event, { kind: "manual", side: "front" }));
 $("#manual-card-back").addEventListener("paste", (event) => handleCardPaste(event, { kind: "manual", side: "back" }));
 $("#flashcard-image-file").addEventListener("change", (event) => {
@@ -3450,79 +3728,6 @@ $("#flashcard-image-file").addEventListener("change", (event) => {
   event.currentTarget.value = "";
   state.pendingCardImageTarget = null;
 });
-
-const drawingCanvas = $("#flashcard-drawing-canvas");
-const drawingContext = drawingCanvas.getContext("2d");
-let drawingPointerActive = false;
-function drawingPoint(event) {
-  const rect = drawingCanvas.getBoundingClientRect();
-  return { x: (event.clientX - rect.left) * drawingCanvas.width / rect.width, y: (event.clientY - rect.top) * drawingCanvas.height / rect.height };
-}
-function restoreDrawingSnapshot(dataUrl) {
-  drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-  if (!dataUrl) return;
-  const image = new Image();
-  image.onload = () => drawingContext.drawImage(image, 0, 0, drawingCanvas.width, drawingCanvas.height);
-  image.src = dataUrl;
-}
-drawingCanvas.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
-  drawingPointerActive = true;
-  drawingCanvas.setPointerCapture(event.pointerId);
-  state.drawingHistory.push(drawingCanvas.toDataURL("image/png"));
-  if (state.drawingHistory.length > 24) state.drawingHistory.shift();
-  const point = drawingPoint(event);
-  drawingContext.beginPath();
-  drawingContext.moveTo(point.x, point.y);
-});
-drawingCanvas.addEventListener("pointermove", (event) => {
-  if (!drawingPointerActive) return;
-  event.preventDefault();
-  const point = drawingPoint(event);
-  drawingContext.lineWidth = Number($("#drawing-size").value) || 6;
-  drawingContext.lineCap = "round";
-  drawingContext.lineJoin = "round";
-  drawingContext.globalCompositeOperation = state.drawingTool === "eraser" ? "destination-out" : "source-over";
-  drawingContext.strokeStyle = $("#drawing-color").value;
-  drawingContext.lineTo(point.x, point.y);
-  drawingContext.stroke();
-});
-function finishDrawingPointer() { drawingPointerActive = false; drawingContext.closePath(); drawingContext.globalCompositeOperation = "source-over"; }
-drawingCanvas.addEventListener("pointerup", finishDrawingPointer);
-drawingCanvas.addEventListener("pointercancel", finishDrawingPointer);
-$$('[data-drawing-tool]').forEach((button) => button.addEventListener("click", () => {
-  state.drawingTool = button.dataset.drawingTool;
-  $$('[data-drawing-tool]').forEach((item) => item.classList.toggle("active", item === button));
-}));
-$("#drawing-undo").addEventListener("click", () => restoreDrawingSnapshot(state.drawingHistory.pop()));
-$("#drawing-clear").addEventListener("click", () => {
-  state.drawingHistory.push(drawingCanvas.toDataURL("image/png"));
-  drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-});
-$("#save-drawing").addEventListener("click", () => {
-  if (!state.pendingDrawingTarget) return;
-  applyCardImage(state.pendingDrawingTarget, drawingCanvas.toDataURL("image/png"));
-  closeDrawingTool();
-  showToast("Drawing added to the card.");
-});
-$("#close-drawing-dialog").addEventListener("click", closeDrawingTool);
-$("#cancel-drawing").addEventListener("click", closeDrawingTool);
-$("#drawing-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeDrawingTool(); });
-
-$("#math-expression").addEventListener("input", updateMathPreview);
-$$('[data-math-symbol]').forEach((button) => button.addEventListener("click", () => {
-  const input = $("#math-expression");
-  const start = input.selectionStart ?? input.value.length;
-  const end = input.selectionEnd ?? input.value.length;
-  input.setRangeText(button.dataset.mathSymbol, start, end, "end");
-  updateMathPreview();
-  input.focus();
-}));
-$("#insert-math").addEventListener("click", insertMathIntoCard);
-$("#math-expression").addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") insertMathIntoCard(); });
-$("#close-math-dialog").addEventListener("click", closeMathTool);
-$("#cancel-math").addEventListener("click", closeMathTool);
-$("#math-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeMathTool(); });
 $("#clear-draft").addEventListener("click", () => {
   if (!state.customDraft.length) return;
   if (!window.confirm(`Clear all ${state.customDraft.length} flashcards from this draft? Questions and Feynman topics will be kept.`)) return;
@@ -3600,7 +3805,11 @@ $("#new-custom-study-set").addEventListener("click", () => {
 });
 $("#close-custom-study").addEventListener("click", () => showAppView(state.customStudyReturnView));
 $("#delete-all-study-sets").addEventListener("click", deleteAllStudySets);
-$("#cancel-custom-delete").addEventListener("click", () => { state.pendingCustomDeleteId = null; state.pendingBuiltInDeleteId = null; state.pendingDeleteAllStudySets = false; showAppView(state.customDeleteReturnView); });
+$("#create-study-folder").addEventListener("click", createStudyFolder);
+$("#return-all-built-in-decks").addEventListener("click", returnAllBuiltInDecks);
+$("#my-study-sets-search").addEventListener("input", renderCustomDecks);
+$("#built-in-study-search").addEventListener("input", () => { state.studyCatalogPage = 0; renderBuiltInDecks(); });
+$("#cancel-custom-delete").addEventListener("click", () => { state.pendingCustomDeleteId = null; state.pendingBuiltInDeleteId = null; state.pendingDeleteAllStudySets = false; state.pendingReturnAllBuiltIn = false; showAppView(state.customDeleteReturnView); });
 $("#confirm-custom-delete").addEventListener("click", confirmCustomDeckDeletion);
 $$('[data-custom-study-mode]').forEach((button) => button.addEventListener("click", () => startCustomReview(button.dataset.customStudyMode)));
 $("#close-custom-review").addEventListener("click", closeCustomReview);
@@ -3644,8 +3853,6 @@ $("#custom-feynman-next").addEventListener("click", () => moveCustomFeynman(1));
 $$('[data-custom-anki-rating]').forEach((button) => button.addEventListener("click", () => rateCustomAnkiCard(button.dataset.customAnkiRating)));
 
 $("#open-settings").addEventListener("click", () => showAppView("settings"));
-$("#export-deck-select").addEventListener("change", updateExportSummary);
-$("#export-study-set").addEventListener("click", exportSelectedStudySet);
 $$('[data-settings-tab]').forEach((button) => button.addEventListener("click", () => selectSettingsTab(button.dataset.settingsTab)));
 $("#settings-form").addEventListener("change", (event) => { if (event.target.name === "theme") applyTheme(event.target.value); });
 $("#settings-form").addEventListener("submit", (event) => {
@@ -3666,9 +3873,11 @@ $("#reset-settings").addEventListener("click", () => {
 $$("[data-toast]").forEach((element) => element.addEventListener("click", () => showToast(element.dataset.toast)));
 $$(".primary-nav .nav-item").forEach((item) => item.addEventListener("click", (event) => {
   const target = item.getAttribute("href");
-  if (["#courses", "#dashboard", "#flashcards", "#create", "#export", "#study-guide"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
+if (["#courses", "#dashboard", "#flashcards", "#create", "#export", "#study-guide"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
 }));
-$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#export"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
+$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
+$("#export-deck-select").addEventListener("change", updateExportSummary);
+$("#export-study-set").addEventListener("click", exportSelectedStudyDeck);
 $("#flashcards-create-set").addEventListener("click", () => { showAppView("create"); $("#new-custom-study-set").click(); });
 $(".brand").addEventListener("click", (event) => { event.preventDefault(); showAppView("dashboard"); });
 document.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); $(".search-field input").focus(); } });

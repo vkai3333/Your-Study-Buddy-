@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, webUtils } = require("electron");
+const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("desktopApp", {
   platform: process.platform,
@@ -11,11 +11,7 @@ contextBridge.exposeInMainWorld("desktopApp", {
   chooseStudyFile() {
     return ipcRenderer.invoke("study-file:choose");
   },
-  readDroppedStudyFile(file) {
-    const filePath = webUtils.getPathForFile(file);
-    return ipcRenderer.invoke("study-file:read-dropped", filePath);
-  },
-  exportStudySet(payload) {
-    return ipcRenderer.invoke("study-file:export", payload);
+  exportStudyDeck(payload) {
+    return ipcRenderer.invoke("study-deck:export", payload);
   },
 });

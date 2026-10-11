@@ -25,7 +25,6 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR/Web" "$ICONSET_DIR" "$MODULE_CACHE"
   -target arm64-apple-macos13.0 \
   -module-cache-path "$MODULE_CACHE" \
   -framework AppKit \
-  -framework PDFKit \
   -framework WebKit \
   "$SCRIPT_DIR/macOS/StudyDeskApp.swift" \
   -o "$MACOS_DIR/YourStudyBuddy"
@@ -46,8 +45,10 @@ done
 /bin/cp "$SCRIPT_DIR/dist/your-study-buddy-icon.png" "$RESOURCES_DIR/Web/your-study-buddy-icon.png"
 /bin/cp "$SCRIPT_DIR/dist/vocabulary-data.js" "$RESOURCES_DIR/Web/vocabulary-data.js"
 /bin/cp "$SCRIPT_DIR/dist/vanders-data.js" "$RESOURCES_DIR/Web/vanders-data.js"
+/bin/cp "$SCRIPT_DIR/dist/vanders-glossary-data.js" "$RESOURCES_DIR/Web/vanders-glossary-data.js"
 /bin/cp "$SCRIPT_DIR/dist/atkins-data.js" "$RESOURCES_DIR/Web/atkins-data.js"
 /bin/cp "$SCRIPT_DIR/dist/raven-data.js" "$RESOURCES_DIR/Web/raven-data.js"
+/bin/cp "$SCRIPT_DIR/dist/raven-glossary-data.js" "$RESOURCES_DIR/Web/raven-glossary-data.js"
 /bin/cp "$SCRIPT_DIR/dist/zumdahl-data.js" "$RESOURCES_DIR/Web/zumdahl-data.js"
 /bin/cp "$SCRIPT_DIR/dist/central-science-data.js" "$RESOURCES_DIR/Web/central-science-data.js"
 /bin/cp "$SCRIPT_DIR/dist/source-expansions.js" "$RESOURCES_DIR/Web/source-expansions.js"
@@ -59,6 +60,15 @@ done
 /bin/cp "$SCRIPT_DIR/dist/apgov-data.js" "$RESOURCES_DIR/Web/apgov-data.js"
 /bin/cp "$SCRIPT_DIR/dist/sat-vocabulary-data.js" "$RESOURCES_DIR/Web/sat-vocabulary-data.js"
 /bin/cp "$SCRIPT_DIR/dist/appsych-data.js" "$RESOURCES_DIR/Web/appsych-data.js"
+/bin/cp "$SCRIPT_DIR/dist/apush-textbook-data.js" "$RESOURCES_DIR/Web/apush-textbook-data.js"
+/bin/cp "$SCRIPT_DIR/dist/apart-data.js" "$RESOURCES_DIR/Web/apart-data.js"
+/bin/cp -R "$SCRIPT_DIR/dist/ap-art-history-images" "$RESOURCES_DIR/Web/ap-art-history-images"
+/bin/cp "$SCRIPT_DIR/dist/apcsp-data.js" "$RESOURCES_DIR/Web/apcsp-data.js"
+/bin/cp "$SCRIPT_DIR/dist/apbiology-data.js" "$RESOURCES_DIR/Web/apbiology-data.js"
+/bin/cp "$SCRIPT_DIR/dist/apstats-data.js" "$RESOURCES_DIR/Web/apstats-data.js"
+/bin/cp -R "$SCRIPT_DIR/dist/ap-statistics-images" "$RESOURCES_DIR/Web/ap-statistics-images"
+/bin/cp "$SCRIPT_DIR/dist/apchem-data.js" "$RESOURCES_DIR/Web/apchem-data.js"
+/bin/cp -R "$SCRIPT_DIR/dist/ap-chemistry-images" "$RESOURCES_DIR/Web/ap-chemistry-images"
 /bin/cp "$SCRIPT_DIR/dist/app.js" "$RESOURCES_DIR/Web/app.js"
 /usr/bin/codesign --force --deep --sign - "$APP_DIR"
 

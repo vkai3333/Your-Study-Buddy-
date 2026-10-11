@@ -71,10 +71,85 @@ TERM_REPAIRS = {
     "schizophrenia": "Schizophrenia",
     "sleep": "Sleep",
     "somatoform disorder": "Somatic symptom disorder",
+    "ecstacy (mdma)": "Ecstasy (MDMA)",
+    "hierarchy of neds": "hierarchy of needs",
+    "hypochonriasis": "illness anxiety disorder",
+    "indicisualism": "individualism",
+    "menemonics": "mnemonics",
+    "perceptual consistency": "perceptual constancy",
+    "sensorieneural hearing loss": "sensorineural hearing loss",
+    "dsm-iv-tr": "DSM-5-TR",
+    "client centered therapy": "client-centered therapy",
 }
 
 SKIP_TERMS = {
     "sq3r", "myer's psychology for ap* vocabulary [all 14 units]",
+    "donald meichenbaum", "extrasensory perception", "near-death experience",
+    "parapsychology", "terror-management theory",
+}
+
+# These concepts are normally learned together. A single comparison card keeps
+# every definition while avoiding several nearly repetitive reviews.
+COMBINE_GROUPS = {
+    "0": [
+        ("mean, median, and mode", ["mean", "median", "mode"]),
+        ("positive vs. negative correlation", ["Positive correlation", "Negative correlation"]),
+        ("applied vs. basic research", ["applied research", "basic research"]),
+        ("experimental vs. control group", ["experimental group", "control group"]),
+        ("independent vs. dependent variable", ["independent variable", "dependent variable"]),
+        ("random sampling vs. random assignment", ["random sample", "random assignment"]),
+        ("cross-sectional vs. longitudinal study", ["cross-sectional study", "longitudinal study"]),
+        ("descriptive vs. inferential statistics", ["Descriptive statistics", "Inferential statistics"]),
+        ("content vs. predictive validity", ["content validity", "predictive validity"]),
+    ],
+    "1": [
+        ("sympathetic vs. parasympathetic nervous system", ["sympathetic nervous system", "parasympathetic nervous system"]),
+        ("sensory neurons, motor neurons, and interneurons", ["sensory neurons", "motor neurons", "interneurons"]),
+        ("rods vs. cones", ["rods", "cones"]),
+        ("EEG, CT, PET, MRI, and fMRI", ["electroencephalogram", "CT (computed tomography) scan", "PET (positron emission tomography) scan", "MRI (magnetic resonance imaging)", "fMRI (functional MRI)"]),
+        ("identical vs. fraternal twins", ["identical twins", "fraternal twins"]),
+        ("physical vs. psychological dependence", ["physical dependence", "psychological dependence"]),
+        ("place theory vs. frequency theory", ["place theory", "frequency theory"]),
+        ("X vs. Y chromosome", ["X chromosome", "Y chromosome"]),
+        ("stimulants, depressants, hallucinogens, and opiates", ["stimulants", "depressants", "hallucinogens", "opiates"]),
+        ("tolerance vs. withdrawal", ["tolerance", "withdrawal"]),
+    ],
+    "2": [
+        ("algorithm vs. heuristic", ["algorithm", "heuristic"]),
+        ("availability vs. representativeness heuristic", ["availability heuristic", "representativeness heuristic"]),
+        ("fluid vs. crystallized intelligence", ["fluid intelligence", "crystallized intelligence"]),
+        ("proactive vs. retroactive interference", ["proactive interference", "retroactive interference"]),
+        ("recall, recognition, and relearning", ["recall", "recognition", "relearning"]),
+        ("iconic vs. echoic memory", ["iconic memory", "echoic memory"]),
+        ("explicit vs. implicit memory", ["explicit memory", "implicit memory"]),
+        ("bottom-up vs. top-down processing", ["bottom-up processing", "Top-down processing"]),
+        ("binocular vs. monocular cues", ["binocular cues", "monocular cues"]),
+        ("phoneme, morpheme, semantics, and syntax", ["phoneme", "morpheme", "semantics", "syntax"]),
+        ("encoding, storage, and retrieval", ["encoding", "storage", "retrieval"]),
+    ],
+    "3": [
+        ("assimilation vs. accommodation", ["assimilation", "Accommodation (Piaget)"]),
+        ("fixed and variable reinforcement schedules", ["fixed-interval schedule", "fixed-ratio schedule", "variable-interval schedule", "variable-ratio schedule"]),
+        ("conditioned and unconditioned stimuli and responses", ["conditioned stimulus", "conditioned response", "unconditioned stimulus", "unconditioned response"]),
+        ("positive vs. negative reinforcement", ["positive reinforcement", "negative reinforcement"]),
+        ("primary vs. conditioned reinforcer", ["primary reinforcer", "conditioned reinforcer"]),
+        ("one-word, two-word, and telegraphic speech", ["one-word stage", "two-word stage", "telegraphic speech"]),
+    ],
+    "4": [
+        ("internal vs. external locus of control", ["internal locus of control", "external locus of control"]),
+        ("id, ego, and superego", ["id", "ego", "superego"]),
+        ("ingroup vs. outgroup", ["ingroup", "outgroup"]),
+        ("central vs. peripheral route of persuasion", ["central route of persuasion", "peripheral route of persuasion"]),
+        ("individualism vs. collectivism", ["individualism", "collectivism"]),
+        ("manifest vs. latent content", ["manifest content", "latent content"]),
+        ("James-Lange, Cannon-Bard, and two-factor theories", ["James-Lange theory", "Cannon-Bard theory", "two-factor theory"]),
+    ],
+    "5": [
+        ("anorexia nervosa, bulimia nervosa, and binge-eating disorder", ["anorexia nervosa", "bulimia nervosa", "binge-eating disorder"]),
+        ("hallucinations vs. delusions", ["hallucinations", "Delusions"]),
+        ("antianxiety, antidepressant, and antipsychotic drugs", ["antianxiety drugs", "antidepressant drugs", "antipsychotic drugs"]),
+        ("denial, repression, rationalization, and reaction formation", ["denial", "repression", "rationalization", "reaction formation"]),
+    ],
 }
 
 UNIT_TERMS = {
@@ -243,6 +318,21 @@ def classify(entry):
     return winner if scores[winner] else "2"
 
 
+def combine_related_cards(items, unit):
+    by_term = {item["term"].casefold(): item for item in items}
+    consumed = set()
+    combined = []
+    for front, member_terms in COMBINE_GROUPS.get(unit, []):
+        members = [by_term.get(term.casefold()) for term in member_terms]
+        members = [member for member in members if member]
+        if len(members) < 2:
+            continue
+        consumed.update(member["term"].casefold() for member in members)
+        back = " ".join(f'{member["term"]}: {member["definition"]}' for member in members)
+        combined.append({"number": "combined", "term": front, "definition": back})
+    return [item for item in items if item["term"].casefold() not in consumed] + combined
+
+
 def build_decks(entries):
     unique = {}
     for entry in entries:
@@ -260,7 +350,8 @@ def build_decks(entries):
 
     decks = []
     for unit, name in SECTION_NAMES.items():
-        items = sorted(grouped[unit], key=lambda item: item["term"].casefold())
+        items = combine_related_cards(grouped[unit], unit)
+        items = sorted(items, key=lambda item: item["term"].casefold())
         deck_id = f"appsych-unit-{unit}"
         decks.append({
             "id": deck_id,

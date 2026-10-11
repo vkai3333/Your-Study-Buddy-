@@ -48,6 +48,62 @@ BAD_TERMS = {
     "third", "estate", "technology", "italy", "allies", "hungary",
 }
 
+CURATION_REMOVE = {
+    1: {"the school of athens", "spanish empire", "aztec", "smallpox", "anti-semitism"},
+    2: {"pope paul iii", "pagans", "habsburg-valois", "concordatof bologna", "henry of guise",
+        "henry iii", "maximilian i", "baron tilly", "frederick v", "battle of white mountain",
+        "christian iv", "albrecht von wallenstein", "treatyof lubeck", "battle of lutzen", "philip"},
+    3: {"protestants", "ferdinand ii", "louis xiii", "ferdinand iii", "austrian habsburgs",
+        "huguenots", "military dictator", "ferdinand i"},
+    4: {"catholic church", "consumer goods", "authoritarian", "applied", "catholic",
+        "marquis de condorcet", "tolerance", "industrious revolution"},
+    5: {"second", "estates", "monarchiens", "jacobin republic", "planned economy", "egalitarian",
+        "revolutionary culture", "robespierre", "grand empire", "centralization", "paul delaroche",
+        "emperor of the french", "joseph bonaparte", "spanishthrone", "alexander i", "moscow",
+        "napoleon", "d-day", "representatives"},
+    6: {"medici", "rocket", "wage-earners", "homemakers", "accessible foods", "anti-christian",
+        "grand struggle for survival", "anti-semetic", "petroleum", "electricity", "steel",
+        "automobiles", "chemicals", "telegraph", "telephone", "radio", "urbanized", "quality of life",
+        "migrated", "crystal palace", "great exhibition", "utopian", "reactionary", "frenchnationalism",
+        "nationalist ideas", "democratic constitutions", "social reform", "ethnic minority groups",
+        "political autonomy", "cultural independence", "prussian constituent assembly",
+        "prussiantroops forcibly dissolved what remained of the assembly", "malaria", "britain", "russians"},
+    7: {"enlightenment", "revolutionary government", "liberal", "working class", "imperialists",
+        "class-consciousness", "class war", "sociology", "klemens von metternich", "brothers grimm",
+        "karl marx and friedrich engels", "republicanism", "emperor napoleon iii", "right to strike",
+        "urban living", "magyar nobility", "weakened by nationalism", "northern italy", "cavour",
+        "kingdom of italy", "parliamentary monarchy", "united germany", "old-age pensions", "russian",
+        "trade unions", "privatization", "maxim machine gun", "steamship"},
+    8: {"first", "tsar nicholas i", "industrial revolution", "nationalists", "soviet union",
+        "second industrial revolution", "provisional republic", "civilliberties", "unions",
+        "victor emmanuel ii", "otto von bismarck", "franco-prussian war", "germany", "anti-semites",
+        "industrialization", "military", "whig party", "liberal party", "second reform bill",
+        "benjamin disraeli", "third reform bill", "william gladstone", "david lloyd george",
+        "people’s budget", "nationalhealth insurance", "unemployment benefits", "austria-hungary",
+        "german chancellor otto von bismarck", "planes", "tanks", "temporarilyabandonedfree-market capitalism",
+        "united states", "lloyd george", "georges clemenceau", "rhineland", "formal defensive alliance",
+        "middle east", "finland", "baltic states", "austro-hungarian", "munitionsfactories",
+        "monet", "newtonian physics", "pseudoscientific", "heroic age of physics", "neutron",
+        "japan", "economic downturn", "stock market crash", "reparations", "moratorium", "ruhrdistrict",
+        "print money", "inflation", "liberal democracy", "marxist", "bolshevik", "international",
+        "rapid industrialization", "collective farms", "class cooperation", "rejection of liberalism",
+        "revival of national greatness", "national rebirth", "reichstag", "president hindenburg",
+        "aryan ethnostate", "traditional familyvalues", "hitler", "nonaggressionpact", "baltic nations",
+        "spheres of influence", "greater germany", "world war i", "nazi germany", "radar technology",
+        "enigmacode", "nonagressionpact", "new order", "national socialism", "racial imperialism",
+        "eastern front", "poles", "ukranians", "ethnic german", "pearl harbor", "europe first",
+        "unconditional surrender", "self-determination", "red army", "mussolini", "liberties"},
+    9: {"czechoslovakia", "yugoslavia", "world war ii", "chancellor", "churchill", "soviet foreign policy",
+        "coexistence with capitalism", "communist reformer", "open elections", "suezcrisis", "czechoslovak",
+        "local decision", "dubček", "loyalty to the soviet union", "khrushchev", "fidel castro",
+        "communist cuba", "turkey", "re-stalinization", "arms buildup", "neutrality", "preserve communist rule",
+        "status quo", "space mission", "final act of the conference on security and cooperation",
+        "environmental policies", "moderation", "nationwide strike", "outlawed solidarity", "polish parliament",
+        "solidarity government", "neoliberaleconomic policy", "10-pointplan", "economic blessing",
+        "alliance for germany", "christian democrats", "yeltsin", "withdrewfrom the soviet union",
+        "end of the soviet union", "economiccompetition", "eurocrats", "import-export policies"},
+}
+
 WHAT_KEYWORDS = (
     "war", "revolution", "reformation", "treaty", "peace", "act", "edict", "plan", "doctrine",
     "empire", "republic", "conference", "congress", "alliance", "pact", "party", "church", "council",
@@ -293,6 +349,8 @@ def parse(pdf_path):
                     return (0 if paragraph_key.startswith(key) else 1, len(item[1]))
 
                 unit_number, paragraph = min(candidates, key=candidate_rank)
+                if term.casefold().strip(" .,:;()") in CURATION_REMOVE.get(unit_number, set()):
+                    continue
                 answer = answer_from_paragraph(paragraph, term)
                 if len(answer) < 45:
                     continue

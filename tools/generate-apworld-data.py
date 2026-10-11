@@ -29,11 +29,60 @@ UNIT_NAMES = {
     9: "Globalization",
 }
 
+# The source guide mixes real concepts with table headings, region labels,
+# dates, and repeated "origins / effects" fragments.  These labels do not make
+# useful standalone study cards.
+APWORLD_REMOVE = {
+    1: {"transfers", "jews", "muslims", "economic and social change", "agriculture in china"},
+    2: {"growth of states", "heraclius", "exchange effects"},
+    3: {"europe", "russia", "germany", "france", "military might"},
+    4: {"empire", "african states", "japan", "china", "portugal", "france", "russia", "economic changes", "free peasants"},
+    5: {"effect on mass culture"},
+    6: set(),
+    7: {"war"},
+    8: {"1960", "1963", "1969", "1974"},
+    9: {"political changes", "social changes", "artistic changes"},
+}
+
+
+def concept_front(front):
+    """Collapse source-guide fragments into one named historical concept."""
+    return re.sub(
+        r"\s+-\s+(?:origins and features|development and change|effects|historical significance)$",
+        "",
+        clean(front),
+        flags=re.I,
+    )
+
+
+def curate_cards(cards, unit_number):
+    grouped = {}
+    order = []
+    for card in cards:
+        front = concept_front(card["front"])
+        key = front.casefold()
+        if not front or key in APWORLD_REMOVE[unit_number]:
+            continue
+        if key not in grouped:
+            grouped[key] = {**card, "front": front}
+            order.append(key)
+            continue
+        existing = grouped[key]
+        # Hand-written definition cards are clearer than extracted narrative.
+        if card.get("sourcePage") is None:
+            grouped[key] = {**card, "front": front}
+        elif existing.get("sourcePage") is not None and card["back"] not in existing["back"]:
+            existing["back"] = clean(existing["back"] + " " + card["back"])
+    return [grouped[key] for key in order]
+
 FEYNMAN_TOPICS = {
     1: [
-        "Song Dynasty", "China's tributary system", "Japanese feudalism", "Korea's relationship with China",
-        "Dar al-Islam", "Delhi Sultanate", "Chola Dynasty", "Srivijaya Empire", "Majapahit Kingdom",
-        "Khmer Empire", "Aztec Empire", "Inca Empire", "Mali Empire", "Great Zimbabwe", "Medieval European feudalism",
+        "Song China and the tributary system",
+        "Japan and Korea's relationships with China",
+        "Dar al-Islam and the Delhi Sultanate",
+        "Khmer, Srivijaya, Chola, and Majapahit",
+        "Aztec and Inca empires",
+        "Mali and Great Zimbabwe",
     ],
     2: [
         "Silk Roads", "Mongol Empire", "Indian Ocean trade network", "Trans-Saharan trade routes",
@@ -41,12 +90,12 @@ FEYNMAN_TOPICS = {
         "The Black Death and Afro-Eurasian exchange", "Tributary trade relationships",
     ],
     3: [
-        "Ottoman Empire", "Safavid Empire", "Mughal Empire", "Qing Dynasty", "Tokugawa Japan", "Russian Empire",
-        "Gunpowder empires", "Imperial bureaucracy and taxation", "Religion as imperial legitimacy",
+        "Ottoman, Safavid, and Mughal empires", "Qing China and Tokugawa Japan", "Russian Empire",
+        "Gunpowder empires", "Imperial bureaucracy, taxation, and religious legitimacy",
     ],
     4: [
-        "Portuguese maritime empire", "Spanish maritime empire", "Dutch maritime empire", "British maritime empire",
-        "Columbian Exchange", "Atlantic slave trade", "Global silver trade", "Mercantilism", "Encomienda and hacienda systems",
+        "Portuguese, Spanish, Dutch, and British maritime empires",
+        "Columbian Exchange and Atlantic slave trade", "Global silver trade and mercantilism", "Encomienda and hacienda systems",
         "Resistance to expanding empires", "Changing social hierarchies in the Atlantic world",
     ],
     5: [
@@ -430,6 +479,7 @@ def build_decks(units):
             if key not in seen:
                 seen.add(key)
                 cards.append({"front": front, "back": back, "sourcePage": None})
+        cards = curate_cards(cards, unit_number)
         for index, card in enumerate(cards, start=1):
             card["back"] = clean(card["back"].replace("•", " "))
             card["id"] = f"apworld-u{unit_number}-c{index}"
@@ -437,7 +487,8 @@ def build_decks(units):
         # AP topic headers such as "Empires Expand" and "Empires:
         # Administration" are organizational labels, not useful recall cues.
         # Use concrete, deliberately selected historical subjects instead.
-        prompt_values = FEYNMAN_TOPICS[unit_number]
+        prompt_limit = 6 if unit_number == 1 else max(1, round(len(cards) / 10))
+        prompt_values = FEYNMAN_TOPICS[unit_number][:prompt_limit]
         prompt_seen = set()
         for value in prompt_values:
             value = re.sub(r"\s+from\s+c\.\s*\d+.*$", "", clean(value), flags=re.I).rstrip(":")

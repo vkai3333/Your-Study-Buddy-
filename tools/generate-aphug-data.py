@@ -39,6 +39,62 @@ REMOVE_TERMS = {
     7: {"travel time", "cost advantages", "festival landscapes", "federal home loan programs", "relocate", "female-headed households", "smog"},
 }
 
+# A second-pass AP-focused trim. These are valid geography facts, but they are
+# redundant, unusually narrow examples, dated labels, or better learned under a
+# broader retained concept rather than as independent cards.
+CURATION_REMOVE = {
+    1: {
+        "physical geography", "latitude and climate", "air masses and climate", "continentality",
+        "elevation and climate", "mountain barriers and climate", "ocean currents and climate",
+        "atmospheric pressure cells", "storm systems", "high pressure", "low pressure",
+        "goode’s interrupted/homolosine equal", "conic", "planar projection", "fuller projection",
+        "primary-sector economies", "secondary-sector economies", "tertiary-sector economies",
+        "quaternary-sector economies", "mdc", "nic", "ldc", "environment pillar", "economy pillar",
+        "society pillar", "weather", "precipitation", "geographic space", "spatial flow",
+    },
+    2: {
+        "colonialism", "imperialism", "gdp per capita", "critical distance",
+        "majority-minority population", "quota act in 1921 and the national origins act in 1924",
+        "great migration in the united states", "rust belt", "return migration", "ethnocentrism",
+    },
+    3: {
+        "customary beliefs", "folk music", "popular music", "popular clothing",
+        "folk clothing preferences", "threats to pop culture", "folk housing", "folk/local culture",
+        "altaic", "swahili", "agnosticism", "religious branch", "denomination", "sect",
+    },
+    4: {
+        "un (united nations)", "warsaw pact", "comecon", "north american free trade agreement (nafta)",
+        "satellite states", "berlin conference", "versailles peace conference", "apartheid", "cold war",
+        "political frontier", "open boundary", "natural boundary", "militarized boundary",
+        "defined boundary", "demarcated boundary", "allocational dispute", "functional disputes",
+        "definitional boundary dispute", "locational boundary dispute", "operational boundary dispute",
+    },
+    5: {
+        "demographic transition model", "physiological density", "general farming", "food preservation",
+        "income disparity", "communist manifesto", "human ecology", "food web", "food chain",
+        "spring wheat", "winter wheat", "ethanol", "biodiesel", "hybrids", "irrigation pumps",
+        "brahman cattle", "rbgh", "downer cattle", "appellation", "parmigiano-reggiano",
+        "suitcase farmers", "ultra-high temperature pasteurization", "labor intensive",
+    },
+    6: {
+        "labor intensive crops", "managed forest", "labor extensive crop", "grazing in the von thünen model",
+        "cost to distance relationship", "land-rent curve", "old asian tigers", "new asian tigers",
+        "primary production", "secondary production", "tertiary production", "quaternary production -.",
+        "quinary production", "mining and energy extraction", "fisheries and timer markets",
+        "durable and nondurable goods", "low benefit services", "high-benefit services", "investment value",
+        "returns on investment", "donor state", "north versus south analogy", "asian tigers", "keiretsu",
+        "chaebol", "the cycle of dependency", "prebisch thesis", "market stagnation", "capital accumulation",
+        "internalization of economics", "nationalization of natural resource-based industries",
+        "profit-sharing agreements", "technology development programs", "millennium development goals",
+    },
+    7: {
+        "limited banking regulations", "resource nodes", "transport nodes", "circular settlements",
+        "plvi", "verticality", "commuter zone", "suitcase farming", "wasps", "suburban business districts",
+        "suburban cbds", "laws of the indies", "central plaza", "middle-class flight", "lateral commuting",
+        "counter commuting", "fall-line cities", "medieval cities", "chinatown",
+    },
+}
+
 TERM_RENAMES = {
     (1, "movement"): "Movement of people, goods, and ideas",
     (1, "regions"): "Geographic regions",
@@ -315,7 +371,7 @@ def main():
             if not term or term.lower() in {"chapter overview", f"unit {unit_number} vocabulary", f"unit {unit_number} vocab"}:
                 continue
             original_normalized = normalized(term)
-            if original_normalized in REMOVE_TERMS.get(unit_number, set()):
+            if original_normalized in REMOVE_TERMS.get(unit_number, set()) or original_normalized in CURATION_REMOVE.get(unit_number, set()):
                 continue
             term = TERM_RENAMES.get((unit_number, original_normalized), term)
             normalized_term = normalized(term)

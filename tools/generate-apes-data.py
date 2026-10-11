@@ -25,34 +25,35 @@ UNIT_NAMES = {
 FEYNMAN_TOPICS = {
     "1-2": [
         "Ecosystem structure", "Species interactions", "Energy flow through ecosystems",
-        "Biodiversity and ecosystem stability", "Ecological succession",
+        "Biodiversity and ecosystem stability", "Ecological succession", "Carbon, nitrogen, phosphorus, and water cycles",
     ],
     "3": [
         "Population growth and carrying capacity", "R-selected vs. K-selected species",
-        "Human population growth", "The IPAT model and ecological footprints",
+        "Human population growth", "The IPAT model and ecological footprints", "Demographic transition and age structure",
     ],
     "4": [
         "Plate tectonics and volcanism", "Atmospheric structure and the greenhouse effect",
         "Freshwater and marine systems", "Soil formation and soil chemistry",
-        "The rock cycle and weathering", "Agriculture and soil conservation",
+        "The rock cycle and weathering", "Agriculture and soil conservation", "Soil horizons and groundwater movement",
     ],
     "5": [
         "The tragedy of the commons", "Renewable vs. nonrenewable resources",
         "Agriculture and soil degradation", "Forest and mineral resource management",
-        "Commercial fishing and aquaculture",
+        "Commercial fishing and aquaculture", "Integrated pest management",
     ],
     "6": [
         "Energy and the laws of thermodynamics", "Fossil fuels and nuclear energy",
-        "Renewable energy systems and tradeoffs",
+        "Renewable energy systems and tradeoffs", "Energy efficiency and energy return on investment",
     ],
     "7-8": [
         "Human water use and wastewater treatment", "Eutrophication and oxygen depletion",
         "Persistent, thermal, and sediment pollution", "Air pollution and emission controls",
-        "Stratospheric ozone depletion",
+        "Stratospheric ozone depletion and the Montreal Protocol", "Toxicology and dose-response relationships",
+        "Primary, secondary, and tertiary wastewater treatment",
     ],
     "9": [
         "Physical and biological effects of climate change",
-        "Climate mitigation and adaptation",
+        "Climate mitigation and adaptation", "International environmental agreements",
     ],
 }
 
@@ -244,6 +245,140 @@ MANUAL_CARDS = {
     ],
 }
 
+# High-value CED concepts that are absent or only implied in the source guide.
+SUPPLEMENTAL_CARDS = {
+    "1-2": [
+        ("Gross primary productivity (GPP)", "The total rate at which producers capture solar energy and convert it into chemical energy through photosynthesis."),
+        ("Net primary productivity (NPP)", "The rate at which producers store biomass after subtracting the energy they use for cellular respiration; NPP equals GPP minus respiration."),
+        ("10% rule", "The approximate principle that only about 10 percent of the energy at one trophic level becomes biomass available to the next trophic level."),
+        ("Trophic level", "An organism's feeding position in a food chain or food web, such as producer, primary consumer, or secondary consumer."),
+        ("Carbon cycle", "The movement of carbon among the atmosphere, organisms, oceans, soils, sediments, and rocks through processes including photosynthesis, respiration, decomposition, and combustion."),
+        ("Nitrogen cycle", "The movement of nitrogen among the atmosphere, soil, water, and organisms through fixation, nitrification, assimilation, ammonification, and denitrification."),
+        ("Nitrogen fixation", "The conversion of atmospheric nitrogen gas into ammonia or related compounds that organisms can use, primarily by bacteria and also by lightning or industrial processes."),
+        ("Nitrification", "The bacterial conversion of ammonia or ammonium first to nitrite and then to nitrate."),
+        ("Denitrification", "The bacterial conversion of nitrate into nitrogen gas, returning nitrogen to the atmosphere under low-oxygen conditions."),
+        ("Phosphorus cycle", "The movement of phosphorus through rocks, soil, water, and organisms; unlike carbon and nitrogen, it has no major atmospheric reservoir."),
+        ("Ecological resilience", "An ecosystem's ability to recover its structure and function after a disturbance."),
+        ("Ecological resistance", "An ecosystem's ability to remain relatively unchanged when exposed to a disturbance."),
+        ("Island biogeography", "The study of how island size and distance from a source population affect immigration, extinction, and species richness."),
+        ("Invasive species", "A nonnative species that spreads and causes ecological, economic, or human-health harm in its introduced range."),
+        ("Water cycle", "The movement of water among the atmosphere, oceans, surface water, groundwater, and organisms through evaporation, transpiration, condensation, precipitation, infiltration, and runoff."),
+        ("Tropical rainforest", "A warm, wet biome near the equator with high productivity and biodiversity, rapid nutrient cycling, and generally nutrient-poor soils."),
+        ("Savanna", "A tropical grassland biome with scattered trees, seasonal rainfall, and organisms adapted to drought and fire."),
+        ("Subtropical desert", "A dry biome near 30 degrees latitude with low precipitation, sparse vegetation, and organisms adapted to water scarcity and temperature extremes."),
+        ("Temperate grassland", "A midlatitude biome dominated by grasses, seasonal temperatures, periodic fire, and deep fertile soil."),
+        ("Temperate deciduous forest", "A midlatitude biome with year-round precipitation, seasonal temperature changes, and broadleaf trees that shed their leaves."),
+        ("Boreal forest (taiga)", "A cold northern forest biome dominated by evergreen conifers, with long winters, short growing seasons, and acidic nutrient-poor soils."),
+        ("Tundra", "A cold, treeless biome with low precipitation, a short growing season, and permafrost that limits drainage and root growth."),
+        ("Freshwater biome", "An aquatic system with low salinity, including streams, rivers, lakes, ponds, and inland wetlands."),
+        ("Marine biome", "A saltwater ecosystem such as an ocean, coral reef, estuary, or coastal zone, shaped by salinity, depth, light, nutrients, and currents."),
+    ],
+    "3": [
+        ("Limiting factor", "A biotic or abiotic condition that restricts population growth, abundance, or distribution."),
+        ("Population overshoot", "A condition in which a population temporarily exceeds the carrying capacity of its environment."),
+        ("Dieback", "A rapid population decline that can follow overshoot when resources are depleted or environmental resistance increases."),
+        ("Doubling time", "The time required for a population to double; for a constant percentage growth rate it can be estimated with the Rule of 70."),
+        ("Age-structure diagram", "A graph showing the proportions of males and females in different age groups, used to infer a population's likely future growth."),
+        ("Demographic transition", "The shift from high birth and death rates to low birth and death rates as a country industrializes and develops."),
+        ("Infant mortality rate", "The number of deaths of infants under one year of age per 1,000 live births in a given year."),
+        ("Crude birth rate", "The number of live births per 1,000 people in a population per year."),
+        ("Crude death rate", "The number of deaths per 1,000 people in a population per year."),
+        ("Malthusian theory", "The idea that human populations can grow faster than food supplies, producing resource scarcity unless growth is limited by preventive or positive checks."),
+    ],
+    "4": [
+        ("Coriolis effect", "The apparent deflection of moving air and water caused by Earth's rotation: toward the right in the Northern Hemisphere and left in the Southern Hemisphere."),
+        ("Rain shadow", "A dry region on the leeward side of a mountain where descending air warms after losing moisture on the windward side."),
+        ("El Niño-Southern Oscillation (ENSO)", "A periodic change in tropical Pacific ocean-atmosphere circulation that includes El Niño and La Niña and alters weather patterns worldwide."),
+        ("Soil horizon", "A distinct layer in a soil profile with characteristic composition; common horizons include organic O, topsoil A, subsoil B, parent material C, and bedrock R."),
+        ("O horizon", "The upper organic layer of a soil profile, composed mainly of leaf litter and decomposing material called humus."),
+        ("A horizon (topsoil)", "The mineral-rich topsoil layer where organic matter mixes with weathered rock; it usually contains many roots and soil organisms."),
+        ("E horizon", "A pale, leached soil layer from which clay, iron, aluminum, and organic compounds have been removed by percolating water."),
+        ("B horizon (subsoil)", "The subsoil layer where clay, iron, aluminum, and other materials leached from upper horizons accumulate."),
+        ("C horizon (parent material)", "A layer of partly weathered parent rock with relatively little organic matter or biological activity."),
+        ("R horizon (bedrock)", "The consolidated, largely unweathered rock beneath the soil profile from which upper mineral material may originate."),
+        ("Soil texture", "The relative proportions of sand, silt, and clay in soil, which influence drainage, nutrient retention, and aeration."),
+        ("Porosity", "The percentage of a material's volume made up of pore spaces that can hold water or air."),
+        ("Permeability", "The ability of water to flow through connected pore spaces in soil or rock."),
+        ("Water table", "The upper boundary of the saturated zone in the ground, below which pore spaces are filled with water."),
+        ("Cone of depression", "A lowered, cone-shaped water table around a well caused when groundwater is pumped faster than it is replenished."),
+        ("Saltwater intrusion", "The movement of seawater into a coastal aquifer when excessive groundwater withdrawal lowers freshwater pressure."),
+        ("Hadley cell", "A tropical atmospheric circulation cell in which warm air rises near the equator, moves poleward aloft, sinks near 30 degrees latitude, and returns toward the equator."),
+        ("Intertropical Convergence Zone (ITCZ)", "A band near the equator where trade winds converge and warm moist air rises, producing frequent clouds and heavy precipitation."),
+        ("Adiabatic cooling", "The cooling of rising air as lower atmospheric pressure allows it to expand, encouraging condensation and precipitation."),
+    ],
+    "5": [
+        ("Integrated pest management (IPM)", "A pest-control strategy that combines monitoring, biological controls, habitat changes, resistant crops, and limited targeted pesticide use."),
+        ("Pesticide treadmill", "A cycle in which pests evolve resistance, leading farmers to apply larger doses or develop new pesticides while natural predators may also be harmed."),
+        ("Concentrated animal feeding operation (CAFO)", "A high-density livestock facility that concentrates feed, animals, and waste, increasing production efficiency but creating air and water pollution risks."),
+        ("Drip irrigation", "An efficient irrigation method that delivers small amounts of water directly to plant roots through perforated tubing."),
+        ("Flood irrigation", "An irrigation method that covers a field with water; it is inexpensive but loses substantial water to evaporation and runoff and can promote salinization."),
+        ("Center-pivot irrigation", "A mechanized irrigation system that rotates sprinklers around a central point, producing circular fields and using less water than flood irrigation."),
+        ("Shelterbelt", "Rows of trees or shrubs planted along fields to reduce wind speed and soil erosion."),
+        ("Rotational grazing", "Moving livestock among pastures so grazed vegetation can recover, reducing erosion and overgrazing."),
+        ("Maximum sustainable yield", "The largest long-term harvest that can be removed from a renewable population without reducing its future productive capacity."),
+        ("Bycatch", "Nontarget organisms unintentionally captured by fishing gear."),
+        ("Urban sprawl", "Low-density development that spreads outward from cities, increasing habitat loss, vehicle travel, infrastructure demand, and impervious surfaces."),
+        ("Impervious surface", "A surface such as pavement or roofing that prevents infiltration, increasing runoff, flooding, erosion, and pollutant transport."),
+    ],
+    "6": [
+        ("Hydraulic fracturing", "The injection of water, sand, and chemicals under high pressure to fracture rock and release oil or natural gas."),
+        ("Energy return on investment (EROI)", "The ratio of usable energy obtained from an energy resource to the energy required to locate, extract, process, and deliver it."),
+        ("Cogeneration", "The simultaneous production of electricity and useful heat from the same fuel source, increasing overall energy efficiency."),
+        ("Passive solar heating", "Building design that uses orientation, windows, thermal mass, and insulation to collect and distribute solar heat without mechanical equipment."),
+        ("Active solar energy", "A system that uses mechanical or electrical equipment, such as photovoltaic panels, pumps, or fans, to capture and use solar energy."),
+        ("Combined-cycle natural gas plant", "A power plant that uses both a gas turbine and waste heat to run a steam turbine, producing electricity more efficiently than a single-cycle plant."),
+        ("Half-life", "The time required for half of the radioactive atoms in a sample to decay; it determines how long radioactive material remains hazardous."),
+        ("Nuclear waste", "Radioactive material left from nuclear power or other uses that must be isolated, cooled, transported, and stored to prevent exposure and contamination."),
+    ],
+    "7-8": [
+        ("Chlorofluorocarbons (CFCs)", "Stable synthetic compounds formerly used as refrigerants and propellants; ultraviolet radiation releases chlorine radicals from them that catalytically destroy stratospheric ozone."),
+        ("Montreal Protocol", "The 1987 international agreement that phases out production and consumption of ozone-depleting substances such as CFCs."),
+        ("Catalytic converter", "An automobile exhaust device that uses catalysts to convert carbon monoxide, nitrogen oxides, and unburned hydrocarbons into less harmful gases."),
+        ("Scrubber", "A pollution-control device that sprays an alkaline solution into exhaust to remove sulfur dioxide and some particulate matter before release."),
+        ("Electrostatic precipitator", "A device that electrically charges particles in exhaust and collects them on oppositely charged plates."),
+        ("Thermal inversion", "An atmospheric condition in which warm air overlies cooler surface air, suppressing vertical mixing and trapping pollutants near the ground."),
+        ("Tropospheric ozone", "A harmful secondary pollutant formed when nitrogen oxides and volatile organic compounds react in sunlight; it irritates respiratory tissue and damages plants."),
+        ("Carbon monoxide", "A colorless, odorless primary pollutant from incomplete combustion that binds to hemoglobin and reduces the blood's ability to carry oxygen."),
+        ("Radon", "A radioactive gas produced by uranium decay in rock and soil that can accumulate indoors and increase lung-cancer risk."),
+        ("Bioaccumulation", "The buildup of a persistent chemical in an organism over time because uptake exceeds elimination."),
+        ("Biomagnification", "The increase in concentration of a persistent pollutant at successively higher trophic levels in a food chain."),
+        ("Dose-response relationship", "The relationship between the amount of exposure to a substance and the magnitude or frequency of the resulting effect."),
+        ("LD50", "The dose of a substance expected to kill 50 percent of a test population, historically used as a measure of acute toxicity."),
+        ("Primary wastewater treatment", "The physical removal of large solids and suspended particles from sewage by screening and settling."),
+        ("Secondary wastewater treatment", "The biological breakdown of dissolved organic matter by microorganisms, followed by settling and disinfection."),
+        ("Tertiary wastewater treatment", "Advanced treatment that removes remaining nutrients, salts, metals, pathogens, or other contaminants before discharge or reuse."),
+        ("Clean Air Act", "The major United States law authorizing national air-quality standards and regulation of hazardous and common air pollutants."),
+        ("Clean Water Act", "The major United States law regulating pollutant discharges into surface waters and establishing water-quality standards."),
+        ("Superfund (CERCLA)", "The federal program that identifies and cleans heavily contaminated hazardous-waste sites and can require responsible parties to pay cleanup costs."),
+        ("Resource Conservation and Recovery Act (RCRA)", "The United States law governing the generation, transport, treatment, storage, and disposal of solid and hazardous waste from cradle to grave."),
+        ("Safe Drinking Water Act", "The United States law that sets national health-based standards for public drinking-water systems and protects underground drinking-water sources."),
+        ("Point-source pollution", "Pollution discharged from a single identifiable location, such as a pipe, smokestack, or drainage outlet."),
+        ("Nonpoint-source pollution", "Diffuse pollution carried from many places by runoff, such as fertilizer, sediment, oil, and pesticides washed from farms or cities."),
+        ("Endocrine disruptor", "A chemical that mimics, blocks, or alters hormones and can interfere with development, reproduction, metabolism, or behavior."),
+    ],
+    "9": [
+        ("Ocean acidification", "The decline in ocean pH as seawater absorbs atmospheric carbon dioxide and forms carbonic acid, reducing carbonate availability for shell-building organisms."),
+        ("Paris Agreement", "The 2015 international climate agreement in which countries submit and strengthen national plans to limit greenhouse gas emissions and warming."),
+        ("Kyoto Protocol", "The 1997 international agreement that established binding greenhouse-gas reduction targets for participating developed countries."),
+        ("Sea-level rise", "An increase in average sea level caused mainly by thermal expansion of warming seawater and melting land ice."),
+        ("Global warming potential", "A measure comparing how much heat a greenhouse gas traps over a specified period relative to the same mass of carbon dioxide."),
+        ("CITES", "An international agreement that restricts trade in threatened wild animals and plants so international commerce does not endanger their survival."),
+        ("Endangered Species Act", "A United States law that protects listed threatened and endangered species and the habitats critical to their recovery."),
+        ("Carbon tax", "A fee charged on the carbon content or greenhouse-gas emissions of fuels to incorporate climate costs and encourage lower-emission choices."),
+        ("Cap-and-trade", "A policy that limits total emissions, distributes or auctions allowances, and permits regulated sources to trade those allowances."),
+        ("Positive climate feedback", "A process that amplifies an initial climate change, such as melting ice lowering albedo and causing additional warming."),
+    ],
+}
+
+REMOVE_TERMS = {
+    "1-2": {"population", "symbiotic relationships", "evolution", "biological extinction", "ecological extinction", "commercial or economic extinction"},
+    "3": {"population", "green revolution", "overgrazing", "soil salinization", "irrigation", "aquifers", "deforestation", "fragmentation", "degradation", "overexploitation"},
+    "5": {"renewable resources", "nonrenewable resource", "fossil fuels", "nuclear energy", "renewable energy"},
+    "6": {"oil"},
+    "7-8": {"irrigation", "indicator species", "smog", "photochemical oxidant", "ozone", "air pollution control strategies"},
+    "9": {"carbon dioxide concentration", "methane concentration", "nitrous oxide concentration", "technological climate solutions", "behavioral climate solutions", "climate policy solutions"},
+}
+
 
 def clean(value):
     value = str(value or "").replace("—", "-").replace("–", "-")
@@ -352,11 +487,14 @@ def build_decks(units):
         seen = set()
         source_cards = units[unit_key]
         source_cards.extend({"term": term, "definition": definition, "page": None} for term, definition in MANUAL_CARDS.get(unit_key, []))
+        source_cards.extend({"term": term, "definition": definition, "page": None} for term, definition in SUPPLEMENTAL_CARDS.get(unit_key, []))
         for item in source_cards:
             item["term"] = TERM_REPAIRS.get((unit_key, item["term"]), item["term"])
             if unit_key == "3" and item["term"] == "Rule of 70":
                 item["definition"] = re.sub(r"^70\s*-?\s*", "", item["definition"]).strip()
             normalized = item["term"].casefold()
+            if normalized in REMOVE_TERMS.get(unit_key, set()):
+                continue
             if normalized in seen:
                 continue
             seen.add(normalized)
