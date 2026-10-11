@@ -1,77 +1,56 @@
 # Your Study Buddy
-Your Study Buddy is a completely free, open-source, and fully offline study application for macOS and Windows. Unlike many modern study tools, it does not rely on AI assistants or require an internet connection.
+# Your Study Buddy
+
+**Your Study Buddy** is a completely free, open-source, and fully offline study application for macOS and Windows. Unlike many modern study tools, it does not rely on AI assistants or require an internet connection.
 
 Our goal is to create a better, free, and open-source alternative to Anki. Like Anki, Your Study Buddy allows users to create and import flashcards, but it also offers a growing collection of pre-built flashcard decks, textbooks, and additional study tools.
 
-Features
+## Features
 
-Flashcards
+### Flashcards
+- Create and customize your own flashcards.
+- Import existing flashcard decks.
+- Access a collection of pre-made flashcard sets.
 
-Create and customize your own flashcards.
-
-Import existing flashcard decks.
-
-Access a collection of pre-made flashcard sets.
-
-Built-in Textbooks
-
+### Built-in Textbooks
 Your Study Buddy currently includes six textbooks:
 
-Campbell's Biology
+1. Campbell's Biology
+2. Raven's Plant Anatomy
+3. Vander's Human Physiology
+4. Kumbahl Chemistry
+5. Atkins' Chemistry
+6. Chemistry: The General Science
 
-Raven's Plant Anatomy
-
-Vander's Human Physiology
-
-Kumbahl Chemistry
-
-Atkins' Chemistry
-
-Chemistry: The General Science
-
-Pre-made Flashcard Decks
-
+### Pre-made Flashcard Decks
 Seven flashcard decks are currently available:
 
-AP Psychology
+1. AP Psychology
+2. AP U.S. Government and Politics
+3. AP Environmental Science
+4. AP European History
+5. AP World History
+6. AP Human Geography
+7. SAT Vocabulary
 
-AP U.S. Government and Politics
-
-AP Environmental Science
-
-AP European History
-
-AP World History
-
-AP Human Geography
-
-SAT Vocabulary
-
-Additional Study Tools
-
-Your Study Buddy also includes Feynman Technique-based study tools to help users strengthen their understanding by explaining concepts in their own words.
+### Additional Study Tools
+Your Study Buddy also includes **Feynman Technique-based study tools** to help users strengthen their understanding by explaining concepts in their own words.
 
 More textbooks, flashcard decks, and features are planned for future updates.
 
-Note: Your Study Buddy does not currently focus on mathematics or physics, as these subjects are better suited to problem-solving and practice-based learning rather than traditional flashcard memorization.
+**Note:** Your Study Buddy does not currently focus on mathematics or physics, as these subjects are better suited to problem-solving and practice-based learning rather than traditional flashcard memorization.
 
-How to Download
+## How to Download
 
-Visit the Your Study Buddy GitHub repository.
+1. Visit the [Your Study Buddy GitHub repository](https://github.com/vkai3333/Your-Study-Buddy-).
+2. Click the green **Code** button.
+3. Select **Download ZIP** from the dropdown menu.
+4. Once downloaded, extract the ZIP file.
+5. Open the extracted folder and navigate to the **builds** folder.
+6. Locate the version of **Your Study Buddy** for your operating system (macOS or Windows).
+7. Open the application to get started.
 
-Click the green Code button.
-
-Select Download ZIP from the dropdown menu.
-
-Once downloaded, extract the ZIP file.
-
-Open the extracted folder and navigate to the builds folder.
-
-Locate the version of Your Study Buddy for your operating system (macOS or Windows).
-
-Open the application to get started.
-
-Your Study Buddy — Study smarter, completely free and offline.
+**Your Study Buddy — Study smarter, completely free and offline.**
 
 ## Rebuild
 
