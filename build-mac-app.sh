@@ -25,6 +25,7 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR/Web" "$ICONSET_DIR" "$MODULE_CACHE"
   -target arm64-apple-macos13.0 \
   -module-cache-path "$MODULE_CACHE" \
   -framework AppKit \
+  -framework PDFKit \
   -framework WebKit \
   "$SCRIPT_DIR/macOS/StudyDeskApp.swift" \
   -o "$MACOS_DIR/YourStudyBuddy"

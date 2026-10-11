@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="window-drag-region" aria-hidden="true"></div>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
         <a class="brand" href="#dashboard" aria-label="Your Study Buddy home">
@@ -42,6 +43,10 @@
           <a class="nav-item" href="#create">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /><path d="M4 4h5M15 4h5M4 20h5M15 20h5" /></svg>
             <span>Create</span>
+          </a>
+          <a class="nav-item" href="#export">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 14v5h14v-5" /></svg>
+            <span>Export</span>
           </a>
           <a class="nav-item" href="#study-guide">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
@@ -168,14 +173,14 @@
 
               <section class="create-notes-workspace">
               <div class="create-method-panel">
-                <section class="anki-note-import" aria-labelledby="anki-note-import-heading">
+                <section class="anki-note-import" id="study-file-drop-zone" aria-labelledby="anki-note-import-heading">
                   <div>
                     <p class="section-label">Anki-compatible import</p>
                     <h2 id="anki-note-import-heading">Import notes</h2>
-                    <p>Choose an Anki deck package or notes export. Imported material becomes flashcards only.</p>
-                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Supports APKG, UTF-8 TXT, CSV, and TSV files.</p>
+                    <p>Choose an Anki deck, notes export, PDF, or PowerPoint. Documents are extracted into the notes editor so you can review them before generating a study set.</p>
+                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Drag and drop a file here, or choose one. Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV.</p>
                   </div>
-                  <input id="anki-notes-file" type="file" accept=".apkg,.txt,.csv,.tsv,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
+                  <input id="anki-notes-file" type="file" accept=".apkg,.pdf,.pptx,.txt,.csv,.tsv,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
                   <button class="button secondary-button" type="button" id="choose-anki-notes">Choose file</button>
                 </section>
                 <div class="create-field">
@@ -197,8 +202,8 @@
                 <section class="inline-manual-card" aria-labelledby="manual-card-heading">
                   <div><p class="section-label">Manual card</p><h2 id="manual-card-heading">Add a card manually</h2></div>
                   <div class="manual-card-grid">
-                    <label class="create-field">Front<textarea id="manual-card-front" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-front-image-preview" alt="Front image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="front">Add image</button><button type="button" data-remove-manual-image="front" hidden>Remove image</button></span></span></label>
-                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
+                    <label class="create-field">Front<textarea id="manual-card-front" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-front-image-preview" alt="Front image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="front">Add image</button><button type="button" data-draw-manual="front">Draw</button><button type="button" data-math-manual="front">Math syntax</button><button type="button" data-remove-manual-image="front" hidden>Remove image</button></span></span></label>
+                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-draw-manual="back">Draw</button><button type="button" data-math-manual="back">Math syntax</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
                   </div>
                   <input id="flashcard-image-file" type="file" accept="image/*" hidden>
                   <p class="flashcard-paste-hint">Copy and paste works for both text and images. Paste while the front or back box is selected.</p>
@@ -374,6 +379,24 @@
           </div>
         </section>
 
+        <section class="export-page" id="export-page" aria-labelledby="export-page-title" hidden>
+          <header class="export-page-header"><div><p class="section-label">Take your cards with you</p><h2 id="export-page-title">Export</h2><p>Choose one of your study sets and save it for Anki, a spreadsheet, or another flashcard app.</p></div></header>
+          <div class="export-layout">
+            <article class="export-card">
+              <label class="export-field">Study set<select id="export-deck-select"></select></label>
+              <fieldset class="export-formats"><legend>File format</legend>
+                <label><input type="radio" name="export-format" value="apkg" checked><span><strong>Anki package</strong><small>.apkg · ready to import into Anki</small></span></label>
+                <label><input type="radio" name="export-format" value="csv"><span><strong>CSV</strong><small>.csv · opens in Excel and Google Sheets</small></span></label>
+                <label><input type="radio" name="export-format" value="tsv"><span><strong>Tab-separated text</strong><small>.tsv · Anki-friendly plain text</small></span></label>
+                <label><input type="radio" name="export-format" value="json"><span><strong>Backup</strong><small>.json · preserves the full study set</small></span></label>
+              </fieldset>
+              <div class="export-summary" id="export-summary">Choose a study set to see what will be exported.</div>
+              <button class="button primary-button" type="button" id="export-study-set">Export study set</button>
+            </article>
+            <aside class="export-help"><span aria-hidden="true">⇩</span><h3>Which format should I use?</h3><p><strong>Anki package</strong> is best when moving cards into Anki. Use <strong>CSV</strong> or <strong>TSV</strong> to edit cards in a spreadsheet. A <strong>backup</strong> retains questions and Feynman topics too.</p><p>Card text is exported. Images are preserved in the app backup format.</p></aside>
+          </div>
+        </section>
+
         <section class="study-guide-page" id="study-guide-page" aria-labelledby="study-guide-title" hidden>
           <header class="study-guide-header">
             <div><p class="section-label">Tips and resources</p><h2 id="study-guide-title">Study Guide</h2><p>Choose a study method that matches how long you need to remember the material.</p></div>
@@ -511,6 +534,7 @@
       <a href="#courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></svg><span>Textbooks</span></a>
       <a href="#flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6" /></svg><span>Study</span></a>
       <a href="#create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Create</span></a>
+      <a href="#export"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 14v5h14v-5" /></svg><span>Export</span></a>
       <a href="#study-guide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg><span>Guide</span></a>
     </nav>
 
@@ -531,6 +555,33 @@
           <button class="button primary-button" type="submit">Schedule alarm</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="card-tool-dialog drawing-dialog" id="drawing-dialog" aria-labelledby="drawing-dialog-title">
+      <div class="card-tool-shell">
+        <div class="dialog-header"><div><p class="section-label">Flashcard drawing</p><h2 id="drawing-dialog-title">Draw on the card</h2></div><button class="icon-button" type="button" id="close-drawing-dialog" aria-label="Close drawing tool">×</button></div>
+        <div class="drawing-toolbar" role="toolbar" aria-label="Drawing tools">
+          <button type="button" class="active" data-drawing-tool="pen">Pen</button><button type="button" data-drawing-tool="eraser">Eraser</button>
+          <label>Color <input type="color" id="drawing-color" value="#171b2d"></label>
+          <label>Size <input type="range" id="drawing-size" min="2" max="36" value="6"></label>
+          <button type="button" id="drawing-undo">Undo</button><button type="button" id="drawing-clear">Clear</button>
+        </div>
+        <div class="drawing-stage"><canvas id="flashcard-drawing-canvas" width="1000" height="600" aria-label="Drawing canvas"></canvas></div>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-drawing">Cancel</button><button type="button" class="button primary-button" id="save-drawing">Use drawing</button></div>
+      </div>
+    </dialog>
+
+    <dialog class="card-tool-dialog math-dialog" id="math-dialog" aria-labelledby="math-dialog-title">
+      <div class="card-tool-shell">
+        <div class="dialog-header"><div><p class="section-label">Flashcard text</p><h2 id="math-dialog-title">Insert math syntax</h2></div><button class="icon-button" type="button" id="close-math-dialog" aria-label="Close math tool">×</button></div>
+        <label class="math-expression-label">Expression<input id="math-expression" type="text" placeholder="Example: E = mc^2 or \sqrt{x}"></label>
+        <div class="math-symbol-grid" aria-label="Math symbol shortcuts">
+          <button type="button" data-math-symbol="²">x²</button><button type="button" data-math-symbol="₁">x₁</button><button type="button" data-math-symbol="√()">√</button><button type="button" data-math-symbol="/">a/b</button><button type="button" data-math-symbol="×">×</button><button type="button" data-math-symbol="÷">÷</button><button type="button" data-math-symbol="±">±</button><button type="button" data-math-symbol="≈">≈</button><button type="button" data-math-symbol="≤">≤</button><button type="button" data-math-symbol="≥">≥</button><button type="button" data-math-symbol="Δ">Δ</button><button type="button" data-math-symbol="Σ">Σ</button><button type="button" data-math-symbol="π">π</button><button type="button" data-math-symbol="α">α</button><button type="button" data-math-symbol="β">β</button><button type="button" data-math-symbol="→">→</button><button type="button" data-math-symbol="⇌">⇌</button><button type="button" data-math-symbol="°">°</button>
+        </div>
+        <div class="math-preview"><span>Preview</span><strong id="math-preview">Your expression will appear here.</strong></div>
+        <p class="math-help">You can type common syntax such as <code>\sqrt{x}</code>, <code>\alpha</code>, <code>\Delta</code>, <code>^2</code>, and <code>_1</code>.</p>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-math">Cancel</button><button type="button" class="button primary-button" id="insert-math">Insert into card</button></div>
+      </div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -53,6 +53,10 @@ const state = {
   manualFrontImage: "",
   manualBackImage: "",
   pendingCardImageTarget: null,
+  pendingDrawingTarget: null,
+  pendingMathTarget: null,
+  drawingTool: "pen",
+  drawingHistory: [],
 };
 
 const SETTINGS_KEY = "your-study-buddy-settings-v1";
@@ -722,6 +726,7 @@ function showAppView(view) {
   const showingCourse = view === "course";
   const showingFlashcards = view === "flashcards";
   const showingCreate = view === "create";
+  const showingExport = view === "export";
   const showingCustomStudy = view === "custom-study";
   const showingCustomDelete = view === "custom-delete";
   const showingStudyGuide = view === "study-guide";
@@ -730,12 +735,13 @@ function showAppView(view) {
   $("#course-page").hidden = !showingCourse;
   $("#flashcards").hidden = !showingFlashcards;
   $("#create").hidden = !showingCreate;
+  $("#export-page").hidden = !showingExport;
   $("#custom-study-page").hidden = !showingCustomStudy;
   $("#custom-delete-page").hidden = !showingCustomDelete;
   $("#study-guide-page").hidden = !showingStudyGuide;
   $("#settings-page").hidden = !showingSettings;
-  $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingCustomStudy || showingCustomDelete || showingStudyGuide || showingSettings; });
-  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
+  $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingExport || showingCustomStudy || showingCustomDelete || showingStudyGuide || showingSettings; });
+  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingExport ? "#export" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
   $$(".primary-nav .nav-item, .mobile-nav a").forEach((item) => {
     const active = item.getAttribute("href") === activeHref;
     item.classList.toggle("active", active);
@@ -744,6 +750,7 @@ function showAppView(view) {
   $("#open-settings").classList.toggle("active", showingSettings);
   if (showingSettings) populateSettingsForm();
   if (showingCreate || showingFlashcards) renderCustomDecks();
+  if (showingExport) renderExportPage();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1682,6 +1689,113 @@ function handleCardPaste(event, target) {
   acceptCardImage(file, target);
 }
 
+function confirmImageRemoval(button, removeImage) {
+  if (button.dataset.confirmingRemove === "true") {
+    delete button.dataset.confirmingRemove;
+    removeImage();
+    return;
+  }
+  button.dataset.confirmingRemove = "true";
+  const originalLabel = button.textContent;
+  button.textContent = "Click again to remove";
+  button.classList.add("confirming-remove");
+  window.setTimeout(() => {
+    if (!button.isConnected || button.dataset.confirmingRemove !== "true") return;
+    delete button.dataset.confirmingRemove;
+    button.textContent = originalLabel;
+    button.classList.remove("confirming-remove");
+  }, 2500);
+}
+
+function cardTextArea(target) {
+  if (!target) return null;
+  if (target.kind === "manual") return $(`#manual-card-${target.side}`);
+  return $(`[data-draft-${target.side}="${target.index}"]`);
+}
+
+function openDrawingTool(target) {
+  state.pendingDrawingTarget = target;
+  state.drawingTool = "pen";
+  state.drawingHistory = [];
+  $$('[data-drawing-tool]').forEach((button) => button.classList.toggle("active", button.dataset.drawingTool === "pen"));
+  const canvas = $("#flashcard-drawing-canvas");
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  const property = target.side === "front" ? "frontImage" : "backImage";
+  const existing = target.kind === "manual"
+    ? (target.side === "front" ? state.manualFrontImage : state.manualBackImage)
+    : state.customDraft[target.index]?.[property];
+  const remember = () => { state.drawingHistory = [canvas.toDataURL("image/png")]; };
+  if (existing) {
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+      const width = image.naturalWidth * scale;
+      const height = image.naturalHeight * scale;
+      context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+      remember();
+    };
+    image.onerror = remember;
+    image.src = existing;
+  } else remember();
+  $("#drawing-dialog-title").textContent = `Draw on the ${target.side}`;
+  $("#drawing-dialog").showModal();
+}
+
+function closeDrawingTool() {
+  $("#drawing-dialog").close();
+  state.pendingDrawingTarget = null;
+  state.drawingHistory = [];
+}
+
+function readableMathSyntax(value) {
+  const symbols = { "\\alpha": "α", "\\beta": "β", "\\gamma": "γ", "\\Delta": "Δ", "\\delta": "δ", "\\theta": "θ", "\\lambda": "λ", "\\mu": "μ", "\\pi": "π", "\\sigma": "σ", "\\Sigma": "Σ", "\\times": "×", "\\div": "÷", "\\pm": "±", "\\le": "≤", "\\ge": "≥", "\\rightarrow": "→", "\\rightleftharpoons": "⇌" };
+  let text = String(value || "").trim();
+  Object.entries(symbols).forEach(([syntax, symbol]) => { text = text.split(syntax).join(symbol); });
+  text = text.replace(/\\sqrt\{([^{}]+)\}/g, "√($1)").replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)");
+  const superscript = { 0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹","+":"⁺","-":"⁻" };
+  const subscript = { 0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"₈",9:"₉","+":"₊","-":"₋" };
+  text = text.replace(/\^\{?([0-9+-]+)\}?/g, (_, chars) => [...chars].map((char) => superscript[char] || char).join(""));
+  text = text.replace(/_\{?([0-9+-]+)\}?/g, (_, chars) => [...chars].map((char) => subscript[char] || char).join(""));
+  return text;
+}
+
+function updateMathPreview() {
+  $("#math-preview").textContent = readableMathSyntax($("#math-expression").value) || "Your expression will appear here.";
+}
+
+function openMathTool(target) {
+  const textarea = cardTextArea(target);
+  state.pendingMathTarget = { ...target, start: textarea?.selectionStart ?? textarea?.value.length ?? 0, end: textarea?.selectionEnd ?? textarea?.value.length ?? 0 };
+  $("#math-expression").value = "";
+  $("#math-dialog-title").textContent = `Insert math on the ${target.side}`;
+  updateMathPreview();
+  $("#math-dialog").showModal();
+  $("#math-expression").focus();
+}
+
+function closeMathTool() {
+  $("#math-dialog").close();
+  state.pendingMathTarget = null;
+}
+
+function insertMathIntoCard() {
+  const target = state.pendingMathTarget;
+  const expression = readableMathSyntax($("#math-expression").value);
+  if (!target || !expression) { showToast("Enter a math expression first."); return; }
+  const textarea = cardTextArea(target);
+  if (!textarea) return;
+  const before = textarea.value.slice(0, target.start);
+  const after = textarea.value.slice(target.end);
+  const spacingBefore = before && !/\s$/.test(before) ? " " : "";
+  const spacingAfter = after && !/^\s/.test(after) ? " " : "";
+  textarea.value = `${before}${spacingBefore}${expression}${spacingAfter}${after}`;
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  closeMathTool();
+  textarea.focus();
+  showToast("Math inserted into the card.");
+}
+
 function cleanNoteLine(line) {
   return line
     .replace(/^\s{0,3}#{1,6}\s+/, "")
@@ -1961,7 +2075,13 @@ function generateCardsFromNotes(notes) {
       || expanded.match(/^\s*\d+(?:\.\d+)+\.?\s+(.+?)\s*$/);
     const bulletMatch = expanded.match(/^(\s*)(?:[-*•]|\d+[.)])\s+(.+?)\s*$/);
     if (headingMatch) return { sourceIndex, kind: "heading", depth: -1, text: cleanNoteLine(headingMatch[1]).replace(/^\d+(?:\.\d+)*\.?\s*/, ""), children: [] };
-    if (bulletMatch) return { sourceIndex, kind: "bullet", depth: Math.floor(bulletMatch[1].length / 2), text: cleanNoteLine(bulletMatch[2]), children: [] };
+    if (bulletMatch) {
+      const boldTerm = bulletMatch[2].match(/^\*\*([^*]{2,70})\*\*\s*(?:[-–—,:]\s*)?(.{3,})$/);
+      const boldFront = cleanNoteLine(boldTerm?.[1] || "");
+      const phraseLooksLikeTerm = boldTerm && !/^(?:decreases?|increases?|shifts?|protects?|ensures?|prevents?|requires?|allows?|prohibits?|limits?|reinforces?|shows?|explains?|argues?|ruled?|held?)\b/i.test(boldFront) && !/[.!?]$/.test(boldFront);
+      const text = phraseLooksLikeTerm ? `${boldFront}: ${cleanNoteLine(boldTerm[2])}` : cleanNoteLine(bulletMatch[2]);
+      return { sourceIndex, kind: "bullet", depth: Math.floor(bulletMatch[1].length / 2), text, children: [] };
+    }
     const plainText = cleanNoteLine(expanded);
     return plainText ? { sourceIndex, kind: "plain", depth: 0, text: plainText, children: [] } : null;
   }).filter((line) => line?.text);
@@ -2264,7 +2384,7 @@ function renderCustomDraft() {
   $("#flashcard-tab-count").textContent = state.customDraft.length;
   empty.hidden = state.customDraft.length > 0;
   updateCustomSaveButtons();
-  list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
+  list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="front" data-image-index="${index}">Draw</button><button type="button" data-math-draft="front" data-image-index="${index}">Math syntax</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="back" data-image-index="${index}">Draw</button><button type="button" data-math-draft="back" data-image-index="${index}">Math syntax</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftFront)].front = input.value; }));
   $$('[data-draft-back]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftBack)].back = input.value; }));
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("paste", (event) => handleCardPaste(event, { kind: "draft", side: "front", index: Number(input.dataset.draftFront) })));
@@ -2273,10 +2393,15 @@ function renderCustomDraft() {
     state.pendingCardImageTarget = { kind: "draft", side: button.dataset.chooseDraftImage, index: Number(button.dataset.imageIndex) };
     $("#flashcard-image-file").click();
   }));
+  $$('[data-draw-draft]', list).forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "draft", side: button.dataset.drawDraft, index: Number(button.dataset.imageIndex) })));
+  $$('[data-math-draft]', list).forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "draft", side: button.dataset.mathDraft, index: Number(button.dataset.imageIndex) })));
   $$('[data-remove-draft-image]', list).forEach((button) => button.addEventListener("click", () => {
-    const card = state.customDraft[Number(button.dataset.imageIndex)];
-    if (card) card[button.dataset.removeDraftImage === "front" ? "frontImage" : "backImage"] = "";
-    renderCustomDraft();
+    confirmImageRemoval(button, () => {
+      const card = state.customDraft[Number(button.dataset.imageIndex)];
+      if (card) card[button.dataset.removeDraftImage === "front" ? "frontImage" : "backImage"] = "";
+      renderCustomDraft();
+      showToast("Image removed. Choose Update set to save the change.");
+    });
   }));
   $$('[data-remove-draft]', list).forEach((button) => button.addEventListener("click", () => {
     state.customDraft.splice(Number(button.dataset.removeDraft), 1);
@@ -2312,7 +2437,7 @@ function resetCustomDraft() {
   renderManualImagePreview("back");
   $("#manual-feynman-topic").value = "";
   $("#anki-notes-file").value = "";
-  $("#anki-import-status").textContent = "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
+  $("#anki-import-status").textContent = "Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV files.";
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Generate and save study set";
   renderCustomDraft();
@@ -2372,6 +2497,70 @@ function effectiveBuiltInCollection(collection) {
   const override = loadBuiltInCollectionOverrides()[collection.id];
   if (!override) return collection;
   return { ...collection, name: override.name || collection.name, units: override.units || collection.units, customized: true };
+}
+
+function exportableStudySets() {
+  const personal = loadCustomDecks().map((deck) => ({ ...deck, exportId: `personal:${deck.id}` }));
+  const builtIn = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((collection) => effectiveBuiltInCollection(collection)).map((collection) => ({
+    exportId: `built-in:${collection.id}`, name: collection.name,
+    cards: collection.units.flatMap((unit) => unit.cards || []),
+    questions: collection.units.flatMap((unit) => unit.questions || []),
+    feynmanPrompts: collection.units.flatMap((unit) => unit.feynmanPrompts || []),
+  }));
+  return [...personal, ...builtIn];
+}
+
+function cleanExportText(value) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = String(value || "");
+  return (wrapper.textContent || wrapper.innerText || "").trim();
+}
+
+function delimitedExport(cards, delimiter) {
+  const quote = (value) => `"${cleanExportText(value).replace(/"/g, '""')}"`;
+  return [["Front", "Back"], ...cards.map((card) => [card.front, card.back])].map((row) => row.map(quote).join(delimiter)).join("\r\n");
+}
+
+function renderExportPage() {
+  const select = $("#export-deck-select");
+  const decks = exportableStudySets();
+  const previous = select.value;
+  select.innerHTML = decks.length ? decks.map((deck) => `<option value="${escapeHtml(deck.exportId)}">${escapeHtml(deck.name)}</option>`).join("") : '<option value="">No study sets available</option>';
+  if (decks.some((deck) => deck.exportId === previous)) select.value = previous;
+  select.disabled = !decks.length;
+  $("#export-study-set").disabled = !decks.length;
+  updateExportSummary();
+}
+
+function updateExportSummary() {
+  const deck = exportableStudySets().find((item) => item.exportId === $("#export-deck-select").value);
+  $("#export-summary").textContent = deck ? `${deck.cards.length} flashcards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman topics` : "Create or add a study set before exporting.";
+}
+
+async function exportSelectedStudySet() {
+  const deck = exportableStudySets().find((item) => item.exportId === $("#export-deck-select").value);
+  if (!deck) { showToast("Choose a study set first."); return; }
+  const format = document.querySelector('input[name="export-format"]:checked')?.value || "apkg";
+  const cards = deck.cards.map((card) => ({ front: cleanExportText(card.front), back: cleanExportText(card.back), frontImage: card.frontImage || "", backImage: card.backImage || "" }));
+  const payload = { name: deck.name, format, cards, questions: deck.questions || [], feynmanPrompts: deck.feynmanPrompts || [] };
+  if (window.desktopApp?.exportStudySet) {
+    const result = await window.desktopApp.exportStudySet(payload);
+    if (result?.error) { showToast(result.error); return; }
+    if (!result?.canceled) showToast(`${deck.name} exported.`);
+    return;
+  }
+  if (window.webkit?.messageHandlers?.studyExport) {
+    window.webkit.messageHandlers.studyExport.postMessage(payload);
+    showToast("Choose where to save your study set.");
+    return;
+  }
+  if (format === "apkg") { showToast("APKG export is available in the desktop app."); return; }
+  const content = format === "csv" ? delimitedExport(cards, ",") : format === "tsv" ? delimitedExport(cards, "\t") : JSON.stringify(payload, null, 2);
+  const blob = new Blob([content], { type: format === "json" ? "application/json" : "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob); link.download = `${deck.name.replace(/[^a-z0-9._-]+/gi, "-") || "study-set"}.${format}`; link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 500);
+  showToast(`${deck.name} exported.`);
 }
 
 function getBuiltInCollection(collectionId) {
@@ -2500,7 +2689,7 @@ function editCustomDeck(deckId) {
   state.customImportSource = deck.sourceImport || null;
   $("#custom-deck-name").value = deck.name;
   setNotesContent(deck.sourceNotes || "", deck.sourceNotesHtml || "");
-  $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name} · flashcards only` : "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
+  $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name}` : "Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV files.";
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Update set";
   renderCustomDraft();
@@ -3030,7 +3219,23 @@ $("#my-courses-search").addEventListener("input", (event) => renderMyCourses(eve
 $("#catalog-courses-search").addEventListener("input", (event) => renderCourseShelf(event.currentTarget.value));
 
 function importDeckName(fileName) {
-  return fileName.replace(/\.(apkg|txt|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported flashcards";
+  return fileName.replace(/\.(apkg|pdf|pptx|txt|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported flashcards";
+}
+
+function loadImportedDocument(payload) {
+  if (!payload?.text?.trim()) throw new Error("No readable text was found in this document.");
+  if ((state.customDraft.length || state.customQuestionDraft.length || state.customFeynmanDraft.length) && !window.confirm("Replace the current notes and draft with this document?")) return;
+  state.editingCustomDeckId = null; state.editingBuiltInCollectionId = null;
+  state.customDraft = []; state.customQuestionDraft = []; state.customFeynmanDraft = [];
+  state.customImportSource = { name: payload.name, type: payload.extension, importedAt: Date.now() };
+  $("#custom-deck-name").value = importDeckName(payload.name);
+  setNotesContent(payload.text);
+  renderCustomDraft(); renderCustomQuestionDraft(); renderCustomFeynmanDraft();
+  $("#anki-import-status").textContent = `Extracted ${payload.name}. Review the notes below, then choose Generate and save study set.`;
+  $("#anki-notes-file").value = "";
+  $("#choose-anki-notes").disabled = false;
+  $("#notes-input").scrollIntoView({ behavior: "smooth", block: "center" });
+  showToast("Document text imported. Review it before generating your study set.");
 }
 
 function saveImportedFlashcards({ fileName, type, cards, skipped = 0 }) {
@@ -3064,7 +3269,7 @@ async function importAnkiNotesFile(file) {
   if (!["txt", "csv", "tsv"].includes(extension)) {
     if (extension === "apkg") status.textContent = "The desktop app is opening this APKG package locally…";
     else {
-      status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
+      status.textContent = ["pdf", "pptx"].includes(extension) ? "PDF and PowerPoint extraction is available in the Mac and Windows desktop apps." : "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
       showToast("That file type is not supported.");
     }
     return;
@@ -3095,12 +3300,20 @@ window.receiveAnkiPackageImportError = (message) => {
   $("#anki-import-status").textContent = message;
   showToast("This APKG package could not be imported.");
 };
+window.receiveDocumentImport = (payload) => { try { loadImportedDocument(payload); } catch (error) { window.receiveAnkiPackageImportError(error?.message || "This document could not be read."); } };
+window.receiveDocumentImportStatus = (message) => {
+  $("#anki-import-status").textContent = message;
+  $("#choose-anki-notes").disabled = true;
+};
+window.receiveDocumentImportError = (message) => {
+  $("#anki-import-status").textContent = message || "This PDF or PowerPoint could not be imported.";
+  $("#anki-notes-file").value = "";
+  $("#choose-anki-notes").disabled = false;
+  showToast("This document could not be imported.");
+};
 
-$("#choose-anki-notes").addEventListener("click", async () => {
-  if (!window.desktopApp?.chooseStudyFile) { $("#anki-notes-file").click(); return; }
+function handleStudyFileResult(result) {
   const status = $("#anki-import-status");
-  status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
-  const result = await window.desktopApp.chooseStudyFile();
   if (!result || result.canceled) return;
   if (result.error) { status.textContent = result.error; showToast("This file could not be imported."); return; }
   try {
@@ -3110,12 +3323,45 @@ $("#choose-anki-notes").addEventListener("click", async () => {
     } else if (result.kind === "text") {
       const parsed = parseAnkiNotes(result.name, result.text);
       saveImportedFlashcards({ fileName: result.name, type: result.extension, cards: parsed.cards });
-    }
+    } else if (result.kind === "document") loadImportedDocument(result);
   } catch (error) {
     status.textContent = error?.message || "This file could not be imported.";
-    showToast("I couldn’t find readable flashcards in that file.");
+    showToast("I couldn’t find readable study material in that file.");
   }
+}
+
+async function importDroppedStudyFile(file) {
+  const extension = String(file?.name || "").split(".").pop().toLowerCase();
+  if (!file || !["apkg", "pdf", "pptx", "txt", "csv", "tsv"].includes(extension)) { showToast("Drop an APKG, PDF, PPTX, TXT, CSV, or TSV file."); return; }
+  $("#anki-import-status").textContent = `Reading ${file.name}…`;
+  if (window.desktopApp?.readDroppedStudyFile) { handleStudyFileResult(await window.desktopApp.readDroppedStudyFile(file)); return; }
+  if (["txt", "csv", "tsv"].includes(extension)) { await importAnkiNotesFile(file); return; }
+  if (window.webkit?.messageHandlers?.studyDroppedFile) {
+    const reader = new FileReader();
+    reader.onerror = () => window.receiveDocumentImportError("The dropped file could not be read.");
+    reader.onload = () => window.webkit.messageHandlers.studyDroppedFile.postMessage({ name: file.name, data: String(reader.result || "") });
+    reader.readAsDataURL(file);
+    return;
+  }
+  showToast("Drop PDF, PowerPoint, and APKG files into the desktop app.");
+}
+
+$("#choose-anki-notes").addEventListener("click", async () => {
+  if (!window.desktopApp?.chooseStudyFile) {
+    const input = $("#anki-notes-file");
+    input.value = "";
+    input.click();
+    return;
+  }
+  const status = $("#anki-import-status");
+  status.textContent = "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
+  const result = await window.desktopApp.chooseStudyFile();
+  handleStudyFileResult(result);
 });
+const studyFileDropZone = $("#study-file-drop-zone");
+["dragenter", "dragover"].forEach((type) => studyFileDropZone.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation(); studyFileDropZone.classList.add("drag-over"); }));
+["dragleave", "drop"].forEach((type) => studyFileDropZone.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation(); studyFileDropZone.classList.remove("drag-over"); }));
+studyFileDropZone.addEventListener("drop", (event) => { const file = event.dataTransfer?.files?.[0]; if (file) importDroppedStudyFile(file); });
 $("#notes-input").addEventListener("paste", (event) => {
   const clipboard = event.clipboardData;
   if (!clipboard) return;
@@ -3190,7 +3436,12 @@ $$('[data-choose-manual-image]').forEach((button) => button.addEventListener("cl
   state.pendingCardImageTarget = { kind: "manual", side: button.dataset.chooseManualImage };
   $("#flashcard-image-file").click();
 }));
-$$('[data-remove-manual-image]').forEach((button) => button.addEventListener("click", () => applyCardImage({ kind: "manual", side: button.dataset.removeManualImage }, "")));
+$$('[data-draw-manual]').forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "manual", side: button.dataset.drawManual })));
+$$('[data-math-manual]').forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "manual", side: button.dataset.mathManual })));
+$$('[data-remove-manual-image]').forEach((button) => button.addEventListener("click", () => confirmImageRemoval(button, () => {
+  applyCardImage({ kind: "manual", side: button.dataset.removeManualImage }, "");
+  showToast("Image removed.");
+})));
 $("#manual-card-front").addEventListener("paste", (event) => handleCardPaste(event, { kind: "manual", side: "front" }));
 $("#manual-card-back").addEventListener("paste", (event) => handleCardPaste(event, { kind: "manual", side: "back" }));
 $("#flashcard-image-file").addEventListener("change", (event) => {
@@ -3199,6 +3450,79 @@ $("#flashcard-image-file").addEventListener("change", (event) => {
   event.currentTarget.value = "";
   state.pendingCardImageTarget = null;
 });
+
+const drawingCanvas = $("#flashcard-drawing-canvas");
+const drawingContext = drawingCanvas.getContext("2d");
+let drawingPointerActive = false;
+function drawingPoint(event) {
+  const rect = drawingCanvas.getBoundingClientRect();
+  return { x: (event.clientX - rect.left) * drawingCanvas.width / rect.width, y: (event.clientY - rect.top) * drawingCanvas.height / rect.height };
+}
+function restoreDrawingSnapshot(dataUrl) {
+  drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+  if (!dataUrl) return;
+  const image = new Image();
+  image.onload = () => drawingContext.drawImage(image, 0, 0, drawingCanvas.width, drawingCanvas.height);
+  image.src = dataUrl;
+}
+drawingCanvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  drawingPointerActive = true;
+  drawingCanvas.setPointerCapture(event.pointerId);
+  state.drawingHistory.push(drawingCanvas.toDataURL("image/png"));
+  if (state.drawingHistory.length > 24) state.drawingHistory.shift();
+  const point = drawingPoint(event);
+  drawingContext.beginPath();
+  drawingContext.moveTo(point.x, point.y);
+});
+drawingCanvas.addEventListener("pointermove", (event) => {
+  if (!drawingPointerActive) return;
+  event.preventDefault();
+  const point = drawingPoint(event);
+  drawingContext.lineWidth = Number($("#drawing-size").value) || 6;
+  drawingContext.lineCap = "round";
+  drawingContext.lineJoin = "round";
+  drawingContext.globalCompositeOperation = state.drawingTool === "eraser" ? "destination-out" : "source-over";
+  drawingContext.strokeStyle = $("#drawing-color").value;
+  drawingContext.lineTo(point.x, point.y);
+  drawingContext.stroke();
+});
+function finishDrawingPointer() { drawingPointerActive = false; drawingContext.closePath(); drawingContext.globalCompositeOperation = "source-over"; }
+drawingCanvas.addEventListener("pointerup", finishDrawingPointer);
+drawingCanvas.addEventListener("pointercancel", finishDrawingPointer);
+$$('[data-drawing-tool]').forEach((button) => button.addEventListener("click", () => {
+  state.drawingTool = button.dataset.drawingTool;
+  $$('[data-drawing-tool]').forEach((item) => item.classList.toggle("active", item === button));
+}));
+$("#drawing-undo").addEventListener("click", () => restoreDrawingSnapshot(state.drawingHistory.pop()));
+$("#drawing-clear").addEventListener("click", () => {
+  state.drawingHistory.push(drawingCanvas.toDataURL("image/png"));
+  drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+});
+$("#save-drawing").addEventListener("click", () => {
+  if (!state.pendingDrawingTarget) return;
+  applyCardImage(state.pendingDrawingTarget, drawingCanvas.toDataURL("image/png"));
+  closeDrawingTool();
+  showToast("Drawing added to the card.");
+});
+$("#close-drawing-dialog").addEventListener("click", closeDrawingTool);
+$("#cancel-drawing").addEventListener("click", closeDrawingTool);
+$("#drawing-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeDrawingTool(); });
+
+$("#math-expression").addEventListener("input", updateMathPreview);
+$$('[data-math-symbol]').forEach((button) => button.addEventListener("click", () => {
+  const input = $("#math-expression");
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  input.setRangeText(button.dataset.mathSymbol, start, end, "end");
+  updateMathPreview();
+  input.focus();
+}));
+$("#insert-math").addEventListener("click", insertMathIntoCard);
+$("#math-expression").addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") insertMathIntoCard(); });
+$("#close-math-dialog").addEventListener("click", closeMathTool);
+$("#cancel-math").addEventListener("click", closeMathTool);
+$("#math-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeMathTool(); });
 $("#clear-draft").addEventListener("click", () => {
   if (!state.customDraft.length) return;
   if (!window.confirm(`Clear all ${state.customDraft.length} flashcards from this draft? Questions and Feynman topics will be kept.`)) return;
@@ -3320,6 +3644,8 @@ $("#custom-feynman-next").addEventListener("click", () => moveCustomFeynman(1));
 $$('[data-custom-anki-rating]').forEach((button) => button.addEventListener("click", () => rateCustomAnkiCard(button.dataset.customAnkiRating)));
 
 $("#open-settings").addEventListener("click", () => showAppView("settings"));
+$("#export-deck-select").addEventListener("change", updateExportSummary);
+$("#export-study-set").addEventListener("click", exportSelectedStudySet);
 $$('[data-settings-tab]').forEach((button) => button.addEventListener("click", () => selectSettingsTab(button.dataset.settingsTab)));
 $("#settings-form").addEventListener("change", (event) => { if (event.target.name === "theme") applyTheme(event.target.value); });
 $("#settings-form").addEventListener("submit", (event) => {
@@ -3340,9 +3666,9 @@ $("#reset-settings").addEventListener("click", () => {
 $$("[data-toast]").forEach((element) => element.addEventListener("click", () => showToast(element.dataset.toast)));
 $$(".primary-nav .nav-item").forEach((item) => item.addEventListener("click", (event) => {
   const target = item.getAttribute("href");
-  if (["#courses", "#dashboard", "#flashcards", "#create", "#study-guide"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
+  if (["#courses", "#dashboard", "#flashcards", "#create", "#export", "#study-guide"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
 }));
-$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
+$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#export"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
 $("#flashcards-create-set").addEventListener("click", () => { showAppView("create"); $("#new-custom-study-set").click(); });
 $(".brand").addEventListener("click", (event) => { event.preventDefault(); showAppView("dashboard"); });
 document.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); $(".search-field input").focus(); } });
