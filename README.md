@@ -1,59 +1,99 @@
 # Your Study Buddy
 
-**Your Study Buddy** is a completely free, open-source, and fully offline study application for macOS and Windows. Unlike many modern study tools, it does not rely on AI assistants or require an internet connection.
+**Your Study Buddy** is a free, open-source study application for macOS and Windows. It works fully offline, does not require an account, and does not send your study materials to an AI service.
 
-Our goal is to create a better, free, and open-source alternative to Anki. Like Anki, Your Study Buddy allows users to create and import flashcards, but it also offers a growing collection of pre-built flashcard decks, textbooks, and additional study tools.
+The app combines customizable flashcards, Anki-style spaced repetition, pre-built study decks, textbook-aligned resources, practice questions, and Feynman Technique prompts in one place.
 
 ## Features
 
-### Flashcards
-- Create and customize your own flashcards.
-- Import existing flashcard decks.
-- Access a collection of pre-made flashcard sets.
+### Flashcards and spaced repetition
 
-### Built-in Textbooks
-Your Study Buddy currently includes six textbooks:
+- Create, edit, organize, and delete your own flashcards.
+- Review cards normally or with Anki-style spaced repetition.
+- Track new, learning, and review cards in daily sessions.
+- Add text, images, drawings, and mathematical notation to cards.
+- Organize study sets into customizable folders and study an entire folder at once.
+- Search your personal collection and the built-in deck library.
 
-1. Campbell's Biology
-2. Raven's Plant Anatomy
-3. Vander's Human Physiology
-4. Kumbahl Chemistry
-5. Atkins' Chemistry
-6. Chemistry: The General Science
+### Create from notes
 
-### Pre-made Flashcard Decks
-Seven flashcard decks are currently available:
+- Paste formatted notes to create an editable study set.
+- Generate flashcards, practice questions, and Feynman prompts in one pass.
+- Preserve useful structure such as headings, bold text, and bullet points.
+- Add or revise cards, questions, and prompts before saving the set.
+
+All note processing is performed locally. The app uses offline text-processing rules rather than a hosted AI model.
+
+### Import and export
+
+- Import Anki packages (`.apkg`) and common study formats.
+- Import notes from PDF, PowerPoint (`.pptx`), text, CSV, and TSV files.
+- Choose a file or drag and drop it into the app.
+- Export study sets as APKG, CSV, TSV, or JSON files.
+
+Import and export are designed to work on both macOS and Windows.
+
+### Built-in textbooks
+
+The current textbook library contains study resources aligned with:
+
+1. Campbell Biology, 12th Edition
+2. Vander's Human Physiology, 16th Edition
+3. Atkins' Physical Chemistry, 8th Edition
+4. Raven Biology of Plants, 8th Edition
+5. Zumdahl Chemistry, 7th Edition
+6. Chemistry: The Central Science, 12th Edition
+
+The app contains original study material organized around these books; it does not distribute copies of the textbooks themselves.
+
+### Pre-built study decks
+
+The current release includes:
 
 1. AP Psychology
 2. AP U.S. Government and Politics
 3. AP Environmental Science
 4. AP European History
-5. AP World History
+5. AP World History: Modern
 6. AP Human Geography
 7. SAT Vocabulary
 
-### Additional Study Tools
-Your Study Buddy also includes **Feynman Technique-based study tools** to help users strengthen their understanding by explaining concepts in their own words.
+Each collection is divided into smaller units so students can study a specific topic or combine multiple units into one session.
 
-More textbooks, flashcard decks, and features are planned for future updates.
+### Additional study tools
 
-**Note:** Your Study Buddy does not currently focus on mathematics or physics, as these subjects are better suited to problem-solving and practice-based learning rather than traditional flashcard memorization.
+- Feynman Technique prompts for explaining broad concepts in your own words
+- Multiple-choice and true-or-false practice questions
+- Light and dark themes
+- Searchable textbook and study-deck libraries
+- Configurable Anki review settings
+- Study alarms with custom descriptions
 
-## How to Download
+More textbooks, pre-built decks, and study features are planned for future releases.
 
-1. Visit the [Your Study Buddy GitHub repository](https://github.com/vkai3333/Your-Study-Buddy-).
-2. Go to releases. 
-3. Download the zip file. 
-4. Once downloaded, extract the ZIP file.
-5. Open the extracted folder and navigate to the **builds** folder.
-6. Locate the version of **Your Study Buddy** for your operating system (macOS or Windows).
-7. Open the application to get started.
+## Download
 
-**Your Study Buddy — Study smarter, completely free and offline.**
+1. Open the [Your Study Buddy releases page](https://github.com/vkai3333/Your-Study-Buddy-/releases).
+2. Select the newest release.
+3. Under **Assets**, download the file for your operating system:
+   - **macOS:** the macOS ZIP file
+   - **Windows:** the Windows installer (`.exe`)
+4. Open the downloaded file and follow the installation prompts.
 
-## Rebuild
+Because builds may not yet be code-signed, macOS Gatekeeper or Windows SmartScreen may display a warning when the app is opened for the first time.
 
-Run:
+## Development
+
+### Run the Electron app
+
+```sh
+npm install
+npm start
+```
+
+The Electron wrapper uses the application files in `dist/`.
+
+### Build the macOS app
 
 ```sh
 ./build-mac-app.sh
@@ -61,13 +101,16 @@ Run:
 
 The app bundle is created at `build/Your Study Buddy.app` and is ad-hoc signed for local use.
 
-## Windows and Electron
-
-The Electron wrapper reuses the same files in `dist/` as the native Mac app.
+### Create a platform package
 
 ```sh
-npm install
-npm start
+npm run make
 ```
 
-To create a platform package, run `npm run make`. Windows installers are built automatically by `.github/workflows/windows-build.yml` when a version tag beginning with `v` is pushed, or when the workflow is started manually from GitHub Actions.
+Windows packages can also be generated with `.github/workflows/windows-build.yml`. The workflow can be started manually from GitHub Actions and runs automatically when a version tag beginning with `v` is pushed.
+
+## Privacy
+
+Your study sets and progress are stored locally on your computer. The app does not require an internet connection for its study features and does not upload your notes to an AI provider.
+
+**Your Study Buddy — study smarter, completely free and offline.**
