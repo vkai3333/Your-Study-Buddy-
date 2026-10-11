@@ -3062,7 +3062,7 @@ async function importAnkiNotesFile(file) {
   const status = $("#anki-import-status");
   const extension = file.name.split(".").pop().toLowerCase();
   if (!["txt", "csv", "tsv"].includes(extension)) {
-    if (extension === "apkg") status.textContent = "The Mac app is opening this APKG package locally…";
+    if (extension === "apkg") status.textContent = "The desktop app is opening this APKG package locally…";
     else {
       status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
       showToast("That file type is not supported.");
@@ -3096,7 +3096,26 @@ window.receiveAnkiPackageImportError = (message) => {
   showToast("This APKG package could not be imported.");
 };
 
-$("#choose-anki-notes").addEventListener("click", () => $("#anki-notes-file").click());
+$("#choose-anki-notes").addEventListener("click", async () => {
+  if (!window.desktopApp?.chooseStudyFile) { $("#anki-notes-file").click(); return; }
+  const status = $("#anki-import-status");
+  status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
+  const result = await window.desktopApp.chooseStudyFile();
+  if (!result || result.canceled) return;
+  if (result.error) { status.textContent = result.error; showToast("This file could not be imported."); return; }
+  try {
+    if (result.kind === "apkg") {
+      const parsed = cardsFromAnkiPackageNotes(result.payload.notes);
+      saveImportedFlashcards({ fileName: result.payload.name, type: "apkg", cards: parsed.cards, skipped: parsed.skipped });
+    } else if (result.kind === "text") {
+      const parsed = parseAnkiNotes(result.name, result.text);
+      saveImportedFlashcards({ fileName: result.name, type: result.extension, cards: parsed.cards });
+    }
+  } catch (error) {
+    status.textContent = error?.message || "This file could not be imported.";
+    showToast("I couldn’t find readable flashcards in that file.");
+  }
+});
 $("#notes-input").addEventListener("paste", (event) => {
   const clipboard = event.clipboardData;
   if (!clipboard) return;

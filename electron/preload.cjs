@@ -8,4 +8,7 @@ contextBridge.exposeInMainWorld("desktopApp", {
   cancelAlarm(id) {
     ipcRenderer.send("study-alarm:cancel", id);
   },
+  chooseStudyFile() {
+    return ipcRenderer.invoke("study-file:choose");
+  },
 });

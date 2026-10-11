@@ -51,5 +51,10 @@
     "@electron-forge/cli": "^8.0.1",
     "@electron-forge/maker-squirrel": "^8.0.1",
     "electron": "^44.7.0"
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "fzstd": "^0.1.1",
+    "sql.js": "^1.14.2"
   }
 }
