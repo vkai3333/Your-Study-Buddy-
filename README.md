@@ -48,7 +48,7 @@ The app contains original study material organized around these books; it does n
 
 ### Pre-built study decks
 
-The current release includes:
+The current release includes 13 collections (12 AP courses and SAT Vocabulary):
 
 1. AP Psychology
 2. AP U.S. Government and Politics
@@ -56,7 +56,13 @@ The current release includes:
 4. AP European History
 5. AP World History: Modern
 6. AP Human Geography
-7. SAT Vocabulary
+7. AP U.S. History
+8. AP Art History
+9. AP Computer Science Principles
+10. AP Biology
+11. AP Statistics
+12. AP Chemistry
+13. SAT Vocabulary
 
 Each collection is divided into smaller units so students can study a specific topic or combine multiple units into one session.
 
