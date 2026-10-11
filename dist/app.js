@@ -1552,7 +1552,9 @@ function storeStudyAlarms(alarms) { localStorage.setItem(STUDY_ALARMS_KEY, JSON.
 
 function notifyNativeAlarm(action, alarm) {
   const handler = window.webkit?.messageHandlers?.studyAlarm;
-  if (handler) handler.postMessage({ action, ...alarm });
+  if (handler) { handler.postMessage({ action, ...alarm }); return; }
+  if (action === "schedule") window.desktopApp?.scheduleAlarm?.(alarm);
+  if (action === "cancel") window.desktopApp?.cancelAlarm?.(alarm.id);
 }
 
 function formatAlarmDate(timestamp) {
@@ -1561,6 +1563,7 @@ function formatAlarmDate(timestamp) {
 
 function renderStudyAlarms() {
   const alarms = loadStudyAlarms().sort((a, b) => a.timestamp - b.timestamp);
+  if (window.desktopApp) alarms.filter((alarm) => alarm.timestamp > Date.now()).forEach((alarm) => notifyNativeAlarm("schedule", alarm));
   $("#tasks-done-stat").textContent = String(alarms.length);
   $("#task-list").innerHTML = alarms.length ? alarms.map((alarm) => `<li class="task-item alarm-item"><span class="alarm-icon" aria-hidden="true">◷</span><div class="task-copy"><strong>${escapeHtml(alarm.title)}</strong><span>${escapeHtml(formatAlarmDate(alarm.timestamp))}${alarm.description ? ` · ${escapeHtml(alarm.description)}` : ""}</span></div><button class="icon-button remove-alarm" type="button" data-remove-alarm="${alarm.id}" aria-label="Remove ${escapeHtml(alarm.title)}">×</button></li>`).join("") : '<li class="alarm-empty"><strong>No alarms scheduled</strong><span>Create one and Your Study Buddy will notify this Mac when it is time to study.</span></li>';
   $$('[data-remove-alarm]').forEach((button) => button.addEventListener("click", () => {

@@ -1,0 +1,55 @@
+{
+  "name": "your-study-buddy",
+  "productName": "Your Study Buddy",
+  "version": "1.0.0",
+  "description": "Your Study Buddy is a native, fully offline macOS study app with original study companions for biology, physiology, plant biology, general chemistry, and physical chemistry.",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "make": "electron-forge make",
+    "package": "electron-forge package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dominodude898-jpg/Your-Study-Buddy-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "name": "YourStudyBuddy",
+        "asar": true,
+        "ignore": [
+          "^/build($|/)",
+          "^/macOS($|/)",
+          "^/tmp($|/)",
+          "^/tools($|/)",
+          "^/README\\.md$",
+          "^/build-mac-app\\.sh$"
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "your_study_buddy",
+            "authors": "Kai Chen Guo",
+            "description": "Offline flashcards, spaced repetition, questions, and Feynman study tools."
+          }
+        }
+      ]
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/dominodude898-jpg/Your-Study-Buddy-/issues"
+  },
+  "homepage": "https://github.com/dominodude898-jpg/Your-Study-Buddy-#readme",
+  "devDependencies": {
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-squirrel": "^8.0.1",
+    "electron": "^44.7.0"
+  }
+}

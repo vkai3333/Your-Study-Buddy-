@@ -1,6 +1,6 @@
-# Your Study Buddy for macOS
+# Your Study Buddy
 
-Your Study Buddy is a native, fully offline macOS study app with original study companions for biology, physiology, plant biology, general chemistry, and physical chemistry.
+Your Study Buddy is a fully offline study app for macOS and Windows with original study companions for biology, physiology, plant biology, general chemistry, and physical chemistry.
 
 ## Included courses
 
@@ -27,3 +27,14 @@ Run:
 ```
 
 The app bundle is created at `build/Your Study Buddy.app` and is ad-hoc signed for local use.
+
+## Windows and Electron
+
+The Electron wrapper reuses the same files in `dist/` as the native Mac app.
+
+```sh
+npm install
+npm start
+```
+
+To create a platform package, run `npm run make`. Windows installers are built automatically by `.github/workflows/windows-build.yml` when a version tag beginning with `v` is pushed, or when the workflow is started manually from GitHub Actions.
