@@ -43,6 +43,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /><path d="M4 4h5M15 4h5M4 20h5M15 20h5" /></svg>
             <span>Create</span>
           </a>
+          <a class="nav-item" href="#study-guide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
+            <span>Study Guide</span>
+          </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -370,6 +374,35 @@
           </div>
         </section>
 
+        <section class="study-guide-page" id="study-guide-page" aria-labelledby="study-guide-title" hidden>
+          <header class="study-guide-header">
+            <div><p class="section-label">Tips and resources</p><h2 id="study-guide-title">Study Guide</h2><p>Choose a study method that matches how long you need to remember the material.</p></div>
+          </header>
+          <div class="study-guide-grid">
+            <article class="study-guide-card study-guide-featured">
+              <span class="study-guide-icon" aria-hidden="true">↻</span>
+              <p class="section-label">Long-term memory</p>
+              <h3>Anki works best with daily effort</h3>
+              <p>Anki-style spaced repetition is one of the strongest ways to retain information over months or years. It works by bringing cards back near the time you might forget them.</p>
+              <div class="study-guide-callout"><strong>Consistency matters.</strong><span>Complete your due reviews every day. Skipping several days creates a backlog and weakens the benefit of the schedule.</span></div>
+            </article>
+            <article class="study-guide-card">
+              <span class="study-guide-icon" aria-hidden="true">⇩</span>
+              <p class="section-label">More flashcards</p>
+              <h3>Browse Anki shared decks</h3>
+              <p>Find decks created by other learners, download an APKG file, and import it from the Create tab. Review imported cards and correct anything that does not match your course.</p>
+              <a class="button primary-button guide-link" href="https://ankiweb.net/shared/decks" target="_blank" rel="noopener noreferrer">Open Anki shared decks</a>
+            </article>
+            <article class="study-guide-card">
+              <span class="study-guide-icon" aria-hidden="true">✦</span>
+              <p class="section-label">Understand, then remember</p>
+              <h3>Combine methods</h3>
+              <p>Use Feynman prompts to explain broad ideas, questions to practice applying them, and Anki to keep important details available in long-term memory.</p>
+              <ul class="study-guide-steps"><li><strong>Feynman:</strong> explain the whole idea in your own words.</li><li><strong>Questions:</strong> practice recognition and application.</li><li><strong>Anki:</strong> maintain details through spaced review.</li></ul>
+            </article>
+          </div>
+        </section>
+
         <section class="settings-page" id="settings-page" aria-labelledby="settings-title" hidden>
           <header class="settings-page-header">
             <div><p class="section-label">Preferences</p><h2 id="settings-title">Settings</h2><p>Customize the app and how Anki schedules your cards.</p></div>
@@ -478,7 +511,7 @@
       <a href="#courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></svg><span>Textbooks</span></a>
       <a href="#flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6" /></svg><span>Study</span></a>
       <a href="#create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Create</span></a>
-      <button type="button" data-toast="Profile menu coming soon."><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M5 21a7 7 0 0 1 14 0" /></svg><span>Profile</span></button>
+      <a href="#study-guide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg><span>Guide</span></a>
     </nav>
 
     <dialog class="task-dialog" id="task-dialog" aria-labelledby="task-dialog-title">

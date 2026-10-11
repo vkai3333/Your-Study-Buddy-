@@ -724,6 +724,7 @@ function showAppView(view) {
   const showingCreate = view === "create";
   const showingCustomStudy = view === "custom-study";
   const showingCustomDelete = view === "custom-delete";
+  const showingStudyGuide = view === "study-guide";
   const showingSettings = view === "settings";
   $("#courses").hidden = !showingCourses;
   $("#course-page").hidden = !showingCourse;
@@ -731,9 +732,10 @@ function showAppView(view) {
   $("#create").hidden = !showingCreate;
   $("#custom-study-page").hidden = !showingCustomStudy;
   $("#custom-delete-page").hidden = !showingCustomDelete;
+  $("#study-guide-page").hidden = !showingStudyGuide;
   $("#settings-page").hidden = !showingSettings;
-  $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingCustomStudy || showingCustomDelete || showingSettings; });
-  const activeHref = showingSettings ? null : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
+  $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingCustomStudy || showingCustomDelete || showingStudyGuide || showingSettings; });
+  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
   $$(".primary-nav .nav-item, .mobile-nav a").forEach((item) => {
     const active = item.getAttribute("href") === activeHref;
     item.classList.toggle("active", active);
@@ -3316,9 +3318,9 @@ $("#reset-settings").addEventListener("click", () => {
 $$("[data-toast]").forEach((element) => element.addEventListener("click", () => showToast(element.dataset.toast)));
 $$(".primary-nav .nav-item").forEach((item) => item.addEventListener("click", (event) => {
   const target = item.getAttribute("href");
-  if (["#courses", "#dashboard", "#flashcards", "#create"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
+  if (["#courses", "#dashboard", "#flashcards", "#create", "#study-guide"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
 }));
-$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
+$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
 $("#flashcards-create-set").addEventListener("click", () => { showAppView("create"); $("#new-custom-study-set").click(); });
 $(".brand").addEventListener("click", (event) => { event.preventDefault(); showAppView("dashboard"); });
 document.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); $(".search-field input").focus(); } });
