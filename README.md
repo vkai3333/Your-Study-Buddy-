@@ -42,8 +42,8 @@ More textbooks, flashcard decks, and features are planned for future updates.
 ## How to Download
 
 1. Visit the [Your Study Buddy GitHub repository](https://github.com/vkai3333/Your-Study-Buddy-).
-2. Click the green **Code** button.
-3. Select **Download ZIP** from the dropdown menu.
+2. Go to releases. 
+3. Download the zip file. 
 4. Once downloaded, extract the ZIP file.
 5. Open the extracted folder and navigate to the **builds** folder.
 6. Locate the version of **Your Study Buddy** for your operating system (macOS or Windows).
