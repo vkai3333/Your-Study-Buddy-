@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <div class="window-drag-region" aria-label="Drag to move the window"><span>Your Study Buddy</span></div>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
         <a class="brand" href="#dashboard" aria-label="Your Study Buddy home">
@@ -43,6 +44,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /><path d="M4 4h5M15 4h5M4 20h5M15 20h5" /></svg>
             <span>Create</span>
           </a>
+          <a class="nav-item" href="#notes">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z" /><path d="M16 3v4h4M8 11h8M8 15h8M8 19h5" /></svg>
+            <span>Notes</span>
+          </a>
           <a class="nav-item" href="#export">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 19h14" /></svg>
             <span>Export</span>
@@ -60,9 +65,9 @@
           </button>
 
           <div class="profile-card">
-            <div class="avatar" aria-hidden="true">K</div>
+            <div class="avatar" id="profile-avatar" aria-hidden="true">?</div>
             <div class="profile-copy">
-              <strong>Kai</strong>
+              <strong id="profile-name">Student</strong>
               <span>Student plan</span>
             </div>
             <button class="icon-button profile-menu" type="button" aria-label="Open profile menu" data-toast="Profile menu coming soon.">
@@ -76,42 +81,33 @@
         <header class="topbar">
           <div>
             <p class="eyebrow" id="today-label">Thursday, October 8</p>
-            <h1>Good afternoon, Kai <span aria-hidden="true">👋</span></h1>
+            <h1><span id="dashboard-greeting">Good afternoon, Student</span> <span aria-hidden="true">👋</span></h1>
             <p class="intro">Keep your momentum going with one focused step.</p>
           </div>
-          <div class="topbar-actions">
-            <label class="search-field">
-              <span class="sr-only">Search Your Study Buddy</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-              <input type="search" placeholder="Search" autocomplete="off" />
-              <kbd>⌘ K</kbd>
-            </label>
-            <button class="icon-button notification-button" type="button" aria-label="View notifications" data-toast="You’re all caught up.">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
-              <span class="notification-dot" aria-hidden="true"></span>
-            </button>
-            <button class="button primary-button" type="button" id="open-library-button">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h7v14H4zM13 5h7v14h-7z" /><path d="M7 9h1M16 9h1" /></svg>
-              Browse textbooks
-            </button>
-          </div>
         </header>
+
+        <section class="birthday-celebration" id="birthday-celebration" aria-label="Birthday celebration" hidden>
+          <div class="birthday-message"><p class="section-label">A special day</p><h2 id="birthday-message">Happy Birthday!</h2><p>Here’s to another year of learning, growing, and reaching your goals.</p></div>
+          <div class="birthday-scene" aria-hidden="true"><span class="birthday-balloon balloon-one"></span><span class="birthday-balloon balloon-two"></span><span class="birthday-balloon balloon-three"></span></div>
+          <div class="birthday-confetti" id="birthday-confetti" aria-hidden="true"></div>
+        </section>
 
         <section class="stats-grid" aria-label="Study overview">
           <article class="stat-card">
             <span class="stat-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9" /></svg></span>
             <div>
               <p>Study alarms</p>
-              <strong id="tasks-done-stat">0</strong>
-              <span class="trend">scheduled</span>
+              <strong>Coming soon</strong>
+              <span class="trend">Reminders are being redesigned</span>
+              <span id="tasks-done-stat" hidden>0</span>
             </div>
           </article>
           <article class="stat-card">
             <span class="stat-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 3s1 4-2 6c-2-1-2-3-2-4-3 2-5 5-5 9a8 8 0 0 0 16 0c0-4-2-7-4-9 0 3-1 5-3 6" /></svg></span>
             <div>
               <p>Current streak</p>
-              <strong>7 days</strong>
-              <span class="trend">Personal best: 12</span>
+              <strong id="current-study-streak">0 days</strong>
+              <span class="trend" id="best-study-streak">Personal best: 0</span>
             </div>
           </article>
         </section>
@@ -128,6 +124,7 @@
               <p class="library-intro">Textbooks you add will appear here and stay saved on this Mac.</p>
             </div>
             <div class="course-heading-actions">
+              <button class="button secondary-button" type="button" id="return-all-textbooks">Return all to library</button>
               <label class="textbook-search"><span class="sr-only">Search your textbooks</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-courses-search" placeholder="Search your textbooks" autocomplete="off"></label>
             </div>
           </div>
@@ -146,9 +143,9 @@
             <button class="button primary-button" type="button" id="flashcards-create-set">+ Create study set</button>
           </header>
           <section class="flashcards-library">
-            <div class="saved-decks-heading"><div><h2>My Study Sets</h2><p class="deck-source-copy">Organize personal and built-in sets into folders, then study a whole folder at once.</p></div><div class="saved-decks-heading-actions"><button type="button" class="button secondary-button" id="create-study-folder">+ New folder</button><span id="flashcards-deck-count">0</span><button type="button" class="button danger-text-button" id="delete-all-study-sets">Delete All</button><label class="textbook-search study-deck-search"><span class="sr-only">Search your study sets</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-study-sets-search" placeholder="Search your study sets" autocomplete="off"></label></div></div>
+            <div class="saved-decks-heading"><div><h2>My Study Sets</h2><p class="deck-source-copy">Drag study sets into folders, between folders, or back into the unfiled area. Open a folder to study everything inside it.</p></div><div class="saved-decks-heading-actions"><button type="button" class="button secondary-button" id="create-study-folder">+ New folder</button><span id="flashcards-deck-count">0</span><button type="button" class="button danger-text-button" id="delete-all-study-sets">Delete All</button><label class="textbook-search study-deck-search"><span class="sr-only">Search your study sets</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-study-sets-search" placeholder="Search your study sets" autocomplete="off"></label></div></div>
             <div id="study-folder-list" class="study-folder-list"></div>
-            <div id="flashcards-deck-list" class="custom-deck-list flashcards-deck-grid"></div>
+            <div id="flashcards-deck-list" class="custom-deck-list flashcards-deck-grid study-set-drop-zone" data-drop-folder="" aria-label="Unfiled study sets"></div>
           </section>
           <section class="flashcards-library built-in-flashcards-library">
             <div class="saved-decks-heading"><div><p class="section-label">Study library</p><h2>Available study decks</h2><p class="deck-source-copy">Add a built-in collection to My Study Sets.</p></div><div class="built-in-library-heading-actions"><span id="built-in-deck-count">0 decks</span><button type="button" class="button secondary-button" id="return-all-built-in-decks">Return all to library</button><label class="textbook-search study-deck-search"><span class="sr-only">Search study deck library</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="built-in-study-search" placeholder="Search study deck library" autocomplete="off"></label></div></div>
@@ -175,14 +172,14 @@
 
               <section class="create-notes-workspace">
               <div class="create-method-panel">
-                <section class="anki-note-import" aria-labelledby="anki-note-import-heading">
+                <section class="anki-note-import" id="study-file-drop-zone" aria-labelledby="anki-note-import-heading">
                   <div>
                     <p class="section-label">Anki-compatible import</p>
                     <h2 id="anki-note-import-heading">Import notes</h2>
-                    <p>Choose an Anki deck package or notes export. Imported material becomes flashcards only.</p>
-                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Supports APKG, UTF-8 TXT, CSV, and TSV files.</p>
+                    <p>Choose an Anki deck, notes export, PDF, or PowerPoint. Documents are extracted into the notes editor so you can review them before generating a study set.</p>
+                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Drag and drop a file here, or choose one. Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV.</p>
                   </div>
-                  <input id="anki-notes-file" type="file" accept=".apkg,.txt,.csv,.tsv,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
+                  <input id="anki-notes-file" type="file" accept=".apkg,.pdf,.pptx,.txt,.csv,.tsv,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
                   <button class="button secondary-button" type="button" id="choose-anki-notes">Choose file</button>
                 </section>
                 <div class="create-field">
@@ -204,8 +201,8 @@
                 <section class="inline-manual-card" aria-labelledby="manual-card-heading">
                   <div><p class="section-label">Manual card</p><h2 id="manual-card-heading">Add a card manually</h2></div>
                   <div class="manual-card-grid">
-                    <label class="create-field">Front<textarea id="manual-card-front" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-front-image-preview" alt="Front image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="front">Add image</button><button type="button" data-remove-manual-image="front" hidden>Remove image</button></span></span></label>
-                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
+                    <label class="create-field">Front<textarea id="manual-card-front" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-front-image-preview" alt="Front image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="front">Add image</button><button type="button" data-draw-manual="front">Draw</button><button type="button" data-math-manual="front">Math syntax</button><button type="button" data-code-manual="front">Code</button><button type="button" data-remove-manual-image="front" hidden>Remove image</button></span></span></label>
+                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-draw-manual="back">Draw</button><button type="button" data-math-manual="back">Math syntax</button><button type="button" data-code-manual="back">Code</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
                   </div>
                   <input id="flashcard-image-file" type="file" accept="image/*" hidden>
                   <p class="flashcard-paste-hint">Copy and paste works for both text and images. Paste while the front or back box is selected.</p>
@@ -257,8 +254,86 @@
           </div>
         </section>
 
+        <section class="notes-page" id="notes-page" aria-labelledby="notes-page-title" hidden>
+          <input class="notes-only-toggle-input" id="notes-only-toggle" type="checkbox" aria-label="Show only this note">
+          <header class="notes-page-header">
+            <div><h1 id="notes-page-title">Notes</h1></div>
+            <div class="notes-new-actions"><button class="button secondary-button" type="button" id="import-notes">Import notes</button><input id="notes-import-file" type="file" accept=".pdf,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown" hidden><button class="button secondary-button" type="button" id="new-note-folder">+ Notebook</button><button class="button secondary-button" type="button" id="new-drawing-note" data-new-note="open">+ Open note</button><button class="button primary-button" type="button" id="new-word-note" data-new-note="page">+ Page note</button></div>
+          </header>
+          <div class="notes-layout">
+            <aside class="notes-library" aria-label="Saved notes">
+              <label class="notes-search"><span class="sr-only">Search notes</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="search" id="notes-search" placeholder="Search notes"></label>
+              <p class="notes-drag-hint">Drag notes into folders to organize them.</p>
+              <div class="notes-list" id="notes-list"></div>
+            </aside>
+            <section class="notes-workspace">
+              <div class="notes-empty" id="notes-empty"><span aria-hidden="true">✎</span><h2>Choose your note surface</h2><p>Page notes use a fixed letter-style page. Open notes provide a large expandable whiteboard.</p><div><button class="button primary-button" type="button" data-new-note="page">Page note</button><button class="button secondary-button" type="button" data-new-note="open">Open note</button></div></div>
+              <article class="word-note-editor" id="word-note-editor" hidden>
+                <div class="note-title-row"><input id="word-note-title" maxlength="100" aria-label="Note title" placeholder="Untitled note"><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
+                <div class="word-note-toolbar" role="toolbar" aria-label="Text formatting">
+                  <button type="button" data-note-command="bold" aria-label="Bold"><strong>B</strong></button><button type="button" data-note-command="italic" aria-label="Italic"><em>I</em></button><button type="button" data-note-command="underline" aria-label="Underline"><u>U</u></button>
+                  <button type="button" data-note-block="h2">Heading</button><button type="button" data-note-block="p">Body</button><button type="button" data-note-command="insertUnorderedList">• List</button><button type="button" data-note-command="insertOrderedList">1. List</button>
+                  <label class="note-font-control"><span>Font</span><select id="word-note-font" aria-label="Font"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Helvetica">Helvetica</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Verdana">Verdana</option></select></label>
+                  <label class="note-font-control"><span>Size</span><select id="word-note-font-size" aria-label="Text size"><option value="2">Small</option><option value="3" selected>Normal</option><option value="4">Large</option><option value="5">Extra large</option><option value="6">Title</option></select></label>
+                </div>
+                <div class="word-note-paper" id="word-note-content" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Start typing your notes…"></div>
+                <p class="note-save-status" id="word-note-status">Saved locally</p>
+              </article>
+              <article class="pdf-note-editor" id="pdf-note-editor" hidden>
+                <div class="note-title-row"><input id="pdf-note-title" maxlength="100" aria-label="PDF note title" placeholder="Imported PDF"><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
+                <div class="pdf-annotation-toolbar" role="toolbar" aria-label="PDF annotation tools"><button type="button" class="active" data-pdf-tool="pen">Pen</button><button type="button" data-pdf-tool="highlighter">Highlighter</button><button type="button" data-pdf-tool="text">Text</button><button type="button" data-pdf-tool="eraser">Eraser</button><label>Color<input type="color" id="pdf-annotation-color" value="#e05252"></label><label>Size<input type="range" id="pdf-annotation-size" min="1" max="24" value="4"></label><button type="button" id="pdf-annotation-undo">Undo</button><button type="button" id="pdf-annotation-clear">Clear annotations</button></div>
+                <div class="pdf-note-frame-wrap" id="pdf-note-pages" aria-label="Imported PDF pages"></div>
+                <p class="note-save-status">Original PDF layout preserved locally</p>
+              </article>
+              <article class="drawing-note-editor" id="drawing-note-editor" hidden>
+                <div class="note-title-row"><input id="drawing-note-title" maxlength="100" aria-label="Note title" placeholder="Untitled drawing"><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
+                <div class="drawing-note-toolbar" role="toolbar" aria-label="Drawing tools">
+                  <div class="drawing-tools"><button type="button" class="active" data-note-tool="pen">Pen</button><button type="button" data-note-tool="pencil">Pencil</button><button type="button" data-note-tool="calligraphy">Calligraphy</button><button type="button" data-note-tool="marker">Marker</button><button type="button" data-note-tool="highlighter">Highlighter</button><button type="button" data-note-tool="text">Text</button><button type="button" data-note-tool="eraser">Eraser</button><button type="button" data-note-tool="pan">Move</button></div>
+                  <div class="canvas-text-options" id="canvas-text-options" hidden>
+                    <div class="canvas-text-styles" aria-label="Text style"><button type="button" class="active" data-canvas-text-style="body">Body</button><button type="button" data-canvas-text-style="h1">H1</button><button type="button" data-canvas-text-style="h2">H2</button><button type="button" data-canvas-text-style="h3">H3</button></div>
+                    <button type="button" id="canvas-text-bold" aria-label="Bold"><strong>B</strong></button><button type="button" id="canvas-text-italic" aria-label="Italic"><em>I</em></button>
+                    <label class="note-font-control">Font<select id="canvas-text-font"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Helvetica">Helvetica</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Verdana">Verdana</option></select></label>
+                    <label class="note-font-control">Size<select id="canvas-text-size"><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="14">14</option><option value="16">16</option><option value="18" selected>18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option><option value="28">28</option><option value="32">32</option><option value="36">36</option><option value="42">42</option><option value="48">48</option><option value="56">56</option><option value="64">64</option><option value="72">72</option></select></label>
+                    <label class="inline-color-control">Text color<input id="canvas-text-color" type="hidden" value="#171b2d"><button type="button" class="inline-color-trigger" data-color-palette-for="canvas-text-color" style="--selected-color:#171b2d" aria-label="Choose text color"></button><div class="inline-color-palette" role="menu" hidden><button type="button" style="--swatch:#171b2d" data-pick-color="#171b2d" aria-label="Black"></button><button type="button" style="--swatch:#ffffff" data-pick-color="#ffffff" aria-label="White"></button><button type="button" style="--swatch:#e05252" data-pick-color="#e05252" aria-label="Red"></button><button type="button" style="--swatch:#f59e0b" data-pick-color="#f59e0b" aria-label="Orange"></button><button type="button" style="--swatch:#f2d34f" data-pick-color="#f2d34f" aria-label="Yellow"></button><button type="button" style="--swatch:#2fac7f" data-pick-color="#2fac7f" aria-label="Green"></button><button type="button" style="--swatch:#3b82f6" data-pick-color="#3b82f6" aria-label="Blue"></button><button type="button" style="--swatch:#665ee8" data-pick-color="#665ee8" aria-label="Purple"></button><button type="button" style="--swatch:#ec65a4" data-pick-color="#ec65a4" aria-label="Pink"></button><button type="button" style="--swatch:#8b5e3c" data-pick-color="#8b5e3c" aria-label="Brown"></button></div></label>
+                  </div>
+                  <label class="inline-color-control">Color<input id="drawing-note-color" type="hidden" value="#171b2d"><button type="button" class="inline-color-trigger" data-color-palette-for="drawing-note-color" style="--selected-color:#171b2d" aria-label="Choose drawing color"></button><div class="inline-color-palette" role="menu" hidden><button type="button" style="--swatch:#171b2d" data-pick-color="#171b2d" aria-label="Black"></button><button type="button" style="--swatch:#ffffff" data-pick-color="#ffffff" aria-label="White"></button><button type="button" style="--swatch:#e05252" data-pick-color="#e05252" aria-label="Red"></button><button type="button" style="--swatch:#f59e0b" data-pick-color="#f59e0b" aria-label="Orange"></button><button type="button" style="--swatch:#f2d34f" data-pick-color="#f2d34f" aria-label="Yellow"></button><button type="button" style="--swatch:#2fac7f" data-pick-color="#2fac7f" aria-label="Green"></button><button type="button" style="--swatch:#3b82f6" data-pick-color="#3b82f6" aria-label="Blue"></button><button type="button" style="--swatch:#665ee8" data-pick-color="#665ee8" aria-label="Purple"></button><button type="button" style="--swatch:#ec65a4" data-pick-color="#ec65a4" aria-label="Pink"></button><button type="button" style="--swatch:#8b5e3c" data-pick-color="#8b5e3c" aria-label="Brown"></button></div></label><label>Size<input id="drawing-note-size" type="range" min="1" max="36" value="4"></label>
+                  <button type="button" id="undo-note-stroke">Undo</button><button type="button" id="redo-note-stroke">Redo</button><button type="button" id="drawing-zoom-out" aria-label="Zoom out">−</button><span class="drawing-zoom-value" id="drawing-zoom-value">100%</span><button type="button" id="drawing-zoom-in" aria-label="Zoom in">+</button><button type="button" id="drawing-zoom-fit">Fit all</button><button type="button" id="toggle-page-layout" hidden>Document writing</button><button type="button" id="clear-note-canvas">Clear</button>
+                  <div class="document-text-toolbar" id="document-text-toolbar" hidden>
+                    <details class="document-toolbar-menu"><summary>Text</summary><div class="document-toolbar-popover">
+                      <div class="document-toolbar-group"><span>Text</span><button type="button" data-document-command="bold"><strong>B</strong></button><button type="button" data-document-command="italic"><em>I</em></button><button type="button" data-document-command="underline"><u>U</u></button></div>
+                      <div class="document-toolbar-group"><span>Style</span><button type="button" data-document-block="h1">H1</button><button type="button" data-document-block="h2">H2</button><button type="button" data-document-block="h3">H3</button><button type="button" data-document-block="p">Body</button></div>
+                      <div class="document-toolbar-group"><span>Lists</span><button type="button" data-document-command="insertUnorderedList">• Bullets</button><button type="button" data-document-command="insertOrderedList">1. Numbered</button></div>
+                      <div class="document-toolbar-group document-toolbar-fields"><label class="note-font-control">Font<select id="document-text-font"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Helvetica">Helvetica</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Verdana">Verdana</option></select></label><label class="note-font-control">Size<select id="document-text-size"><option value="1">10</option><option value="2">13</option><option value="3" selected>16</option><option value="4">18</option><option value="5">24</option><option value="6">32</option><option value="7">48</option></select></label><label class="document-color-control">Color<input id="document-text-color" type="color" value="#171b2d"></label></div>
+                    </div></details>
+                    <details class="document-toolbar-menu"><summary>Format</summary><div class="document-toolbar-popover document-format-popover">
+                      <div class="document-toolbar-group"><span>Alignment</span><button type="button" data-document-command="justifyLeft">Left</button><button type="button" data-document-command="justifyCenter">Center</button><button type="button" data-document-command="justifyRight">Right</button><button type="button" data-document-command="justifyFull">Justify</button></div>
+                      <div class="document-toolbar-group"><span>Line spacing</span><button type="button" data-document-line-spacing="1">1.0</button><button type="button" data-document-line-spacing="1.15">1.15</button><button type="button" data-document-line-spacing="1.5">1.5</button><button type="button" data-document-line-spacing="2">2.0</button></div>
+                      <label class="document-format-toggle"><input type="checkbox" id="document-show-page-numbers"><span>Show page numbers</span></label>
+                    </div></details>
+                    <details class="document-toolbar-menu"><summary>Insert</summary><div class="document-toolbar-popover document-insert-popover"><button type="button" id="document-insert-table" data-document-table>Table</button><button type="button" id="document-page-add">Add page</button><button type="button" id="document-page-remove">Remove selected page</button></div></details>
+                    <details class="document-toolbar-menu" id="document-edit-menu"><summary>Edit</summary><div class="document-toolbar-popover document-edit-popover">
+                      <div class="document-toolbar-group"><span>History</span><button type="button" id="document-edit-undo">Undo</button><button type="button" id="document-edit-redo">Redo</button></div>
+                      <p class="document-table-empty" id="document-table-empty">Click inside a table to edit it.</p>
+                      <div class="document-table-controls" id="document-table-controls" hidden>
+                        <div class="document-toolbar-group"><span>Borders</span><label>Width<select id="document-table-border-width"><option value="0">None</option><option value="1" selected>1 px</option><option value="2">2 px</option><option value="3">3 px</option><option value="4">4 px</option><option value="6">6 px</option></select></label><label>Color<input type="color" id="document-table-border-color" value="#9aa0af"></label></div>
+                        <div class="document-toolbar-group"><span>Rows</span><button type="button" id="document-table-add-row">Add row</button><button type="button" id="document-table-remove-row">Remove row</button></div>
+                        <div class="document-toolbar-group"><span>Columns</span><button type="button" id="document-table-add-column">Add column</button><button type="button" id="document-table-remove-column">Remove column</button></div>
+                        <button type="button" class="document-delete-table" id="document-table-delete">Delete table</button>
+                      </div>
+                    </div></details>
+                    <span class="document-toolbar-hint">Text, Insert, and Edit</span>
+                    <div class="document-page-controls" id="document-page-controls" hidden></div>
+                  </div>
+                </div>
+                <div class="drawing-canvas-wrap"><svg id="drawing-note-canvas" viewBox="0 0 2000 4000" preserveAspectRatio="none" role="img" aria-label="Infinite-style drawing canvas"></svg><div class="open-note-text-layer" id="open-note-text-layer" aria-label="Open note text"></div><div class="page-document-pages" id="page-document-pages" hidden></div><div class="page-actions" id="page-actions" hidden><button class="remove-note-page" id="remove-note-page" type="button">− Remove last page</button><button class="add-note-page" id="add-note-page" type="button">＋ Add page</button></div></div>
+                <p class="note-save-status" id="drawing-note-status">Saved locally</p>
+              </article>
+            </section>
+          </div>
+        </section>
+
         <section class="export-page" id="export" aria-labelledby="export-page-heading" hidden>
-          <header class="export-page-header"><div><p class="eyebrow">Take your cards anywhere</p><h1 id="export-page-heading">Export</h1><p class="intro">Export a study set or a whole folder for Anki, spreadsheets, or another flashcard app.</p></div></header>
+          <header class="export-page-header"><div><p class="eyebrow">Take your work anywhere</p><h1 id="export-page-heading">Export</h1><p class="intro">Export flashcards for Anki or spreadsheets, and save notes as images, editable documents, text, or their original PDF.</p></div></header>
           <div class="export-layout">
             <article class="export-card">
               <div><p class="section-label">Choose material</p><h2>Flashcards to export</h2></div>
@@ -277,6 +352,36 @@
               <p class="export-status" id="export-status" aria-live="polite">Exports include flashcard fronts and backs. Questions and Feynman prompts are not included.</p>
             </article>
           </div>
+          <section class="note-export-section" aria-labelledby="note-export-heading">
+            <div class="note-export-heading"><div><p class="section-label">Your notes</p><h2 id="note-export-heading">Export a note</h2><p>Open notes are cropped to what you actually wrote or drew. Drag across the preview to choose a different section.</p></div></div>
+            <div class="export-layout note-export-layout">
+              <article class="export-card">
+                <label class="export-field">Note<select id="export-note-select"></select></label>
+                <label class="export-field">File format<select id="export-note-format"></select></label>
+                <div class="export-selection-summary" id="export-note-summary">Choose a note.</div>
+                <div class="note-export-crop-fields" id="export-note-crop-fields">
+                  <label>Left<input type="number" id="export-note-crop-x" min="0" step="1"></label>
+                  <label>Top<input type="number" id="export-note-crop-y" min="0" step="1"></label>
+                  <label>Width<input type="number" id="export-note-crop-width" min="1" step="1"></label>
+                  <label>Height<input type="number" id="export-note-crop-height" min="1" step="1"></label>
+                </div>
+                <div class="note-export-crop-actions" id="export-note-crop-actions">
+                  <button type="button" class="button secondary-button" id="export-note-fit-content">Fit to content</button>
+                  <button type="button" class="button secondary-button" id="export-note-whole-canvas">Whole canvas</button>
+                </div>
+                <button type="button" class="button primary-button export-action" id="export-note-button">Export note</button>
+                <p class="export-status" id="export-note-status" aria-live="polite">The preview shows exactly what will be exported.</p>
+              </article>
+              <article class="export-card note-export-preview-card">
+                <div><p class="section-label">Preview and crop</p><h2>Choose the section</h2></div>
+                <div class="note-export-preview-wrap" id="export-note-preview-wrap">
+                  <canvas id="export-note-preview" width="960" height="620" aria-label="Note export preview"></canvas>
+                  <div class="note-export-preview-empty" id="export-note-preview-empty">Choose a note to preview it.</div>
+                </div>
+                <p class="note-export-help" id="export-note-help">Drag over the preview to select an area. The shaded region will not be exported.</p>
+              </article>
+            </div>
+          </section>
         </section>
 
         <section class="course-page" id="course-page" aria-labelledby="library-dialog-title" hidden>
@@ -297,7 +402,7 @@
               <div><p class="section-label">Choose a study mode</p><h2 id="custom-study-title">My study set</h2></div>
             </header>
             <section class="built-in-unit-picker" id="built-in-unit-picker" hidden>
-              <div class="unit-picker-heading"><div><p class="section-label">Choose sections</p><h3>Select what to study</h3></div><button type="button" id="toggle-all-built-in-units">Clear all</button></div>
+              <div class="unit-picker-heading"><div><p class="section-label">Choose sections</p><h3>Select what to study</h3></div><div class="unit-picker-actions"><button type="button" id="toggle-calculus-ab" hidden>AB only: Off</button><button type="button" id="toggle-all-built-in-units">Clear all</button></div></div>
               <div class="built-in-unit-grid" id="built-in-unit-grid"></div>
             </section>
             <div class="custom-study-options">
@@ -346,9 +451,7 @@
                 <em>Click to reveal</em>
               </button>
               <div class="anki-session-counts" id="custom-anki-session-counts" hidden aria-label="Cards remaining in this Anki session">
-                <span class="anki-count-new">0</span><b>+</b><span class="anki-count-learning">0</span><b>+</b><span class="anki-count-review">0</span>
-                <div class="anki-type-markers" aria-hidden="true"><i class="anki-type-marker-new"></i><i class="anki-type-marker-learning"></i><i class="anki-type-marker-review"></i></div>
-                <small>New · Learning · Review</small>
+                <span class="anki-count-group anki-count-group-new"><strong class="anki-count-new">0</strong><small>New</small></span><b aria-hidden="true">+</b><span class="anki-count-group anki-count-group-learning"><strong class="anki-count-learning">0</strong><small>Learning</small></span><b aria-hidden="true">+</b><span class="anki-count-group anki-count-group-review"><strong class="anki-count-review">0</strong><small>Review</small></span>
               </div>
               <button type="button" class="button primary-button custom-reveal-button" id="custom-review-reveal">Reveal answer</button>
               <section class="custom-question-practice" id="custom-question-practice" hidden>
@@ -380,10 +483,11 @@
               </section>
               <footer id="custom-regular-controls"><button type="button" class="button secondary-button" id="custom-review-previous">← Previous</button><button type="button" class="button primary-button" id="custom-review-next">Next →</button></footer>
               <div class="custom-anki-ratings" id="custom-anki-ratings" hidden>
-                <button type="button" data-custom-anki-rating="again"><span>10m</span><strong>Again</strong></button>
-                <button type="button" data-custom-anki-rating="hard"><span>1d</span><strong>Hard</strong></button>
-                <button type="button" data-custom-anki-rating="good"><span>3d</span><strong>Good</strong></button>
-                <button type="button" data-custom-anki-rating="easy"><span>7d</span><strong>Easy</strong></button>
+                <button type="button" data-custom-anki-rating="again"><span>—</span><strong>Again</strong></button>
+                <button type="button" data-custom-anki-rating="hard"><span>—</span><strong>Hard</strong></button>
+                <button type="button" data-custom-anki-rating="good"><span>—</span><strong>Good</strong></button>
+                <button type="button" data-custom-anki-rating="easy"><span>—</span><strong>Easy</strong></button>
+                <button type="button" class="anki-remove-choice" id="remove-custom-anki-study" title="Double-click to remove this card" aria-label="Double-click to remove this card"><strong>Remove</strong></button>
               </div>
             </div>
           </div>
@@ -443,11 +547,24 @@
             </div>
             <div class="settings-panel" data-settings-panel="general">
             <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">Profile</p><h3>Name and birthday</h3></div><p>Personalize your greeting and birthday celebration. This stays on your device.</p></div>
+              <div class="settings-profile-grid">
+                <label class="settings-profile-name">Name<input id="settings-profile-name" maxlength="50" autocomplete="name" required></label>
+                <label>Birth month<select id="settings-profile-birth-month" aria-label="Birth month" required></select></label>
+                <label>Birth day<select id="settings-profile-birth-day" aria-label="Birth day" required></select></label>
+              </div>
+            </section>
+            <section class="settings-card">
               <div class="settings-card-heading"><div><p class="section-label">Appearance</p><h3>Theme</h3></div><p>Choose how Your Study Buddy looks.</p></div>
               <div class="theme-options" role="radiogroup" aria-label="Color theme">
                 <label><input type="radio" name="theme" value="light"><span><strong>Light</strong><small>Always use the light theme</small></span></label>
                 <label><input type="radio" name="theme" value="dark"><span><strong>Dark</strong><small>Always use the dark theme</small></span></label>
               </div>
+            </section>
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">Your data</p><h3>Export your information</h3></div><p>Download a portable JSON backup of your personal study data and preferences.</p></div>
+              <div class="settings-data-export"><div><strong>Included in the backup</strong><span>Profile, settings, personal sets, folders, notes, alarms, Anki schedules, and review progress.</span></div><button type="button" class="button secondary-button" id="export-user-information">Export my information</button></div>
+              <p class="settings-export-status" id="settings-export-status">Built-in textbook and study-deck content is not duplicated.</p>
             </section>
             </div>
             <div class="settings-panel" data-settings-panel="anki" hidden>
@@ -458,31 +575,33 @@
                 <label>Maximum reviews per day<input name="maxReviewsPerDay" type="number" min="0" max="9999"></label>
                 <label>New-card order<select name="newCardOrder"><option value="random">Random</option><option value="added">Order added</option></select></label>
                 <label>New/review order<select name="newReviewOrder"><option value="reviews-first">Reviews first</option><option value="mix">Mix new and review</option><option value="new-first">New cards first</option></select></label>
+                <label>Review order<select name="reviewOrder"><option value="due">Due date</option><option value="random">Random</option></select></label>
+                <label>Next day starts at<input name="dayStartHour" type="number" min="0" max="23"></label>
+                <label>Learn ahead limit (minutes)<input name="learnAheadMinutes" type="number" min="0" max="1440"></label>
+                <label class="settings-check"><input name="newCardsIgnoreReviewLimit" type="checkbox"><span>New cards ignore review limit</span></label>
               </div>
             </section>
             <section class="settings-card">
-              <div class="settings-card-heading"><div><p class="section-label">New cards</p><h3>Learning steps</h3></div><p>Enter minute steps separated by spaces or commas.</p></div>
+              <div class="settings-card-heading"><div><p class="section-label">FSRS 6</p><h3>Current Anki scheduling</h3></div><p>Intervals are calculated from memory stability, difficulty, review history, and desired retention. On a new card, Easy can correctly be a week or longer.</p></div>
               <div class="settings-grid">
-                <label class="settings-wide">Learning steps (minutes)<input name="learningSteps" type="text" placeholder="1, 10"></label>
-                <label>Graduating interval (days)<input name="graduatingInterval" type="number" min="1" max="36500"></label>
-                <label>Easy interval (days)<input name="easyInterval" type="number" min="1" max="36500"></label>
-                <label>Starting ease (%)<input name="startingEase" type="number" min="130" max="500"></label>
-              </div>
-            </section>
-            <section class="settings-card">
-              <div class="settings-card-heading"><div><p class="section-label">Reviews</p><h3>Interval behavior</h3></div><p>Control how quickly mature cards move into the future.</p></div>
-              <div class="settings-grid">
-                <label>Hard interval (%)<input name="hardInterval" type="number" min="100" max="200"></label>
-                <label>Easy bonus (%)<input name="easyBonus" type="number" min="100" max="300"></label>
-                <label>Interval modifier (%)<input name="intervalModifier" type="number" min="10" max="500"></label>
+                <label>Desired retention (%)<input name="desiredRetention" type="number" min="70" max="99" step="0.1"></label>
                 <label>Maximum interval (days)<input name="maximumInterval" type="number" min="1" max="36500"></label>
+                <label class="settings-check"><input name="enableFuzz" type="checkbox"><span>Apply Anki interval fuzz</span></label>
+                <label class="settings-check"><input name="buryNewSiblings" type="checkbox"><span>Bury new siblings</span></label>
+                <label class="settings-check"><input name="buryReviewSiblings" type="checkbox"><span>Bury review siblings</span></label>
+                <label class="settings-check"><input name="buryLearningSiblings" type="checkbox"><span>Bury interday-learning siblings</span></label>
+              </div>
+            </section>
+            <section class="settings-card">
+              <div class="settings-card-heading"><div><p class="section-label">New cards</p><h3>Learning steps</h3></div><p>Use Anki-style delays such as 1m 10m, 2h, or 1d. Easy is calculated by FSRS rather than fixed to five days.</p></div>
+              <div class="settings-grid">
+                <label class="settings-wide">Learning steps<input name="learningSteps" type="text" placeholder="1m 10m"></label>
               </div>
             </section>
             <section class="settings-card">
               <div class="settings-card-heading"><div><p class="section-label">Lapses</p><h3>Forgotten cards and leeches</h3></div><p>Choose relearning steps and what happens to repeatedly missed cards.</p></div>
               <div class="settings-grid">
-                <label class="settings-wide">Relearning steps (minutes)<input name="relearningSteps" type="text" placeholder="10"></label>
-                <label>Minimum interval (days)<input name="minimumLapseInterval" type="number" min="1" max="36500"></label>
+                <label class="settings-wide">Relearning steps<input name="relearningSteps" type="text" placeholder="10m"></label>
                 <label>Leech threshold<input name="leechThreshold" type="number" min="1" max="99"></label>
                 <label>Leech action<select name="leechAction"><option value="tag">Mark as leech</option><option value="suspend">Suspend card</option></select></label>
               </div>
@@ -494,48 +613,39 @@
 
         <div class="dashboard-grid">
           <div class="primary-column">
-            <section class="continue-card" id="continue-card" aria-labelledby="continue-heading" hidden>
-              <div class="continue-visual" aria-hidden="true">
-                <span class="orbit orbit-one"></span>
-                <span class="orbit orbit-two"></span>
-                <svg viewBox="0 0 72 72"><path d="M16 18h25a13 13 0 0 1 13 13v28H29a13 13 0 0 1-13-13V18Z" /><path d="M29 25v34" /><path d="M37 31h10M37 39h10" /></svg>
-              </div>
-              <div class="continue-content">
-                <div class="card-kicker">Continue learning</div>
-                <div class="continue-title-row">
-                  <div>
-                    <h2 id="continue-heading">Campbell Biology</h2>
-                    <p>Unit 2 · The Cell</p>
-                  </div>
-                  <span class="course-badge">BIO</span>
-                </div>
-                <div class="progress-copy">
-                  <span>Course progress</span>
-                  <strong>68%</strong>
-                </div>
-                <div class="progress-track" role="progressbar" aria-label="Campbell Biology course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
-                  <span style="width: 68%"></span>
-                </div>
-                <button class="button light-button" type="button" id="continue-button">
-                  Continue lesson
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-                </button>
-              </div>
-            </section>
-
             <section class="card active-anki-card" aria-labelledby="active-anki-heading">
               <div class="card-header">
                 <div><p class="section-label">Daily review</p><h2 id="active-anki-heading">Active Anki decks</h2></div>
                 <span class="active-anki-total" id="active-anki-total">0 due</span>
               </div>
-              <p class="active-anki-intro">Jump straight into decks that have new, learning, or review cards ready today.</p>
+              <p class="active-anki-intro">Decks appear here after you start their Anki mode. Finished decks stay visible for the day so you can track your progress.</p>
               <div class="active-anki-list" id="active-anki-list" aria-live="polite"></div>
             </section>
 
+            <section class="card freestyle-feynman-card" aria-labelledby="freestyle-feynman-heading">
+              <div class="card-header">
+                <div><p class="section-label">Explain any topic</p><h2 id="freestyle-feynman-heading">Freestyle Feynman</h2></div>
+              </div>
+              <p class="freestyle-feynman-intro">Choose a writing time and add a prompt if you want one. The timer starts as soon as you begin.</p>
+              <div class="freestyle-feynman-setup" id="freestyle-feynman-setup">
+                <label class="freestyle-prompt-field">Prompt (optional)<input id="freestyle-feynman-prompt-input" type="text" maxlength="240" placeholder="e.g. Explain cellular respiration in detail"></label>
+                <div class="freestyle-time-fields">
+                  <label>Time<input id="freestyle-feynman-time" type="number" min="1" max="120" value="5"></label>
+                  <label>Unit<select id="freestyle-feynman-unit"><option value="seconds">Seconds</option><option value="minutes" selected>Minutes</option></select></label>
+                </div>
+                <button class="button primary-button" type="button" id="start-freestyle-feynman">Start writing</button>
+              </div>
+              <div class="freestyle-feynman-session" id="freestyle-feynman-session" hidden>
+                <div class="freestyle-session-heading"><div><small>Your prompt</small><h3 id="freestyle-feynman-prompt"></h3></div><span id="freestyle-feynman-countdown">05:00</span></div>
+                <label class="freestyle-response-field">Your explanation<textarea id="freestyle-feynman-response" placeholder="Explain the idea in plain language, connect the steps, and identify anything you cannot yet explain…"></textarea></label>
+                <div class="freestyle-session-footer"><span id="freestyle-feynman-status">Timer running. Keep developing your explanation.</span><div><button class="button secondary-button" type="button" id="restart-freestyle-feynman">Restart timer</button><button class="button primary-button" type="button" id="new-freestyle-feynman">New prompt</button></div></div>
+              </div>
+            </section>
+
             <section class="card tasks-card" aria-labelledby="tasks-heading">
-              <div class="card-header"><div><p class="section-label">Reminders</p><h2 id="tasks-heading">Study alarms</h2></div><button class="button text-button" type="button" id="add-task-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create alarm</button></div>
-              <p class="alarm-intro">Schedule a notification on this Mac to remind you when it is time to study.</p>
-              <ul class="task-list alarm-list" id="task-list" aria-live="polite"></ul>
+              <div class="card-header"><div><p class="section-label">Reminders</p><h2 id="tasks-heading">Study alarms</h2></div><span class="coming-soon-badge">Coming soon</span><button class="button text-button" type="button" id="add-task-button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create alarm</button></div>
+              <div class="alarm-coming-soon"><span class="alarm-coming-icon" aria-hidden="true">◷</span><div><strong>Study reminders are coming soon</strong><p>The alarm system is being redesigned before it returns.</p></div></div>
+              <ul class="task-list alarm-list" id="task-list" aria-live="polite" hidden></ul>
             </section>
 
           </div>
@@ -549,6 +659,7 @@
       <a href="#courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></svg><span>Textbooks</span></a>
       <a href="#flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6" /></svg><span>Study</span></a>
       <a href="#create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Create</span></a>
+      <a href="#notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z" /><path d="M8 11h8M8 15h8" /></svg><span>Notes</span></a>
       <a href="#study-guide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg><span>Guide</span></a>
     </nav>
 
@@ -571,6 +682,57 @@
       </form>
     </dialog>
 
+    <dialog class="card-tool-dialog drawing-dialog" id="drawing-dialog" aria-labelledby="drawing-dialog-title">
+      <div class="card-tool-shell">
+        <div class="dialog-header"><div><p class="section-label">Flashcard drawing</p><h2 id="drawing-dialog-title">Draw on the card</h2></div><button class="icon-button" type="button" id="close-drawing-dialog" aria-label="Close drawing tool">×</button></div>
+        <div class="drawing-toolbar" role="toolbar" aria-label="Drawing tools"><button type="button" class="active" data-drawing-tool="pen">Pen</button><button type="button" data-drawing-tool="eraser">Eraser</button><label class="inline-color-control">Color<input type="hidden" id="drawing-color" value="#171b2d"><button type="button" class="inline-color-trigger" data-color-palette-for="drawing-color" style="--selected-color:#171b2d" aria-label="Choose drawing color"></button><div class="inline-color-palette" role="menu" hidden><button type="button" style="--swatch:#171b2d" data-pick-color="#171b2d" aria-label="Black"></button><button type="button" style="--swatch:#ffffff" data-pick-color="#ffffff" aria-label="White"></button><button type="button" style="--swatch:#e05252" data-pick-color="#e05252" aria-label="Red"></button><button type="button" style="--swatch:#f59e0b" data-pick-color="#f59e0b" aria-label="Orange"></button><button type="button" style="--swatch:#f2d34f" data-pick-color="#f2d34f" aria-label="Yellow"></button><button type="button" style="--swatch:#2fac7f" data-pick-color="#2fac7f" aria-label="Green"></button><button type="button" style="--swatch:#3b82f6" data-pick-color="#3b82f6" aria-label="Blue"></button><button type="button" style="--swatch:#665ee8" data-pick-color="#665ee8" aria-label="Purple"></button><button type="button" style="--swatch:#ec65a4" data-pick-color="#ec65a4" aria-label="Pink"></button><button type="button" style="--swatch:#8b5e3c" data-pick-color="#8b5e3c" aria-label="Brown"></button></div></label><label>Size <input type="range" id="drawing-size" min="2" max="36" value="6"></label><button type="button" id="drawing-undo">Undo</button><button type="button" id="drawing-clear">Clear</button></div>
+        <div class="drawing-stage"><canvas id="flashcard-drawing-canvas" width="1000" height="600" aria-label="Drawing canvas"></canvas></div>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-drawing">Cancel</button><button type="button" class="button primary-button" id="save-drawing">Use drawing</button></div>
+      </div>
+    </dialog>
+
+    <dialog class="card-tool-dialog math-dialog" id="math-dialog" aria-labelledby="math-dialog-title">
+      <div class="card-tool-shell">
+        <div class="dialog-header"><div><p class="section-label">Flashcard text</p><h2 id="math-dialog-title">Insert math syntax</h2></div><button class="icon-button" type="button" id="close-math-dialog" aria-label="Close math tool">×</button></div>
+        <label class="math-expression-label">Expression<textarea id="math-expression" rows="2" placeholder="Example: E = mc^2 or \sqrt{x}"></textarea></label>
+        <section class="math-glossary" aria-labelledby="math-glossary-heading">
+          <div class="math-glossary-heading"><div><p class="section-label">Reference</p><h3 id="math-glossary-heading">Math glossary</h3></div><label><span class="sr-only">Search math glossary</span><input id="math-glossary-search" type="search" placeholder="Search integral, derivative, Greek…"></label></div>
+          <div class="math-glossary-list" id="math-glossary-list" aria-live="polite"></div>
+        </section>
+        <div class="math-preview"><span>Preview</span><strong id="math-preview">Your expression will appear here.</strong></div>
+        <p class="math-help">Choose an entry from the glossary or type syntax such as <code>\int</code>, <code>\partial</code>, <code>\sqrt{x}</code>, <code>\frac{a}{b}</code>, <code>^2</code>, and <code>_1</code>.</p>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-math">Cancel</button><button type="button" class="button primary-button" id="insert-math">Insert into card</button></div>
+      </div>
+    </dialog>
+
+    <dialog class="card-tool-dialog code-dialog" id="code-dialog" aria-labelledby="code-dialog-title">
+      <div class="card-tool-shell">
+        <div class="dialog-header"><div><p class="section-label">Flashcard text</p><h2 id="code-dialog-title">Insert code snippet</h2></div><button class="icon-button" type="button" id="close-code-dialog" aria-label="Close code tool">×</button></div>
+        <div class="code-options"><label>Language<select id="code-language"><option value="">Plain text</option><option value="python">Python</option><option value="javascript">JavaScript</option><option value="typescript">TypeScript</option><option value="java">Java</option><option value="c">C</option><option value="cpp">C++</option><option value="csharp">C#</option><option value="swift">Swift</option><option value="r">R</option><option value="sql">SQL</option><option value="html">HTML</option><option value="css">CSS</option><option value="bash">Shell</option></select></label><label class="code-line-toggle"><input id="code-line-numbers" type="checkbox" checked><span>Show line numbers</span></label></div>
+        <label class="code-editor-label">Code<textarea id="code-expression" rows="9" spellcheck="false" placeholder="Type or paste several lines of code…"></textarea></label>
+        <div class="code-preview"><span>Preview</span><div id="code-preview-content"></div></div>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-code">Cancel</button><button type="button" class="button primary-button" id="insert-code">Insert into card</button></div>
+      </div>
+    </dialog>
+
+    <dialog class="welcome-profile-dialog" id="welcome-profile-dialog" aria-labelledby="welcome-profile-title">
+      <form method="dialog" id="welcome-profile-form">
+        <div class="welcome-bear" aria-hidden="true"><img src="./your-study-buddy-icon.png" alt=""></div>
+        <p class="section-label">Welcome to Your Study Buddy</p>
+        <h2 id="welcome-profile-title">Let’s personalize your app</h2>
+        <p class="welcome-profile-copy">Tell your study buddy what to call you—and when to celebrate you.</p>
+        <label>Your name<input id="welcome-profile-name" name="name" required maxlength="50" autocomplete="name" placeholder="What should we call you?"></label>
+        <fieldset class="welcome-birthday-fields">
+          <legend>Your birthday</legend>
+          <label>Month<select id="welcome-profile-birth-month" name="birthMonth" required aria-label="Birth month"></select></label>
+          <label>Day<select id="welcome-profile-birth-day" name="birthDay" required aria-label="Birth day"></select></label>
+        </fieldset>
+        <p class="welcome-privacy">Your information stays on this device.</p>
+        <button class="button primary-button" type="submit">Start studying</button>
+      </form>
+    </dialog>
+
+
     <dialog class="task-dialog folder-editor-dialog" id="folder-editor-dialog" aria-labelledby="folder-editor-title">
       <form method="dialog" id="folder-editor-form">
         <div class="dialog-header">
@@ -583,14 +745,29 @@
       </form>
     </dialog>
 
-    <dialog class="task-dialog move-deck-dialog" id="move-deck-dialog" aria-labelledby="move-deck-title">
-      <form method="dialog" id="move-deck-form">
+    <dialog class="task-dialog folder-editor-dialog" id="note-folder-dialog" aria-labelledby="note-folder-dialog-title">
+      <form method="dialog" id="note-folder-form">
         <div class="dialog-header">
-          <div><p class="section-label">Organize</p><h2 id="move-deck-title">Move study set</h2></div>
-          <button class="icon-button" type="button" id="close-move-deck" aria-label="Close move dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+          <div><p class="section-label">Notebook</p><h2 id="note-folder-dialog-title">Create a notebook</h2></div>
+          <button class="icon-button" type="button" id="close-note-folder-dialog" aria-label="Close notebook editor">×</button>
         </div>
-        <label>Destination<select id="move-deck-folder"><option value="">No folder</option></select></label>
-        <div class="dialog-actions"><button class="button secondary-button" type="button" id="cancel-move-deck">Cancel</button><button class="button primary-button" type="submit">Move set</button></div>
+        <label>Notebook name<input id="note-folder-name" required maxlength="60" placeholder="e.g. Biology notes" /></label>
+        <label class="folder-editor-color">Notebook color<input id="note-folder-color" type="color" value="#d9b66f" /></label>
+        <div class="dialog-actions"><button class="button secondary-button" type="button" id="cancel-note-folder">Cancel</button><button class="button primary-button" type="submit" id="save-note-folder">Create notebook</button></div>
+      </form>
+    </dialog>
+
+    <dialog class="task-dialog note-actions-dialog" id="note-actions-dialog" aria-labelledby="note-actions-dialog-title">
+      <form method="dialog" id="note-actions-form">
+        <div class="dialog-header">
+          <div><p class="section-label">Note options</p><h2 id="note-actions-dialog-title">Note actions</h2></div>
+          <button class="icon-button" type="button" id="close-note-actions" aria-label="Close note options">×</button>
+        </div>
+        <div class="note-actions-grid">
+          <button class="button secondary-button" type="button" id="note-actions-copy">Make a copy</button>
+          <button class="button secondary-button" type="button" id="note-actions-create-cards">Create flashcards</button>
+        </div>
+        <div class="dialog-actions"><button class="button secondary-button" type="button" id="cancel-note-actions">Close</button></div>
       </form>
     </dialog>
 
@@ -613,11 +790,37 @@
     <script src="./sat-vocabulary-data.js"></script>
     <script src="./appsych-data.js"></script>
     <script src="./apush-textbook-data.js"></script>
+    <script src="./history-visuals.js"></script>
     <script src="./apart-data.js"></script>
     <script src="./apcsp-data.js"></script>
     <script src="./apbiology-data.js"></script>
     <script src="./apstats-data.js"></script>
     <script src="./apchem-data.js"></script>
+    <script src="./science-diagrams.js"></script>
+    <script src="./apcalculus-data.js"></script>
+    <script src="./apprecalculus-data.js"></script>
+    <script src="./apcomparative-government-data.js"></script>
+    <script src="./ap-economics-data.js"></script>
+    <script src="./ap-music-theory-data.js"></script>
+    <script src="./ap-latin-data.js"></script>
+    <script src="./ib-diploma-data.js"></script>
+    <script src="./ib-course-crosswalk.js"></script>
+    <script src="./ib-math-aa-data.js"></script>
+    <script src="./ib-history-americas-data.js"></script>
+    <script src="./ib-visuals.js"></script>
+    <script src="./mcat-review-data.js"></script>
+    <script src="./mcat-biochem-expansion.js"></script>
+    <script src="./ap-african-american-studies-data.js"></script>
+    <script src="./ap-cybersecurity-data.js"></script>
+    <script src="./ap-business-personal-finance-data.js"></script>
+    <script src="./ap-new-course-expansions.js"></script>
+    <script src="./formula-enrichments.js"></script>
+    <script src="./vendor/ts-fsrs.umd.js"></script>
     <script src="./app.js"></script>
+    <script src="./fullscreen.js"></script>
+    <script src="./table-editing.js"></script>
+    <script src="./open-note-controls.js"></script>
+    <script src="./pdf-annotation.bundle.js"></script>
+    <script src="./birthday-easter-egg.js"></script>
   </body>
 </html>

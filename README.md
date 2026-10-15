@@ -48,7 +48,7 @@ The app contains original study material organized around these books; it does n
 
 ### Pre-built study decks
 
-The current release includes 13 collections (12 AP courses and SAT Vocabulary):
+The current release includes 16 collections (15 AP courses and SAT Vocabulary):
 
 1. AP Psychology
 2. AP U.S. Government and Politics
@@ -62,7 +62,10 @@ The current release includes 13 collections (12 AP courses and SAT Vocabulary):
 10. AP Biology
 11. AP Statistics
 12. AP Chemistry
-13. SAT Vocabulary
+13. AP African American Studies
+14. AP Cybersecurity
+15. AP Business with Personal Finance
+16. SAT Vocabulary
 
 Each collection is divided into smaller units so students can study a specific topic or combine multiple units into one session.
 

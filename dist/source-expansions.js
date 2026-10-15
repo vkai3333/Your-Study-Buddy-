@@ -321,6 +321,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["critical constants", "The pressure, molar volume, and temperature at a substance's critical point."],
       ["supercritical fluid", "A dense fluid above its critical temperature and pressure with no liquid-vapor boundary."],
       ["reduced variable", "A variable divided by its corresponding critical constant."],
+      ["barometric formula", "A relation describing how the pressure of an isothermal atmosphere decreases with altitude."],
+      ["Boyle temperature", "The temperature at which a real gas initially behaves ideally as pressure approaches zero because its second virial coefficient is zero."],
     ],
     2: [
       ["thermodynamics", "The quantitative study of energy transformations."],
@@ -339,6 +341,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["Joule expansion", "Free expansion of a gas into a vacuum without heat transfer or external work."],
       ["Joule-Thomson coefficient", "The change in temperature with pressure during a constant-enthalpy throttling process."],
       ["inversion temperature", "A temperature at which the Joule-Thomson coefficient changes sign."],
+      ["adiabatic bomb calorimeter", "A constant-volume calorimeter insulated so that combustion energy is obtained from the measured temperature rise."],
+      ["differential scanning calorimetry", "A technique that measures the heat flow needed to keep a sample and reference at the same temperature while they are heated or cooled."],
     ],
     3: [
       ["Carnot cycle", "An ideal reversible cycle made of isothermal and adiabatic expansion and compression steps."],
@@ -352,6 +356,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["maximum non-expansion work", "The greatest work other than pressure-volume work obtainable at constant temperature and pressure."],
       ["Gibbs-Helmholtz equation", "A relation describing the temperature dependence of Gibbs energy using enthalpy."],
       ["Maxwell relation", "One of several identities connecting derivatives of thermodynamic state functions."],
+      ["coefficient of performance", "The heat transferred by a refrigerator or heat pump divided by the work required to operate it."],
+      ["residual entropy", "Entropy that remains at absolute zero when a solid retains frozen-in orientational or configurational disorder."],
     ],
     4: [
       ["chemical potential", "The molar Gibbs-energy contribution of a component and the criterion governing phase transfer."],
@@ -363,6 +369,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["vaporization", "The phase transition from liquid to gas."],
       ["sublimation", "The direct phase transition from solid to gas."],
       ["Ehrenfest classification", "Classification of phase transitions by which derivative of Gibbs energy is discontinuous."],
+      ["lambda transition", "A continuous phase transition whose heat-capacity curve has a sharp lambda-shaped peak."],
+      ["critical isotherm", "The isotherm passing through the critical point, where liquid and vapor become indistinguishable."],
     ],
     5: [
       ["partial molar volume", "The change in total volume when an infinitesimal amount of a component is added at fixed conditions."],
@@ -375,6 +383,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["regular solution", "A solution model with ideal mixing entropy but nonzero mixing enthalpy."],
       ["semipermeable membrane", "A membrane that passes solvent while blocking selected solutes."],
       ["Debye-Huckel theory", "A model relating ionic activity coefficients to electrostatic interactions in dilute solutions."],
+      ["mean activity coefficient", "The experimentally accessible geometric mean of the activity coefficients of the ions in an electrolyte."],
+      ["freezing-point depression", "The lowering of a solvent's freezing point caused by a dissolved solute, a colligative effect governed by solute particle concentration."],
     ],
     6: [
       ["constituent", "A chemical species present in a system."],
@@ -387,6 +397,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["eutectic halt", "A pause in cooling while a eutectic mixture freezes."],
       ["incongruent melting", "Melting in which a compound forms a liquid of different composition plus another solid."],
       ["zone refining", "Purification by moving a molten zone through a solid so impurities concentrate at one end."],
+      ["congruent melting", "Melting in which a compound forms a liquid having the same composition as the solid."],
+      ["tie line", "A line across a two-phase region whose endpoints give the compositions of the two phases in equilibrium."],
     ],
     7: [
       ["extent of reaction", "A variable that measures reaction progress according to stoichiometry."],
@@ -402,6 +414,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["standard hydrogen electrode", "The reference electrode assigned a standard potential of zero."],
       ["electrode couple", "The oxidized and reduced forms associated with an electrode half-reaction."],
       ["temperature coefficient of cell potential", "The rate at which a cell's standard potential changes with temperature."],
+      ["concentration cell", "An electrochemical cell whose potential arises from a difference in concentration or activity between otherwise similar half-cells."],
+      ["liquid junction potential", "A potential difference formed where two electrolyte solutions meet because their ions diffuse at different rates."],
     ],
     8: [
       ["classical catastrophe", "A prediction of classical physics that conflicts with observed microscopic behavior."],
@@ -409,6 +423,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["photoelectron", "An electron emitted from matter after absorption of a sufficiently energetic photon."],
       ["commutator", "An operator expression used to determine whether two quantum observables are compatible."],
       ["expectation value", "The probability-weighted mean result of many measurements on identically prepared systems."],
+      ["acceptable wavefunction", "A wavefunction that is single-valued, finite, continuous, square-integrable, and consistent with the system's boundary conditions."],
+      ["complementary observables", "A pair of observables represented by noncommuting operators and therefore subject to a joint uncertainty relation."],
     ],
     9: [
       ["boundary condition", "A restriction a wavefunction must satisfy at the limits of its allowed region."],
@@ -416,6 +432,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["Hermite polynomial", "A polynomial appearing in harmonic-oscillator wavefunctions."],
       ["spherical harmonic", "The angular part of a rotational or atomic wavefunction."],
       ["variational principle", "A method that uses a trial wavefunction to place an upper bound on the ground-state energy."],
+      ["barrier penetration", "The nonzero extension of a quantum wavefunction into a classically forbidden potential-energy region."],
+      ["finite potential well", "A bound-state model with barriers of finite height, allowing the wavefunction to penetrate beyond the well."],
     ],
     10: [
       ["Rydberg formula", "A relation describing the wavelengths of hydrogenic spectral lines."],
@@ -423,6 +441,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["orbital penetration", "The extent to which an electron in an orbital approaches the nucleus."],
       ["effective nuclear charge", "The net positive charge experienced by an electron after shielding is considered."],
       ["Russell-Saunders coupling", "A scheme that combines individual orbital and spin angular momenta into total atomic values."],
+      ["building-up principle", "The procedure for constructing ground-state electron configurations by filling orbitals in order of increasing energy while obeying Pauli's principle and Hund's rule."],
+      ["electron affinity", "The energy change associated with attaching an electron to a gas-phase atom."],
     ],
     11: [
       ["overlap integral", "A measure of the spatial overlap between two orbitals."],
@@ -430,6 +450,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["sigma orbital", "A molecular orbital with cylindrical symmetry around the internuclear axis."],
       ["pi orbital", "A molecular orbital with a nodal plane containing the internuclear axis."],
       ["configuration interaction", "A method that improves a wavefunction by mixing multiple electron configurations."],
+      ["Coulomb integral", "An integral representing the energy of an electron in an atomic orbital interacting with the molecular framework."],
+      ["resonance integral", "An integral that measures the energetic coupling between atomic orbitals on different atoms in a molecular-orbital treatment."],
     ],
     12: [
       ["irreducible representation", "A fundamental symmetry pattern used to classify molecular orbitals and motions."],
@@ -437,6 +459,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["great orthogonality theorem", "The mathematical foundation governing relationships among group representations."],
       ["direct product", "A representation product used to test transition and integral symmetry."],
       ["symmetry-adapted linear combination", "A combination of basis functions constructed to transform with a chosen symmetry."],
+      ["class", "A set of symmetry operations in a point group that are related by a similarity transformation and share one character-table column."],
+      ["group multiplication table", "A table showing the symmetry operation produced by every ordered pair of operations in a group."],
     ],
     13: [
       ["rotational constant", "A spectroscopic constant inversely related to a molecule's moment of inertia."],
@@ -444,6 +468,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["vibrational wavenumber", "The characteristic frequency of a molecular vibration expressed as reciprocal length."],
       ["anharmonicity", "Departure of a molecular vibration from ideal harmonic behavior."],
       ["Raman activity", "The ability of a molecular motion to produce a change in polarizability and a Raman line."],
+      ["P, Q, and R branches", "Groups of rovibrational spectral lines associated respectively with rotational quantum-number changes of minus one, zero, and plus one when allowed."],
+      ["Stokes and anti-Stokes Raman lines", "Raman lines at lower and higher frequency than the incident light, arising when the molecule gains or loses vibrational energy."],
     ],
     14: [
       ["Franck-Condon principle", "Electronic transitions occur so rapidly that nuclear positions are effectively unchanged."],
@@ -451,6 +477,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["fluorescence", "Prompt light emission following relaxation from an excited singlet state."],
       ["phosphorescence", "Delayed light emission involving a change in spin multiplicity."],
       ["internal conversion", "Radiationless transfer between electronic states of the same spin multiplicity."],
+      ["chromophore", "The part of a molecule responsible for an electronic absorption band."],
+      ["Franck-Condon factor", "The squared overlap between initial and final vibrational wavefunctions that controls vibronic-transition intensity."],
     ],
     15: [
       ["Larmor frequency", "The precession frequency of a magnetic moment in an applied magnetic field."],
@@ -458,6 +486,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["spin-spin coupling", "Splitting of resonances through magnetic interactions between nuclei."],
       ["shielding constant", "A measure of how surrounding electrons reduce the magnetic field at a nucleus."],
       ["relaxation time", "A timescale for nuclear spin populations or coherences to return toward equilibrium."],
+      ["scalar coupling", "An indirect interaction between nuclear spins transmitted through bonding electrons that produces multiplet splitting in NMR spectra."],
+      ["hyperfine structure", "Splitting of an EPR signal caused by interaction between an unpaired electron and nearby magnetic nuclei."],
     ],
     16: [
       ["Boltzmann distribution", "The equilibrium population distribution among energy levels at a given temperature."],
@@ -465,6 +495,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["canonical ensemble", "A collection of systems with fixed particle number and volume in thermal contact with a reservoir."],
       ["configuration", "A particular distribution of particles among available energy levels."],
       ["Lagrange multiplier", "A mathematical parameter used to optimize a quantity subject to constraints."],
+      ["distinguishable particles", "Particles whose interchange produces a physically different microstate, so permutations are counted separately."],
+      ["canonical distribution", "The Boltzmann probability distribution of system energy states in an ensemble at fixed temperature, volume, and particle number."],
     ],
     17: [
       ["translational partition function", "The partition-function contribution from molecular motion through space."],
@@ -472,6 +504,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["vibrational partition function", "The partition-function contribution from molecular vibrational states."],
       ["residual entropy", "Entropy remaining at absolute zero because of frozen configurational disorder."],
       ["equilibrium composition", "The composition that minimizes Gibbs energy under the specified conditions."],
+      ["characteristic rotational temperature", "The temperature scale obtained from a molecule's rotational constant that indicates when rotational levels become thermally populated."],
+      ["symmetry number", "The number of indistinguishable molecular orientations used to correct the rotational partition function for overcounting."],
     ],
     18: [
       ["electric dipole moment", "A measure of separation between positive and negative charge."],
@@ -479,6 +513,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["hydrogen bond", "An attractive interaction involving hydrogen bound to an electronegative atom and another electron-rich site."],
       ["Lennard-Jones potential", "A model combining short-range repulsion with longer-range attraction."],
       ["second virial coefficient", "A coefficient that links pair interactions to deviations from perfect-gas behavior."],
+      ["induced dipole", "A temporary or field-produced dipole created when a particle's electron distribution is distorted."],
+      ["Axilrod-Teller interaction", "A three-body dispersion interaction that supplements pairwise London interactions when three atoms or molecules are close together."],
     ],
     19: [
       ["radius of gyration", "A measure of how polymer mass is distributed around its center of mass."],
@@ -486,6 +522,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["glass-transition temperature", "The temperature range where an amorphous material changes between glassy and rubbery behavior."],
       ["amphiphile", "A molecule containing both hydrophilic and hydrophobic regions."],
       ["bilayer", "A two-layer amphiphile assembly with hydrophobic groups shielded from water."],
+      ["contour length", "The maximum end-to-end length of a polymer chain measured along its molecular backbone."],
+      ["Mark-Kuhn-Houwink-Sakurada equation", "An empirical relation connecting a polymer solution's intrinsic viscosity with its molar mass."],
     ],
     20: [
       ["Bravais lattice", "One of the distinct three-dimensional lattice types generated by translation."],
@@ -493,6 +531,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["Brillouin zone", "A primitive region in reciprocal space used to describe electron states in crystals."],
       ["Fermi level", "The electron chemical potential and characteristic filling level in a solid."],
       ["band gap", "An energy range separating occupied and unoccupied electronic bands."],
+      ["Madelung constant", "A dimensionless geometric factor used to calculate the electrostatic energy of an ionic crystal lattice."],
+      ["doping", "The deliberate addition of impurities to a semiconductor to control its charge-carrier concentration and conductivity."],
     ],
     21: [
       ["root-mean-square speed", "The square root of the mean squared molecular speed."],
@@ -500,6 +540,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["Knudsen number", "The ratio of mean free path to a characteristic system dimension."],
       ["Einstein relation", "A relation connecting diffusion with mobility and temperature."],
       ["Nernst-Einstein equation", "A relation connecting ionic molar conductivity with diffusion coefficients."],
+      ["Graham's law of effusion", "The rate of gas effusion is inversely proportional to the square root of its molar mass at the same temperature and pressure."],
+      ["electrophoretic effect", "The resistance to an ion's motion caused by distortion of its surrounding ionic atmosphere in an applied electric field."],
     ],
     22: [
       ["pseudo-first-order reaction", "A higher-order reaction that behaves as first order because one reactant remains effectively constant."],
@@ -507,6 +549,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["activation Gibbs energy", "The Gibbs-energy barrier separating reactants from the transition state."],
       ["kinetic isotope effect", "A rate change caused by replacing an atom with one of its isotopes."],
       ["rate-determining step", "The mechanistic step exerting the greatest control over the observed reaction rate."],
+      ["consecutive reactions", "A reaction sequence in which the product of one elementary step is the reactant for the next."],
+      ["integrated rate law", "An equation relating reactant concentration to time for a specified reaction order."],
     ],
     23: [
       ["chain carrier", "A reactive intermediate regenerated during propagation steps."],
@@ -514,6 +558,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["autocatalysis", "Catalysis in which a reaction product accelerates the reaction that forms it."],
       ["enzyme inhibition", "Reduction of enzyme activity through inhibitor binding."],
       ["Jablonski diagram", "A diagram organizing electronic states and radiative and radiationless transitions."],
+      ["competitive inhibition", "Enzyme inhibition in which substrate and inhibitor compete for the enzyme's active site."],
+      ["chain-branching explosion", "Rapid acceleration of a chain reaction when branching steps create reactive intermediates faster than termination removes them."],
     ],
     24: [
       ["impact parameter", "The perpendicular offset between the initial paths of two colliding particles."],
@@ -521,6 +567,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["state-to-state reaction", "A reaction resolved by the quantum states of its reactants and products."],
       ["reorganization energy", "The energy required to rearrange nuclear coordinates before electron transfer."],
       ["inverted region", "The Marcus-theory regime where increasing reaction driving force decreases electron-transfer rate."],
+      ["harpoon mechanism", "A reaction mechanism in which long-range electron transfer creates oppositely charged species that attract and react."],
+      ["crossed molecular beams", "An experimental arrangement that intersects controlled molecular beams to resolve reaction dynamics by angle and product state."],
     ],
     25: [
       ["surface coverage", "The fraction of available surface sites occupied by adsorbates."],
@@ -528,6 +576,8 @@ window.TEXTBOOK_VOCABULARY_EXPANSIONS = {
       ["Eley-Rideal mechanism", "A surface reaction in which a gas-phase species reacts directly with an adsorbate."],
       ["Langmuir-Hinshelwood mechanism", "A surface reaction between species that are both adsorbed."],
       ["exchange-current density", "The equilibrium rate of charge transfer at an electrode expressed as current per area."],
+      ["BET isotherm", "A multilayer adsorption model used to determine surface area from gas-adsorption data."],
+      ["cathodic protection", "Corrosion control that forces a metal to act as the cathode of an electrochemical cell."],
     ],
   },
   raven: {

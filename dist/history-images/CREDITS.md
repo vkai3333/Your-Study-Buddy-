@@ -1,0 +1,34 @@
+# History image credits
+
+- `henry-viii.jpg` — *Portrait of Henry VIII of England*, Hans Holbein the Younger. Public domain. Source: https://commons.wikimedia.org/wiki/File:Portrait_of_Henry_VIII_of_England_(Holbein).jpg
+- `louis-xiv.jpg` — *Portrait of Louis XIV*, Hyacinthe Rigaud. Public domain. Source: https://commons.wikimedia.org/wiki/File:Hyacinthe_Rigaud_-_Portrait_of_Louis_XIV_-_WGA19488.jpg
+- `napoleon.jpg` — *Painting of Napoleon Bonaparte*, Jacques-Louis David. Public domain. Source: https://commons.wikimedia.org/wiki/File:Painting_of_Napoleon_Bonaparte_by_Jacques-Louis_David,_1813.jpg
+- `mongol-empire.svg` — *Genghis Khan empire, 13th century*, Bkkbrad and historicair. CC BY-SA 2.5. Source: https://commons.wikimedia.org/wiki/File:Genghis_Khan_empire-en.svg
+- `ottoman-empire.png` — *Ottoman Empire at its greatest extent in 1683*, Atilim Gunes Baydin. CC BY-SA. Source: https://commons.wikimedia.org/wiki/File:OttomanEmpireIn1683.png
+- `martin-luther.jpg` — Portrait of Martin Luther, Lucas Cranach the Younger. Public domain. Source: https://commons.wikimedia.org/wiki/File:Cranach_the_Younger_Martin_Luther.jpg
+- `peter-the-great.jpg` — Portrait of Peter the Great, University of Texas at Austin. Public domain. Source: https://commons.wikimedia.org/wiki/File:Peter_the_Great.jpg
+- `catherine-the-great.jpg` — Portrait of Catherine II, Fedor Rokotov. Public domain. Source: https://commons.wikimedia.org/wiki/File:Rokotov_Portrait_Catherine_II.jpg
+- `karl-marx.jpg` — Portrait of Karl Marx, John Jabez Edwin Mayall. Public domain. Source: https://commons.wikimedia.org/wiki/File:Karl_Marx_Portrait.jpg
+- `lenin.jpg` — Portrait of Vladimir Lenin. Public domain. Source: https://commons.wikimedia.org/wiki/File:Vladimir_Lenin.jpg
+- `aztec-empire.svg` — Locator map of the Aztec Empire, Sémhur. CC BY-SA. Source: https://commons.wikimedia.org/wiki/File:Aztec_Empire_(orthographic_projection).svg
+- `inca-empire.svg` — Map of Inca expansion, QQuantum. CC BY-SA. Source: https://commons.wikimedia.org/wiki/File:Inca_Expansion.svg
+- `safavid-empire.png` — Map of the Safavid Empire, André Koehne. CC BY-SA. Source: https://commons.wikimedia.org/wiki/File:Safavid_Empire_1501_1722_AD.png
+- `louisiana-purchase.png` — Map of the Louisiana Purchase, William Morris. CC BY-SA 4.0. Source: https://commons.wikimedia.org/wiki/File:Louisiana_Purchase.png
+- `great-migration.png` — Great Migration population map, U.S. Census Bureau. Public domain. Source: https://commons.wikimedia.org/wiki/File:GreatMigration1910to1970-UrbanPopulation.png
+- `george-washington.jpg` — Portrait of George Washington, Gilbert Stuart. Public domain. Source: https://commons.wikimedia.org/wiki/File:Gilbert_Stuart_1796_portrait_of_Washington.jpg
+- `thomas-jefferson.jpg` — Portrait of Thomas Jefferson, Rembrandt Peale. Public domain. Source: https://commons.wikimedia.org/wiki/File:Rembrandt_Peale-Thomas_Jefferson.jpg
+- `alexander-hamilton.jpg` — Portrait of Alexander Hamilton, commissioned by the U.S. Department of the Treasury. Public domain. Source: https://commons.wikimedia.org/wiki/File:Alexander_Hamilton_portrait.jpg
+- `andrew-jackson.jpg` — Portrait of Andrew Jackson, Ralph Eleaser Whiteside Earl. Public domain. Source: https://commons.wikimedia.org/wiki/File:Andrew_Jackson_Portrait.jpg
+- `abraham-lincoln.jpg` — Presidential portrait of Abraham Lincoln, George Peter Alexander Healy. Public domain. Source: https://commons.wikimedia.org/wiki/File:Presidential_Portrait_of_Abraham_Lincoln.jpg
+- `frederick-douglass.jpg` — Portrait of Frederick Douglass, Library of Congress. Public domain. Source: https://commons.wikimedia.org/wiki/File:Frederick_Douglass,_head-and-shoulders_portrait,_facing_right_LCCN2004671911.jpg
+- `harriet-tubman.jpg` — Portrait of Harriet Tubman, Horatio Seymour Squyer. Public domain/CC0. Source: https://commons.wikimedia.org/wiki/File:Harriet_Tubman_(circa_1885).jpg
+- `theodore-roosevelt.jpg` — Portrait of Theodore Roosevelt, Pach Brothers. Public domain. Source: https://commons.wikimedia.org/wiki/File:TheodoreRooseveltportrait.jpg
+- `franklin-roosevelt.jpg` — Portrait of Franklin D. Roosevelt, U.S. National Archives. Public domain. Source: https://commons.wikimedia.org/wiki/File:Franklin_D._Roosevelt_portrait_in_New_York_City,_New_York_-_NARA_-_196679.jpg
+- `john-kennedy.jpg` — White House portrait of John F. Kennedy, Cecil Stoughton. U.S. government public domain. Source: https://commons.wikimedia.org/wiki/File:John_F._Kennedy,_White_House_color_photo_portrait_(cropped).jpg
+- `ronald-reagan.jpg` — Official portrait of Ronald Reagan, White House. U.S. government public domain. Source: https://commons.wikimedia.org/wiki/File:Ronald_Reagan_portrait.jpg
+- `ida-b-wells.jpg` — Portrait of Ida B. Wells. Public domain. Source: https://commons.wikimedia.org/wiki/File:Ida-b-wells-barnett1.jpg
+- `martin-luther-king.jpg` — Portrait of Martin Luther King Jr., Betsy Graves Reyneau, U.S. National Archives. U.S. government public domain. Source: https://commons.wikimedia.org/wiki/File:Martin_Luther_King,_Jr_-_NARA_-_559202.jpg
+- `charles-darwin.jpg` — Portrait of Charles Darwin, Herbert Rose Barraud, 1881. Public domain. Source: https://commons.wikimedia.org/wiki/File:Charles_Darwin_portrait.jpg
+- `adolf-hitler.jpg` — 1938 portrait photograph of Adolf Hitler, German Federal Archives. CC BY-SA 3.0 DE. Source: https://commons.wikimedia.org/wiki/File:1938_portrait_photograph_of_Adolf_Hitler.jpg
+- `joseph-stalin.jpg` — Official portrait of Joseph Stalin, 1940–1949. CC0. Source: https://commons.wikimedia.org/wiki/File:Official_portrait_of_Joseph_Stalin,_1940-1949.jpg
+- `john-rockefeller.jpg` — Portrait of John D. Rockefeller, Pach Brothers Studio, National Portrait Gallery. CC0. Source: https://commons.wikimedia.org/wiki/File:Portrait_of_John_D._Rockefeller.jpg

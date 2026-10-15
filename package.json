@@ -5,6 +5,7 @@
   "description": "Your Study Buddy is a native, fully offline macOS study app with original study companions for biology, physiology, plant biology, general chemistry, and physical chemistry.",
   "main": "electron/main.cjs",
   "scripts": {
+    "bundle:pdf": "esbuild dist/pdf-annotation.js --bundle --format=iife --platform=browser --target=safari16 --minify --outfile=dist/pdf-annotation.bundle.js",
     "start": "electron .",
     "make": "electron-forge make",
     "package": "electron-forge package"
@@ -22,6 +23,7 @@
       "packagerConfig": {
         "name": "YourStudyBuddy",
         "asar": true,
+        "icon": "electron/assets/your-study-buddy",
         "ignore": [
           "^/build($|/)",
           "^/macOS($|/)",
@@ -37,7 +39,9 @@
           "config": {
             "name": "your_study_buddy",
             "authors": "Kai Chen Guo",
-            "description": "Offline flashcards, spaced repetition, questions, and Feynman study tools."
+            "description": "Offline flashcards, spaced repetition, questions, and Feynman study tools.",
+            "setupExe": "Your Study Buddy Setup.exe",
+            "setupIcon": "electron/assets/your-study-buddy.ico"
           }
         }
       ]
@@ -50,11 +54,14 @@
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",
     "@electron-forge/maker-squirrel": "^8.0.1",
-    "electron": "^44.7.0"
+    "electron": "^44.7.0",
+    "esbuild": "^0.28.2"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
     "fzstd": "^0.1.1",
-    "sql.js": "^1.14.2"
+    "pdfjs-dist": "^5.4.296",
+    "sql.js": "^1.14.2",
+    "ts-fsrs": "^5.4.2"
   }
 }

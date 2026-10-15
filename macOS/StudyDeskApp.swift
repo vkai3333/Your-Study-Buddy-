@@ -10,6 +10,18 @@ private struct PackageImportFailure: LocalizedError {
 }
 
 private final class StudyWebView: WKWebView {
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        // Only the narrow header at the top moves the window. Keeping the rest
+        // of the interface outside this strip prevents accidental dragging and
+        // allows normal text selection everywhere else.
+        if point.y >= bounds.height - 50 {
+            window?.performDrag(with: event)
+            return
+        }
+        super.mouseDown(with: event)
+    }
+
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let key = event.charactersIgnoringModifiers?.lowercased()
@@ -34,7 +46,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         configuration.websiteDataStore = .default()
         configuration.userContentController.add(self, name: "studyAlarm")
         configuration.userContentController.add(self, name: "studyExport")
+        configuration.userContentController.add(self, name: "noteExport")
         configuration.userContentController.add(self, name: "studyDroppedFile")
+        configuration.userContentController.add(self, name: "notebookImportFile")
+        configuration.userContentController.add(self, name: "studyFullscreen")
 
         let webView = StudyWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
@@ -51,6 +66,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
+        window.collectionBehavior.insert(.fullScreenPrimary)
         window.minSize = NSSize(width: 920, height: 650)
         window.center()
         window.contentView = webView
@@ -73,8 +89,21 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
             exportStudySet(payload)
             return
         }
+        if message.name == "noteExport" {
+            exportNote(payload)
+            return
+        }
         if message.name == "studyDroppedFile" {
             importDroppedStudyFile(payload, in: message.webView)
+            return
+        }
+        if message.name == "notebookImportFile" {
+            chooseNotebookImportFile(in: message.webView)
+            return
+        }
+        if message.name == "studyFullscreen" {
+            let active = (payload["active"] as? Bool) ?? (payload["active"] as? NSNumber)?.boolValue ?? false
+            setWindowFullscreen(active)
             return
         }
         guard message.name == "studyAlarm", let action = payload["action"] as? String, let identifier = payload["id"] as? String else { return }
@@ -105,8 +134,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
             return
         }
         let fileExtension = URL(fileURLWithPath: name).pathExtension.lowercased()
-        guard ["apkg", "pdf", "pptx"].contains(fileExtension) else { callJavaScript("receiveDocumentImportError", payload: "Drop an APKG, PDF, PPTX, TXT, CSV, or TSV file.", in: webView); return }
-        callJavaScript("receiveDocumentImportStatus", payload: "Reading \(name)…", in: webView)
+        let importingNotebookNote = (payload["target"] as? String) == "notes"
+        let documentResultHandler = importingNotebookNote ? "receiveNotebookDocumentImport" : "receiveDocumentImport"
+        let documentStatusHandler = importingNotebookNote ? "receiveNotebookDocumentImportStatus" : "receiveDocumentImportStatus"
+        let documentErrorHandler = importingNotebookNote ? "receiveNotebookDocumentImportError" : "receiveDocumentImportError"
+        guard ["apkg", "pdf", "pptx"].contains(fileExtension) else { callJavaScript(documentErrorHandler, payload: "Drop an APKG, PDF, or PPTX file.", in: webView); return }
+        callJavaScript(documentStatusHandler, payload: "Reading \(name)…", in: webView)
         DispatchQueue.global(qos: .userInitiated).async { [weak self, weak webView] in
             guard let self, let webView else { return }
             let temporaryURL = FileManager.default.temporaryDirectory.appendingPathComponent("ysb-drop-\(UUID().uuidString).\(fileExtension)")
@@ -117,10 +150,60 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
                     self.callJavaScript("receiveAnkiPackageImport", payload: try self.readAnkiPackage(at: temporaryURL).merging(["name": name]) { _, new in new }, in: webView)
                 } else {
                     let text = fileExtension == "pdf" ? try self.readPDF(at: temporaryURL) : try self.readPowerPoint(at: temporaryURL)
-                    self.callJavaScript("receiveDocumentImport", payload: ["name": name, "extension": fileExtension, "text": text], in: webView)
+                    self.callJavaScript(documentResultHandler, payload: ["name": name, "extension": fileExtension, "text": text], in: webView)
                 }
-            } catch { self.callJavaScript(fileExtension == "apkg" ? "receiveAnkiPackageImportError" : "receiveDocumentImportError", payload: error.localizedDescription, in: webView) }
+            } catch { self.callJavaScript(fileExtension == "apkg" ? "receiveAnkiPackageImportError" : documentErrorHandler, payload: error.localizedDescription, in: webView) }
         }
+    }
+
+    private func chooseNotebookImportFile(in webView: WKWebView?) {
+        guard let webView else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Import notes"
+        panel.prompt = "Import"
+        panel.message = "Choose a PDF, PowerPoint, text, or Markdown file to add to Notes."
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.item]
+
+        let handleSelection: (NSApplication.ModalResponse) -> Void = { [weak self, weak webView] response in
+            guard let self, let webView, response == .OK, let url = panel.url else { return }
+            let fileExtension = url.pathExtension.lowercased()
+            guard ["pdf", "pptx", "txt", "md"].contains(fileExtension) else {
+                self.callJavaScript("receiveNotebookDocumentImportError", payload: "Choose a PDF, PowerPoint, TXT, or Markdown file.", in: webView)
+                return
+            }
+            self.callJavaScript("receiveNotebookDocumentImportStatus", payload: "Reading \(url.lastPathComponent)…", in: webView)
+            DispatchQueue.global(qos: .userInitiated).async { [weak self, weak webView] in
+                guard let self, let webView else { return }
+                do {
+                    let text: String
+                    if fileExtension == "pdf" {
+                        text = try self.readPDF(at: url)
+                    } else if fileExtension == "pptx" {
+                        text = try self.readPowerPoint(at: url)
+                    } else {
+                        text = try String(contentsOf: url, encoding: .utf8)
+                    }
+                    self.callJavaScript("receiveNotebookDocumentImport", payload: ["name": url.lastPathComponent, "extension": fileExtension, "text": text], in: webView)
+                } catch {
+                    self.callJavaScript("receiveNotebookDocumentImportError", payload: error.localizedDescription, in: webView)
+                }
+            }
+        }
+
+        if let window {
+            panel.beginSheetModal(for: window, completionHandler: handleSelection)
+        } else {
+            handleSelection(panel.runModal())
+        }
+    }
+
+    private func setWindowFullscreen(_ active: Bool) {
+        guard let window else { return }
+        let isFullscreen = window.styleMask.contains(.fullScreen)
+        if active != isFullscreen { window.toggleFullScreen(nil) }
     }
 
     private func exportStudySet(_ payload: [String: Any]) {
@@ -141,6 +224,33 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
             }
         }
         if let window { panel.beginSheetModal(for: window, completionHandler: completion) } else { completion(panel.runModal()) }
+    }
+
+    private func exportNote(_ payload: [String: Any]) {
+        let allowedExtensions = ["png", "html", "txt", "pdf"]
+        let requestedExtension = (payload["extension"] as? String)?.lowercased() ?? "png"
+        let fileExtension = allowedExtensions.contains(requestedExtension) ? requestedExtension : "png"
+        let rawName = (payload["name"] as? String) ?? "Note"
+        let safeName = rawName.replacingOccurrences(of: "[^A-Za-z0-9._ -]", with: "-", options: .regularExpression)
+        guard let encoded = payload["data"] as? String,
+              let comma = encoded.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(encoded[encoded.index(after: comma)...])) else {
+            let alert = NSAlert(); alert.messageText = "The note couldn’t be exported"; alert.informativeText = "The exported note data could not be decoded."; alert.alertStyle = .warning; alert.runModal()
+            return
+        }
+        let panel = NSSavePanel()
+        panel.title = "Export note"
+        panel.nameFieldStringValue = "\(safeName).\(fileExtension)"
+        if let type = UTType(filenameExtension: fileExtension) { panel.allowedContentTypes = [type] }
+        let completion: (NSApplication.ModalResponse) -> Void = { response in
+            guard response == .OK, let url = panel.url else { return }
+            do { try data.write(to: url, options: .atomic) }
+            catch {
+                let alert = NSAlert(); alert.messageText = "The note couldn’t be exported"; alert.informativeText = error.localizedDescription; alert.alertStyle = .warning; alert.runModal()
+            }
+        }
+        if let window { panel.beginSheetModal(for: window, completionHandler: completion) }
+        else { completion(panel.runModal()) }
     }
 
     private func exportData(_ payload: [String: Any], format: String) throws -> Data {
@@ -167,18 +277,71 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         let now = Int(Date().timeIntervalSince1970), modelID = now * 1000, deckID = modelID + 1
         let deckName = String(describing: payload["name"] ?? "Study set")
         let model = "{\"\(modelID)\":{\"id\":\(modelID),\"name\":\"Your Study Buddy\",\"type\":0,\"mod\":\(now),\"usn\":-1,\"sortf\":0,\"did\":\(deckID),\"tmpls\":[{\"name\":\"Card 1\",\"ord\":0,\"qfmt\":\"{{Front}}\",\"afmt\":\"{{FrontSide}}<hr id=answer>{{Back}}\",\"bqfmt\":\"\",\"bafmt\":\"\",\"did\":null}],\"flds\":[{\"name\":\"Front\",\"ord\":0,\"sticky\":false,\"rtl\":false,\"font\":\"Arial\",\"size\":20,\"media\":[]},{\"name\":\"Back\",\"ord\":1,\"sticky\":false,\"rtl\":false,\"font\":\"Arial\",\"size\":20,\"media\":[]}],\"css\":\".card { font-family: arial; font-size: 20px; text-align: center; }\",\"req\":[[0,\"any\",[0]]]}}"
-        let deckJSON = "{\"\(deckID)\":{\"id\":\(deckID),\"name\":\"\(deckName.replacingOccurrences(of: "\"", with: "\\\""))\",\"mod\":\(now),\"usn\":-1,\"desc\":\"Exported from Your Study Buddy\",\"dyn\":0,\"collapsed\":false},\"1\":{\"id\":1,\"name\":\"Default\",\"mod\":\(now),\"usn\":0,\"desc\":\"\",\"dyn\":0,\"collapsed\":false}}"
+        let deckJSON = "{\"\(deckID)\":{\"id\":\(deckID),\"name\":\"\(deckName.replacingOccurrences(of: "\"", with: "\\\""))\",\"mod\":\(now),\"usn\":-1,\"desc\":\"Exported from Your Study Buddy\",\"dyn\":0,\"collapsed\":false,\"browserCollapsed\":false,\"conf\":1,\"extendNew\":0,\"extendRev\":0,\"lrnToday\":[0,0],\"revToday\":[0,0],\"newToday\":[0,0],\"timeToday\":[0,0],\"reviewLimit\":null,\"newLimit\":null,\"reviewLimitToday\":null,\"newLimitToday\":null},\"1\":{\"id\":1,\"name\":\"Default\",\"mod\":0,\"usn\":0,\"desc\":\"\",\"dyn\":0,\"collapsed\":true,\"browserCollapsed\":true,\"conf\":1,\"extendNew\":0,\"extendRev\":0,\"lrnToday\":[0,0],\"revToday\":[0,0],\"newToday\":[0,0],\"timeToday\":[0,0],\"reviewLimit\":null,\"newLimit\":null,\"reviewLimitToday\":null,\"newLimitToday\":null}}"
         var sql = "CREATE TABLE col (id integer primary key,crt integer not null,mod integer not null,scm integer not null,ver integer not null,dty integer not null,usn integer not null,ls integer not null,conf text not null,models text not null,decks text not null,dconf text not null,tags text not null); CREATE TABLE notes (id integer primary key,guid text not null,mid integer not null,mod integer not null,usn integer not null,tags text not null,flds text not null,sfld integer not null,csum integer not null,flags integer not null,data text not null); CREATE TABLE cards (id integer primary key,nid integer not null,did integer not null,ord integer not null,mod integer not null,usn integer not null,type integer not null,queue integer not null,due integer not null,ivl integer not null,factor integer not null,reps integer not null,lapses integer not null,left integer not null,odue integer not null,odid integer not null,flags integer not null,data text not null); CREATE TABLE revlog (id integer primary key,cid integer not null,usn integer not null,ease integer not null,ivl integer not null,lastIvl integer not null,factor integer not null,time integer not null,type integer not null); CREATE TABLE graves (usn integer not null,oid integer not null,type integer not null); INSERT INTO col VALUES(1,\(now),\(now * 1000),\(now * 1000),11,0,0,0,'{}',\(sqlText(model)),\(sqlText(deckJSON)),'{}','{}');"
         let cards = payload["cards"] as? [[String: Any]] ?? []
+        var exportedCardIDs: [String: Int] = [:]
+        var mediaMap: [String: String] = [:]
+        var mediaURLs: [URL] = []
+        func field(_ text: String, image: Any?, side: String, index: Int) throws -> String {
+            var html = text
+            guard let source = image as? String,
+                  let comma = source.firstIndex(of: ","),
+                  source.hasPrefix("data:image/") else { return html }
+            let header = String(source[..<comma])
+            let encoded = String(source[source.index(after: comma)...])
+            guard header.contains(";base64"), let data = Data(base64Encoded: encoded) else { return html }
+            let ext: String
+            if header.contains("image/jpeg") { ext = "jpg" }
+            else if header.contains("image/gif") { ext = "gif" }
+            else if header.contains("image/webp") { ext = "webp" }
+            else if header.contains("image/svg") { ext = "svg" }
+            else { ext = "png" }
+            let filename = "ysb-\(index + 1)-\(side).\(ext)"
+            let archiveName = String(mediaURLs.count)
+            let fileURL = folder.appendingPathComponent(archiveName)
+            try data.write(to: fileURL)
+            mediaURLs.append(fileURL)
+            mediaMap[archiveName] = filename
+            if !html.isEmpty { html += "<br>" }
+            html += "<img src=\"\(filename)\">"
+            return html
+        }
         for (index, card) in cards.enumerated() {
             let noteID = modelID + 10 + index * 2
-            let front = String(describing: card["front"] ?? ""), back = String(describing: card["back"] ?? "")
-            sql += " INSERT INTO notes VALUES(\(noteID),'ysb\(noteID)',\(modelID),\(now),-1,'',\(sqlText(front + "\u{001F}" + back)),\(sqlText(front)),0,0,''); INSERT INTO cards VALUES(\(noteID + 1),\(noteID),\(deckID),0,\(now),-1,0,0,\(index + 1),0,0,0,0,0,0,0,0,'');"
+            let cardID = noteID + 1
+            if let scheduleKey = card["scheduleKey"] as? String { exportedCardIDs[scheduleKey] = cardID }
+            let front = try field(String(describing: card["front"] ?? ""), image: card["frontImage"], side: "front", index: index)
+            let back = try field(String(describing: card["back"] ?? ""), image: card["backImage"], side: "back", index: index)
+            let schedule = card["schedule"] as? [String: Any] ?? [:]
+            let fsrs = schedule["fsrs"] as? [String: Any] ?? [:]
+            let state = (fsrs["state"] as? NSNumber)?.intValue ?? (schedule["state"] as? NSNumber)?.intValue ?? 0
+            let suspended = (schedule["suspended"] as? Bool) ?? false
+            let queue = suspended ? -1 : state == 0 ? 0 : state == 2 ? 2 : 1
+            let dueMS = (fsrs["due"] as? NSNumber)?.int64Value ?? (schedule["due"] as? NSNumber)?.int64Value ?? Int64(now * 1000)
+            let due = queue == 2 ? max(1, Int((dueMS / 1000 - Int64(now)) / 86400)) : queue == 1 ? Int(dueMS / 1000) : index + 1
+            let interval = (fsrs["scheduled_days"] as? NSNumber)?.intValue ?? (schedule["intervalDays"] as? NSNumber)?.intValue ?? 0
+            let reps = (fsrs["reps"] as? NSNumber)?.intValue ?? (schedule["repetitions"] as? NSNumber)?.intValue ?? 0
+            let lapses = (fsrs["lapses"] as? NSNumber)?.intValue ?? (schedule["lapses"] as? NSNumber)?.intValue ?? 0
+            let stability = (fsrs["stability"] as? NSNumber)?.doubleValue ?? 0
+            let difficulty = (fsrs["difficulty"] as? NSNumber)?.doubleValue ?? 0
+            let cardData = stability > 0 ? "{\"s\":\(stability),\"d\":\(difficulty)}" : ""
+            sql += " INSERT INTO notes VALUES(\(noteID),'ysb\(noteID)',\(modelID),\(now),-1,'',\(sqlText(front + "\u{001F}" + back)),\(sqlText(front)),0,0,''); INSERT INTO cards VALUES(\(cardID),\(noteID),\(deckID),0,\(now),-1,\(state == 2 ? 2 : state == 0 ? 0 : 1),\(queue),\(due),\(interval),0,\(reps),\(lapses),0,0,0,0,\(sqlText(cardData)));"
+        }
+        let reviewLogs = payload["reviewLogs"] as? [[String: Any]] ?? []
+        for (index, log) in reviewLogs.enumerated() {
+            guard let key = log["cardKey"] as? String, let cardID = exportedCardIDs[key] else { continue }
+            let reviewID = max(now * 1000 + index, (log["review"] as? NSNumber)?.intValue ?? now * 1000 + index)
+            let rating = ["again": 1, "hard": 2, "good": 3, "easy": 4][log["rating"] as? String ?? "good"] ?? 3
+            let interval = (log["scheduledDays"] as? NSNumber)?.intValue ?? 0
+            let duration = (log["durationMs"] as? NSNumber)?.intValue ?? 0
+            let type = (log["state"] as? NSNumber)?.intValue ?? 1
+            sql += " INSERT INTO revlog VALUES(\(reviewID),\(cardID),-1,\(rating),\(interval),0,0,\(duration),\(type));"
         }
         _ = try runProcess("/usr/bin/sqlite3", arguments: [database.path, sql])
-        try Data("{}".utf8).write(to: media)
+        try JSONSerialization.data(withJSONObject: mediaMap, options: [.sortedKeys]).write(to: media)
         if fm.fileExists(atPath: destination.path) { try fm.removeItem(at: destination) }
-        _ = try runProcess("/usr/bin/zip", arguments: ["-j", destination.path, database.path, media.path])
+        _ = try runProcess("/usr/bin/zip", arguments: ["-j", destination.path, database.path, media.path] + mediaURLs.map(\.path))
     }
 
     private func installMainMenu() {
@@ -267,45 +430,46 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         }
     }
 
+    func webView(
+        _ webView: WKWebView,
+        runJavaScriptTextInputPanelWithPrompt prompt: String,
+        defaultText: String?,
+        initiatedByFrame frame: WKFrameInfo,
+        completionHandler: @escaping (String?) -> Void
+    ) {
+        let alert = NSAlert()
+        alert.messageText = prompt
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Continue")
+        alert.addButton(withTitle: "Cancel")
+        let input = NSTextField(string: defaultText ?? "")
+        input.frame = NSRect(x: 0, y: 0, width: 280, height: 26)
+        alert.accessoryView = input
+        let finish: (NSApplication.ModalResponse) -> Void = { response in
+            completionHandler(response == .alertFirstButtonReturn ? input.stringValue : nil)
+        }
+        if let window {
+            alert.beginSheetModal(for: window, completionHandler: finish)
+        } else {
+            finish(alert.runModal())
+        }
+    }
+
     private func finishFileSelection(
         response: NSApplication.ModalResponse,
         urls: [URL],
         webView: WKWebView,
         completionHandler: @escaping ([URL]?) -> Void
     ) {
-        guard response == .OK, let url = urls.first else {
+        guard response == .OK, !urls.isEmpty else {
             completionHandler(nil)
             return
         }
-        let fileExtension = url.pathExtension.lowercased()
-        if fileExtension == "pdf" || fileExtension == "pptx" {
-            completionHandler(nil)
-            callJavaScript("receiveDocumentImportStatus", payload: "Reading \(url.lastPathComponent)…", in: webView)
-            DispatchQueue.global(qos: .userInitiated).async { [weak self, weak webView] in
-                guard let self, let webView else { return }
-                do {
-                    let text = fileExtension == "pdf" ? try self.readPDF(at: url) : try self.readPowerPoint(at: url)
-                    self.callJavaScript("receiveDocumentImport", payload: ["name": url.lastPathComponent, "extension": fileExtension, "text": text], in: webView)
-                } catch { self.callJavaScript("receiveDocumentImportError", payload: error.localizedDescription, in: webView) }
-            }
-            return
-        }
-        guard fileExtension == "apkg" else {
-            completionHandler(urls)
-            return
-        }
-
-        completionHandler(nil)
-        callJavaScript("receiveAnkiPackageStatus", payload: "Reading \(url.lastPathComponent)…", in: webView)
-        DispatchQueue.global(qos: .userInitiated).async { [weak self, weak webView] in
-            guard let self, let webView else { return }
-            do {
-                let payload = try self.readAnkiPackage(at: url)
-                self.callJavaScript("receiveAnkiPackageImport", payload: payload, in: webView)
-            } catch {
-                self.callJavaScript("receiveAnkiPackageImportError", payload: error.localizedDescription, in: webView)
-            }
-        }
+        // Return the selected file to the HTML input that opened the panel.
+        // Its own change handler knows whether this is a Notes import, a Create
+        // import, an image, or an APKG. Intercepting PDF/PPTX files here used to
+        // send every selection to Create, including files chosen from Notes.
+        completionHandler(urls)
     }
 
     private func readPDF(at url: URL) throws -> String {
@@ -356,9 +520,6 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
             return result.isEmpty ? nil : result
         }
         if let start = extracted.firstIndex(where: { $0.range(of: #"^##\s+(?:unit|chapter|topic|module)\s+\d+\b"#, options: [.regularExpression, .caseInsensitive]) != nil }), start >= 3 { extracted = Array(extracted[start...]) }
-        extracted = extracted.filter { value in
-            value.split(whereSeparator: \.isNewline).count > 1 || value.range(of: #"^##\s+(?:unit|chapter|topic|module)\s+\d+\b"#, options: [.regularExpression, .caseInsensitive]) != nil
-        }
         guard !extracted.isEmpty else { throw PackageImportFailure(message: "No usable study text was found in this PowerPoint.") }
         return extracted.joined(separator: "\n\n")
     }
@@ -384,7 +545,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         for run in runs {
             let text = try regexGroups(#"<a:t>(.*?)</a:t>"#, in: run).map(decodePowerPointXML).joined()
             if text.isEmpty { continue }
-            parts.append(run.range(of: #"<a:rPr[^>]*\bb="1""#, options: .regularExpression) != nil && !text.trimmingCharacters(in: .whitespaces).isEmpty ? "**\(text)**" : text)
+            let bold = run.range(of: #"<a:rPr[^>]*\bb="1""#, options: .regularExpression) != nil
+            let italic = run.range(of: #"<a:rPr[^>]*\bi="1""#, options: .regularExpression) != nil
+            if !text.trimmingCharacters(in: .whitespaces).isEmpty && bold && italic { parts.append("***\(text)***") }
+            else if !text.trimmingCharacters(in: .whitespaces).isEmpty && bold { parts.append("**\(text)**") }
+            else if !text.trimmingCharacters(in: .whitespaces).isEmpty && italic { parts.append("*\(text)*") }
+            else { parts.append(text) }
         }
         if parts.isEmpty { parts = try regexGroups(#"<a:t>(.*?)</a:t>"#, in: xml).map(decodePowerPointXML) }
         let text = parts.joined().replacingOccurrences(of: #"[ \t]+([,.;:!?])"#, with: "$1", options: .regularExpression).replacingOccurrences(of: #"[ \t]{2,}"#, with: " ", options: .regularExpression).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -410,7 +576,8 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         let uniqueBody = body.filter { value in
             let plain = value.replacingOccurrences(of: #"^\s*-\s*"#, with: "", options: .regularExpression).replacingOccurrences(of: "**", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
             let instructional = plain.range(of: #"^(?:watch|begin at|turn to|complete|submit|discuss with|take notes|answer the following)\b"#, options: [.regularExpression, .caseInsensitive]) != nil
-            return value.count > 2 && seen.insert(value).inserted && !plain.hasSuffix("?") && !instructional
+            let bareURL = plain.range(of: #"^https?://\S+$"#, options: [.regularExpression, .caseInsensitive]) != nil
+            return value.count > 2 && seen.insert(value).inserted && !bareURL && !plain.hasSuffix("?") && !instructional
         }
         if title.isEmpty && uniqueBody.isEmpty { return "" }
         return ((title.isEmpty ? [] : ["## \(title)"]) + uniqueBody).joined(separator: "\n")
@@ -452,16 +619,32 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
             throw PackageImportFailure(message: "The Anki database inside this APKG package could not be decoded.")
         }
 
-        let query = "SELECT id, flds FROM notes ORDER BY id;"
+        let query = "SELECT n.id,n.flds,c.id AS cardId,c.type,c.queue,c.due,c.ivl,c.factor,c.reps,c.lapses,c.left,c.data,(SELECT crt FROM col LIMIT 1) AS crt,(SELECT json_group_array(json_object('rating',r.ease,'interval',r.ivl,'lastInterval',r.lastIvl,'factor',r.factor,'durationMs',r.time,'type',r.type,'review',r.id)) FROM revlog r WHERE r.cid=c.id ORDER BY r.id) AS reviews FROM notes n LEFT JOIN cards c ON c.nid=n.id ORDER BY n.id,c.ord;"
         let notesData = try runProcess("/usr/bin/sqlite3", arguments: ["-json", databaseURL.path, query])
         guard let rows = try JSONSerialization.jsonObject(with: notesData) as? [[String: Any]] else {
             throw PackageImportFailure(message: "The notes inside this APKG package could not be read.")
         }
         let notes: [[String: Any]] = rows.compactMap { row in
             guard let fields = row["flds"] as? String else { return nil }
+            let queue = (row["queue"] as? NSNumber)?.intValue ?? 0
+            let due = (row["due"] as? NSNumber)?.int64Value ?? 0
+            let created = (row["crt"] as? NSNumber)?.int64Value ?? Int64(Date().timeIntervalSince1970)
+            let dueTimestamp = queue == 1 ? due * 1000 : (created + due * 86400) * 1000
+            var reviews: [[String: Any]] = []
+            if let reviewJSON = row["reviews"] as? String, let reviewData = reviewJSON.data(using: .utf8), let parsed = try? JSONSerialization.jsonObject(with: reviewData) as? [[String: Any]] { reviews = parsed }
+            let type = (row["type"] as? NSNumber)?.intValue ?? 0
+            var stability = 0.0
+            var difficulty = 0.0
+            if let customJSON = row["data"] as? String, let customData = customJSON.data(using: .utf8), let custom = try? JSONSerialization.jsonObject(with: customData) as? [String: Any] {
+                stability = (custom["s"] as? NSNumber)?.doubleValue ?? (custom["stability"] as? NSNumber)?.doubleValue ?? 0
+                difficulty = (custom["d"] as? NSNumber)?.doubleValue ?? (custom["difficulty"] as? NSNumber)?.doubleValue ?? 0
+            }
             return [
                 "id": row["id"] ?? UUID().uuidString,
-                "fields": fields.components(separatedBy: "\u{001F}")
+                "cardId": row["cardId"] ?? 0,
+                "fields": fields.components(separatedBy: "\u{001F}"),
+                "schedule": ["due": dueTimestamp, "intervalDays": (row["ivl"] as? NSNumber)?.intValue ?? 0, "repetitions": (row["reps"] as? NSNumber)?.intValue ?? 0, "lapses": (row["lapses"] as? NSNumber)?.intValue ?? 0, "ease": Double((row["factor"] as? NSNumber)?.intValue ?? 2500) / 1000.0, "state": type == 2 ? 2 : type == 3 ? 3 : type == 1 ? 1 : 0, "suspended": queue < 0, "learningSteps": (row["left"] as? NSNumber)?.intValue ?? 0, "stability": stability, "difficulty": difficulty],
+                "reviews": reviews
             ]
         }
         guard !notes.isEmpty else {

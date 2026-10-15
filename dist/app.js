@@ -3,6 +3,8 @@ const state = {
   activeChapter: 0,
   activeMiniUnit: 0,
   activeSection: 0,
+  collapsedCourseUnits: new Set(),
+  collapsedCourseChapters: new Set(),
   activeView: "lesson",
   selectedAnkiDecks: null,
   ankiQueue: [],
@@ -10,6 +12,7 @@ const state = {
   ankiSessionTotal: 0,
   ankiReviewActive: false,
   ankiStartedAt: null,
+  ankiCardShownAt: null,
   selectedFlashcardDecks: null,
   flashcardQueue: [],
   flashcardPosition: 0,
@@ -29,16 +32,20 @@ const state = {
   customImportSource: null,
   editingCustomDeckId: null,
   editingBuiltInCollectionId: null,
+  appendNotesToExistingSet: false,
+  notesHiddenAfterUpdate: false,
+  currentAppView: "dashboard",
   selectedCustomDeckId: null,
   selectedCustomDeckBuiltIn: false,
   selectedBuiltInCollectionId: null,
   selectedBuiltInUnitIds: [],
+  calculusAbOnly: false,
   pendingCustomDeleteId: null,
   pendingBuiltInDeleteId: null,
   pendingDeleteAllStudySets: false,
   pendingReturnAllBuiltIn: false,
+  pendingReturnAllTextbooks: false,
   editingStudyFolderId: null,
-  movingStudyDeckId: null,
   customStudyReturnView: "flashcards",
   customDeleteReturnView: "flashcards",
   courseReturnView: "courses",
@@ -49,6 +56,7 @@ const state = {
   customReviewRevealed: false,
   customReviewWasRevealed: false,
   customReviewStartedAt: null,
+  customAnkiCardShownAt: null,
   customQuestionAnswered: false,
   customFeynmanTimeAmount: 5,
   customFeynmanTimeUnit: "minutes",
@@ -56,20 +64,80 @@ const state = {
   manualFrontImage: "",
   manualBackImage: "",
   pendingCardImageTarget: null,
+  pendingDrawingTarget: null,
+  pendingMathTarget: null,
+  pendingCodeTarget: null,
+  drawingTool: "pen",
+  drawingHistory: [],
   textbookCatalogPage: 0,
   studyCatalogPage: 0,
 };
 
 const TEXTBOOKS_PER_PAGE = 8;
 const STUDY_DECKS_PER_PAGE = 12;
+const STUDY_STREAK_KEY = "your-study-buddy-study-days-v1";
+
+function localStudyDate(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function studyDayNumber(day) {
+  const [year, month, date] = String(day).split("-").map(Number);
+  return Math.floor(Date.UTC(year, month - 1, date) / 86400000);
+}
+
+function studyDays() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STUDY_STREAK_KEY) || "[]");
+    return Array.isArray(stored) ? [...new Set(stored.filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day)))].sort() : [];
+  } catch { return []; }
+}
+
+function studyStreaks() {
+  const days = studyDays().map(studyDayNumber).sort((a, b) => a - b);
+  if (!days.length) return { current: 0, best: 0 };
+  let best = 1;
+  let run = 1;
+  for (let index = 1; index < days.length; index += 1) {
+    run = days[index] === days[index - 1] + 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+  }
+  const today = studyDayNumber(localStudyDate());
+  const latest = days[days.length - 1];
+  if (today - latest > 1) return { current: 0, best };
+  let current = 1;
+  for (let index = days.length - 1; index > 0 && days[index] === days[index - 1] + 1; index -= 1) current += 1;
+  return { current, best };
+}
+
+function renderStudyStreak() {
+  const { current, best } = studyStreaks();
+  const currentElement = $("#current-study-streak");
+  const bestElement = $("#best-study-streak");
+  if (currentElement) currentElement.textContent = `${current} ${current === 1 ? "day" : "days"}`;
+  if (bestElement) bestElement.textContent = `Personal best: ${best}`;
+}
+
+function recordStudyActivity() {
+  const days = studyDays();
+  const today = localStudyDate();
+  if (!days.includes(today)) {
+    days.push(today);
+    localStorage.setItem(STUDY_STREAK_KEY, JSON.stringify(days.sort()));
+  }
+  renderStudyStreak();
+}
 
 const SETTINGS_KEY = "your-study-buddy-settings-v1";
+const PROFILE_KEY = "your-study-buddy-profile-v1";
 const DEFAULT_SETTINGS = {
   theme: "light", newCardsPerDay: 20, maxReviewsPerDay: 200,
-  newCardOrder: "random", newReviewOrder: "reviews-first",
-  learningSteps: "1, 10", graduatingInterval: 1, easyInterval: 4, startingEase: 250,
+  newCardOrder: "random", newReviewOrder: "reviews-first", reviewOrder: "due",
+  desiredRetention: 90, enableFuzz: true, dayStartHour: 4, learnAheadMinutes: 20,
+  newCardsIgnoreReviewLimit: false, buryNewSiblings: true, buryReviewSiblings: true, buryLearningSiblings: true,
+  learningSteps: "1m 10m", graduatingInterval: 1, easyInterval: 4, startingEase: 250,
   hardInterval: 120, easyBonus: 130, intervalModifier: 100, maximumInterval: 36500,
-  relearningSteps: "10", minimumLapseInterval: 1, leechThreshold: 8, leechAction: "tag",
+  relearningSteps: "10m", minimumLapseInterval: 1, leechThreshold: 8, leechAction: "tag",
 };
 
 function loadSettings() {
@@ -86,9 +154,17 @@ function numericSetting(name) {
   return Number.isFinite(value) ? value : Number(DEFAULT_SETTINGS[name]);
 }
 
-function parseMinuteSteps(value) {
-  const steps = String(value || "").split(/[\s,]+/).map(Number).filter((number) => Number.isFinite(number) && number > 0).map((number) => Math.min(15, number));
-  return steps.length ? steps : [1];
+function parseAnkiSteps(value) {
+  return String(value || "")
+    .trim()
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map((step) => {
+      const match = step.match(/^(\d+(?:\.\d+)?)(s|m|h|d|w)?$/i);
+      if (!match || Number(match[1]) <= 0) return null;
+      return `${Number(match[1])}${(match[2] || "m").toLowerCase()}`;
+    })
+    .filter(Boolean);
 }
 
 function effectiveTheme(theme = loadSettings().theme) {
@@ -98,6 +174,95 @@ function effectiveTheme(theme = loadSettings().theme) {
 function applyTheme(theme = loadSettings().theme) {
   document.documentElement.dataset.theme = effectiveTheme(theme);
   document.documentElement.style.colorScheme = effectiveTheme(theme);
+}
+
+function loadProfile() {
+  try {
+    const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+    if (!profile || typeof profile.name !== "string") return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(profile.birthday || "")) profile.birthday = profile.birthday.slice(5);
+    return /^\d{2}-\d{2}$/.test(profile.birthday || "") ? profile : null;
+  } catch { return null; }
+}
+
+function greetingForNow() {
+  const hour = new Date().getHours();
+  return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+}
+
+function applyProfile(profile = loadProfile()) {
+  if (!profile) return;
+  const name = profile.name.trim();
+  $("#profile-name").textContent = name;
+  $("#profile-avatar").textContent = Array.from(name)[0]?.toUpperCase() || "S";
+  $("#dashboard-greeting").textContent = `${greetingForNow()}, ${name}`;
+}
+
+function isBirthdayToday(profile = loadProfile()) {
+  if (!profile?.birthday) return false;
+  const [month, day] = profile.birthday.split("-").map(Number);
+  const today = new Date();
+  return today.getMonth() + 1 === month && today.getDate() === day;
+}
+
+function celebrateBirthday(profile = loadProfile()) {
+  const celebration = $("#birthday-celebration");
+  const layer = $("#birthday-confetti");
+  layer.innerHTML = "";
+  document.body.classList.remove("birthday-today");
+  celebration.hidden = true;
+  if (!isBirthdayToday(profile)) return;
+  document.body.classList.add("birthday-today");
+  const colors = ["#5b5bd6", "#8b7cf6", "#f2b84b", "#ef6f61", "#37b98b", "#4d98e8"];
+  const confetti = Array.from({ length: 72 }, (_, index) => {
+    const horizontal = 1.5 + (index * 31.7) % 97;
+    const top = 5 + (index * 19.3) % 90;
+    const color = colors[index % colors.length];
+    const size = 5 + (index % 4) * 2;
+    const rotation = (index * 47) % 180;
+    return `<i style="--left:${horizontal}%;--top:${top}%;--color:${color};--size:${size}px;--rotation:${rotation}deg"></i>`;
+  }).join("");
+  const name = escapeHtml(profile.name.trim());
+  layer.innerHTML = confetti;
+  $("#birthday-message").innerHTML = `Happy Birthday, ${name}!`;
+  celebration.hidden = $(".dashboard-grid").hidden;
+}
+
+function initializeProfile() {
+  const profile = loadProfile();
+  if (profile) {
+    applyProfile(profile);
+    celebrateBirthday(profile);
+    return;
+  }
+  const dialog = $("#welcome-profile-dialog");
+  populateBirthdayFields();
+  dialog.showModal();
+  window.setTimeout(() => $("#welcome-profile-name").focus(), 0);
+}
+
+function populateBirthdayFields() {
+  populateBirthdaySelects($("#welcome-profile-birth-month"), $("#welcome-profile-birth-day"));
+}
+
+function populateBirthdaySelects(monthSelect, daySelect, birthday = "") {
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const [savedMonth, savedDay] = birthday.split("-").map(Number);
+  monthSelect.innerHTML = '<option value="">Choose month</option>' + months.map((month, index) => `<option value="${index + 1}">${month}</option>`).join("");
+  const updateDays = () => {
+    const month = Number(monthSelect.value);
+    const selectedDay = Number(daySelect.value);
+    const total = month ? new Date(2000, month, 0).getDate() : 31;
+    daySelect.innerHTML = '<option value="">Choose day</option>' + Array.from({ length: total }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join("");
+    if (selectedDay && selectedDay <= total) daySelect.value = String(selectedDay);
+  };
+  if (!monthSelect.dataset.birthdayWired) {
+    monthSelect.addEventListener("change", updateDays);
+    monthSelect.dataset.birthdayWired = "true";
+  }
+  if (savedMonth) monthSelect.value = String(savedMonth);
+  updateDays();
+  if (savedDay) daySelect.value = String(savedDay);
 }
 
 const apHumanGeographyFeynmanTopics = {
@@ -126,7 +291,26 @@ const builtInComputerSciencePrinciplesDecks = window.AP_CSP_DECKS || [];
 const builtInBiologyDecks = window.AP_BIOLOGY_DECKS || [];
 const builtInStatisticsDecks = window.AP_STATISTICS_DECKS || [];
 const builtInChemistryDecks = window.AP_CHEMISTRY_DECKS || [];
-const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks];
+const builtInCalculusDecks = window.AP_CALCULUS_DECKS || [];
+const builtInPrecalculusDecks = window.AP_PRECALCULUS_DECKS || [];
+const builtInComparativeGovernmentDecks = window.AP_COMPARATIVE_GOVERNMENT_DECKS || [];
+const builtInMicroeconomicsDecks = window.AP_MICROECONOMICS_DECKS || [];
+const builtInMacroeconomicsDecks = window.AP_MACROECONOMICS_DECKS || [];
+const builtInMusicTheoryDecks = window.AP_MUSIC_THEORY_DECKS || [];
+const builtInLatinDecks = window.AP_LATIN_DECKS || [];
+const builtInIbBiologyDecks = window.IB_BIOLOGY_DECKS || [];
+const builtInIbChemistryDecks = window.IB_CHEMISTRY_DECKS || [];
+const builtInIbPsychologyDecks = window.IB_PSYCHOLOGY_DECKS || [];
+const builtInIbEconomicsDecks = window.IB_ECONOMICS_DECKS || [];
+const builtInIbGeographyDecks = window.IB_GEOGRAPHY_DECKS || [];
+const builtInIbEssDecks = window.IB_ESS_DECKS || [];
+const builtInIbMathAaDecks = window.IB_MATH_AA_DECKS || [];
+const builtInIbHistoryAmericasDecks = window.IB_HISTORY_AMERICAS_DECKS || [];
+const builtInMcatReviewDecks = window.MCAT_REVIEW_DECKS || [];
+const builtInAfricanAmericanStudiesDecks = window.AP_AFRICAN_AMERICAN_STUDIES_DECKS || [];
+const builtInCybersecurityDecks = window.AP_CYBERSECURITY_DECKS || [];
+const builtInBusinessPersonalFinanceDecks = window.AP_BUSINESS_PERSONAL_FINANCE_DECKS || [];
+const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks, ...builtInCalculusDecks, ...builtInPrecalculusDecks, ...builtInComparativeGovernmentDecks, ...builtInMicroeconomicsDecks, ...builtInMacroeconomicsDecks, ...builtInMusicTheoryDecks, ...builtInLatinDecks, ...builtInIbBiologyDecks, ...builtInIbChemistryDecks, ...builtInIbPsychologyDecks, ...builtInIbEconomicsDecks, ...builtInIbGeographyDecks, ...builtInIbEssDecks, ...builtInIbMathAaDecks, ...builtInIbHistoryAmericasDecks, ...builtInMcatReviewDecks, ...builtInAfricanAmericanStudiesDecks, ...builtInCybersecurityDecks, ...builtInBusinessPersonalFinanceDecks];
 const builtInFlashcardCollections = [{
   id: "aphug",
   name: "AP Human Geography",
@@ -208,6 +392,161 @@ const builtInFlashcardCollections = [{
   unitLabel: "units",
   catalogLabel: "AP course",
   units: builtInChemistryDecks,
+}, {
+  id: "apaas",
+  name: "AP African American Studies",
+  description: "People, events, institutions, cultural forms, and analytical concepts aligned to the four-unit AP African American Studies framework.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInAfricanAmericanStudiesDecks,
+}, {
+  id: "apcalculus",
+  name: "AP Calculus AB/BC",
+  description: "Limits, derivatives, integrals, differential equations, applications, parametric and polar calculus, and infinite series aligned to the current ten-unit framework. Includes an AB-only filter and rendered formulas.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  supportsAbFilter: true,
+  units: builtInCalculusDecks,
+}, {
+  id: "apprecalculus",
+  name: "AP Precalculus",
+  description: "Functions, modeling, formulas, trigonometry, polar coordinates, parameters, vectors, and matrices aligned to all four current CED units. Units 1–3 are tested; Unit 4 is included as optional course content.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInPrecalculusDecks,
+}, {
+  id: "apcompgov",
+  name: "AP Comparative Government and Politics",
+  description: "Core concepts and country-specific evidence aligned to all five current CED units and the six required countries: China, Iran, Mexico, Nigeria, Russia, and the United Kingdom.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInComparativeGovernmentDecks,
+}, {
+  id: "apmicro",
+  name: "AP Microeconomics",
+  description: "Markets, elasticity, firm behavior, market structures, factor markets, externalities, and public policy aligned to all six CED units, with graph-based cards.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInMicroeconomicsDecks,
+}, {
+  id: "apmacro",
+  name: "AP Macroeconomics",
+  description: "Economic indicators, AD–AS, financial markets, stabilization policy, growth, and international finance aligned to all six CED units, with graph-based cards.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInMacroeconomicsDecks,
+}, {
+  id: "apmusic",
+  name: "AP Music Theory",
+  description: "Pitch, rhythm, scales, intervals, chords, harmony, voice leading, secondary function, modes, and form aligned to all eight CED units, with notation images.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInMusicTheoryDecks,
+}, {
+  id: "aplatin",
+  name: "AP Latin",
+  description: "Latin grammar, literary analysis, cultural context, Pliny’s letters, and Vergil’s Aeneid aligned to the revised six-unit framework effective fall 2025.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInLatinDecks,
+}, {
+  id: "ibbio",
+  name: "IB Biology",
+  description: "Current concept-based IB Biology with an SL/HL level toggle, biological diagrams, and investigation skills.",
+  unitLabel: "course",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbBiologyDecks,
+}, {
+  id: "ibchem",
+  name: "IB Chemistry",
+  description: "Structure, reactivity, experimental analysis, and additional Higher Level chemistry in one course with an SL/HL toggle and analytical diagrams.",
+  unitLabel: "course",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbChemistryDecks,
+}, {
+  id: "ibpsych",
+  name: "IB Psychology",
+  description: "Biological, cognitive, and sociocultural psychology plus research methods, aligned to the course first assessed in 2027 with an SL/HL toggle.",
+  unitLabel: "course",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbPsychologyDecks,
+}, {
+  id: "ibecon",
+  name: "IB Economics",
+  description: "Microeconomics, macroeconomics, the global economy, IA analysis, and additional Higher Level theory in one SL/HL-toggle course.",
+  unitLabel: "course",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbEconomicsDecks,
+}, {
+  id: "ibgeo",
+  name: "IB Geography",
+  description: "Global change, geographic themes, fieldwork, and the Higher Level global-interactions extension, with geographic model diagrams.",
+  unitLabel: "course",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbGeographyDecks,
+}, {
+  id: "ibess",
+  name: "IB Environmental Systems and Societies",
+  description: "The current SL and HL environmental systems course, including systems thinking, sustainability, investigation skills, law, economics, and justice.",
+  unitLabel: "course",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbEssDecks,
+}, {
+  id: "ibmathaa",
+  name: "IB Mathematics: Analysis and Approaches",
+  description: "Number and algebra, functions, geometry and trigonometry, statistics and probability, and calculus in one course with an SL/HL toggle, rendered formulas, proof, and mathematical justification.",
+  unitLabel: "themes",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbMathAaDecks,
+}, {
+  id: "ibhistamer",
+  name: "IB History of the Americas",
+  description: "Higher Level regional study of Indigenous societies, colonial systems, slavery, independence, nation-building, industrialization, global affairs, the Cold War, civil rights, and democracy across North America, Latin America, and the Caribbean.",
+  unitLabel: "themes",
+  catalogLabel: "IB HL regional study",
+  units: builtInIbHistoryAmericasDecks,
+}, {
+  id: "mcat",
+  name: "MCAT Review",
+  description: "Large AAMC-outline review spanning biological and biochemical systems, chemical and physical foundations, psychology and sociology, research methods, and CARS reasoning, with sourced diagrams on card backs.",
+  unitLabel: "themes",
+  catalogLabel: "Standardized exam",
+  units: builtInMcatReviewDecks,
+}, {
+  id: "apcyber",
+  name: "AP Cybersecurity",
+  description: "Security concepts, controls, attacks, network evidence, and incident response aligned to the five-unit framework effective fall 2026.",
+  unitLabel: "units",
+  catalogLabel: "AP course",
+  units: builtInCybersecurityDecks,
+}, {
+  id: "apbusiness",
+  name: "AP Business with Personal Finance",
+  description: "Entrepreneurship, marketing, accounting, management, saving, credit, budgeting, and investing aligned to the framework effective fall 2026.",
+  unitLabel: "sections",
+  catalogLabel: "AP course",
+  units: builtInBusinessPersonalFinanceDecks,
 }];
 
 const courses = [
@@ -565,6 +904,8 @@ function companionChapter(spec, source) {
   const equationCards = source === "zumdahl"
     ? (spec.equations || []).map(([name, equation, application]) => [name, application, equation])
     : (details?.equations || []).map(([prompt, equation]) => atkinsEquationApplicationCard(prompt, equation, spec));
+  const cards = vocabularyDeck(vocabulary).concat(equationCards);
+  const sectionCards = assignCardsToTextbookSections(cards, sections || []);
   return {
     number: spec.number,
     title: spec.title,
@@ -575,11 +916,30 @@ function companionChapter(spec, source) {
     textbookVocabulary: vocabulary,
     summary: `This chapter connects ${spec.focusAreas.join(", ")} to build a clear, mechanism-first understanding of the subject.`,
     takeaways: spec.focusAreas.slice(0, 4).map((topic) => `Explain ${topic} using a clear cause-and-effect mechanism.`),
-    sections,
+    sections: sectionCards,
     equations: equationCards,
-    cards: vocabularyDeck(vocabulary).concat(equationCards),
+    cards,
     quizzes: vocabularyQuizzes(vocabulary, 100 + spec.number, 5),
   };
+}
+
+function assignCardsToTextbookSections(cards, sections) {
+  if (!sections.length) return sections;
+  const stopWords = new Set(["and", "the", "of", "to", "in", "a", "an", "for", "on", "with", "introduction", "principles", "concepts"]);
+  const words = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter((word) => word.length > 2 && !stopWords.has(word));
+  const buckets = sections.map(() => []);
+  cards.forEach((card, cardIndex) => {
+    const cardWords = new Set(words(`${card[0]} ${card[1]}`));
+    let bestIndex = 0; let bestScore = -1;
+    sections.forEach((section, sectionIndex) => {
+      const vocabulary = words(`${section.title} ${(section.topics || []).join(" ")}`);
+      const score = vocabulary.reduce((total, word) => total + (cardWords.has(word) ? 3 : [...cardWords].some((cardWord) => cardWord.includes(word) || word.includes(cardWord)) ? 1 : 0), 0) - buckets[sectionIndex].length * 0.08;
+      if (score > bestScore) { bestScore = score; bestIndex = sectionIndex; }
+    });
+    if (bestScore <= 0) bestIndex = buckets.reduce((smallest, bucket, index) => bucket.length < buckets[smallest].length ? index : smallest, 0);
+    buckets[bestIndex].push(cardIndex);
+  });
+  return sections.map((section, index) => ({ ...section, cardIndexes: buckets[index] }));
 }
 
 function normalizeCourseVocabularyCards(course) {
@@ -824,11 +1184,95 @@ builtInFlashcardCollections.push(...courses.map(textbookFlashcardCollection));
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const toast = $("#toast");
+const NOTES_STORAGE_KEY = "your-study-buddy-notes-v1";
+const NOTE_FOLDERS_STORAGE_KEY = "your-study-buddy-note-folders-v1";
+let activeNoteId = null;
+let noteActionsNoteId = null;
+let editingNoteFolderId = null;
+let noteDrawingTool = "pen";
+let noteDrawingActive = false;
+let noteDrawingHistory = [];
+let noteDrawingRedoHistory = [];
+let noteDrawingStrokes = [];
+let noteDrawingTexts = [];
+let currentNoteStroke = null;
+let noteDrawingLegacyImage = "";
+const DRAWING_CANVAS_WIDTH = 4000;
+const DRAWING_CANVAS_HEIGHT = 4000;
+const PAGE_CANVAS_WIDTH = 800;
+const PAGE_CANVAS_HEIGHT = 1100;
+const PAGE_CANVAS_GAP = 44;
+const DRAWING_MAX_ZOOM = 4;
+let noteDrawingZoom = 1;
+let noteDrawingLastPoint = null;
+let noteCanvasPanStart = null;
+let noteCanvasMode = "open";
+let notePageCount = 1;
+let notePageLayout = "pages";
+let notePageDocumentContent = "";
+let noteDocumentPages = [""];
+let activeDocumentPage = 0;
+let noteDocumentLineSpacing = "1.15";
+let noteShowPageNumbers = false;
+let noteCanvasTextStyle = "body";
+let selectedCanvasTextId = null;
+let noteCanvasTextFormat = { fontFamily: "Arial", screenSize: 18, color: "#171b2d", bold: false, italic: false };
+let noteTextSelection = null;
+let noteSaveHandle;
 let toastHandle;
 let ankiTimerHandle;
 let feynmanTimerHandle;
 let customReviewTimerHandle;
 let customFeynmanTimerHandle;
+let freestyleFeynmanTimerHandle;
+let freestyleFeynmanStartedAt = null;
+let freestyleFeynmanDuration = 0;
+let activePdfObjectUrl = "";
+
+function openNotebookAssetDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("your-study-buddy-note-assets", 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains("assets")) request.result.createObjectStore("assets");
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("The note storage could not be opened."));
+  });
+}
+
+async function setNotebookAsset(id, blob) {
+  const database = await openNotebookAssetDatabase();
+  await new Promise((resolve, reject) => {
+    const transaction = database.transaction("assets", "readwrite");
+    transaction.objectStore("assets").put(blob, id);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error || new Error("The PDF could not be saved."));
+  });
+  database.close();
+}
+
+async function getNotebookAsset(id) {
+  const database = await openNotebookAssetDatabase();
+  const blob = await new Promise((resolve, reject) => {
+    const request = database.transaction("assets", "readonly").objectStore("assets").get(id);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error || new Error("The PDF could not be opened."));
+  });
+  database.close();
+  return blob;
+}
+
+async function removeNotebookAsset(id) {
+  if (!id) return;
+  const database = await openNotebookAssetDatabase();
+  await new Promise((resolve, reject) => {
+    const transaction = database.transaction("assets", "readwrite");
+    transaction.objectStore("assets").delete(id);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+  database.close();
+}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
@@ -841,11 +1285,1097 @@ function showToast(message) {
   toastHandle = window.setTimeout(() => toast.classList.remove("show"), 2400);
 }
 
+function loadNotebookNotes() {
+  try {
+    const notes = JSON.parse(localStorage.getItem(NOTES_STORAGE_KEY) || "[]");
+    return Array.isArray(notes) ? notes : [];
+  } catch { return []; }
+}
+
+function saveNotebookNotes(notes) {
+  localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+}
+
+function loadNoteFolders() {
+  try {
+    const folders = JSON.parse(localStorage.getItem(NOTE_FOLDERS_STORAGE_KEY) || "[]");
+    return Array.isArray(folders) ? folders : [];
+  } catch { return []; }
+}
+
+function saveNoteFolders(folders) {
+  localStorage.setItem(NOTE_FOLDERS_STORAGE_KEY, JSON.stringify(folders));
+}
+
+function createNoteFolder() {
+  editingNoteFolderId = null;
+  $("#note-folder-dialog-title").textContent = "Create a notebook";
+  $("#save-note-folder").textContent = "Create notebook";
+  $("#note-folder-name").value = "";
+  $("#note-folder-color").value = "#d9b66f";
+  $("#note-folder-dialog").showModal();
+  window.setTimeout(() => $("#note-folder-name").focus(), 20);
+}
+
+function openNoteFolderRename(folderId) {
+  const folder = loadNoteFolders().find((item) => item.id === folderId);
+  if (!folder) return;
+  editingNoteFolderId = folderId;
+  $("#note-folder-dialog-title").textContent = "Edit notebook";
+  $("#save-note-folder").textContent = "Save notebook";
+  $("#note-folder-name").value = folder.name;
+  $("#note-folder-color").value = /^#[0-9a-f]{6}$/i.test(folder.color || "") ? folder.color : "#d9b66f";
+  $("#note-folder-dialog").showModal();
+  window.setTimeout(() => $("#note-folder-name").select(), 20);
+}
+
+function saveNoteFolderDialog() {
+  const name = $("#note-folder-name").value.trim();
+  if (!name) return false;
+  const color = $("#note-folder-color").value;
+  const folders = loadNoteFolders();
+  if (editingNoteFolderId) {
+    const folder = folders.find((item) => item.id === editingNoteFolderId);
+    if (folder) { folder.name = name; folder.color = color; }
+  } else {
+    folders.push({ id: makeLocalId("note-folder"), name, color, expanded: true });
+  }
+  saveNoteFolders(folders);
+  editingNoteFolderId = null;
+  renderNotesList();
+  return true;
+}
+
+function moveNotebookNote(noteId, folderId = null) {
+  const notes = loadNotebookNotes();
+  const note = notes.find((item) => item.id === noteId);
+  if (!note) return;
+  note.folderId = folderId;
+  note.updatedAt = Date.now();
+  saveNotebookNotes(notes);
+  renderNotesList();
+}
+
+function activeNotebookNote() {
+  return loadNotebookNotes().find((note) => note.id === activeNoteId) || null;
+}
+
+function notePreview(note) {
+  if (note.type === "drawing") return "Drawing note";
+  if (note.type === "pdf") return `PDF · ${note.sourceFileName || "Original document"}`;
+  const holder = document.createElement("div");
+  holder.innerHTML = note.html || "";
+  return holder.textContent.trim().slice(0, 55) || "Empty word note";
+}
+
+function renderNotesList() {
+  const search = $("#notes-search")?.value.trim().toLowerCase() || "";
+  const notes = loadNotebookNotes().sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt));
+  const visible = notes.filter((note) => !search || `${note.title} ${notePreview(note)}`.toLowerCase().includes(search));
+  const folders = loadNoteFolders();
+  const noteButton = (note) => `<button type="button" draggable="true" class="note-list-item ${note.id === activeNoteId ? "active" : ""}" data-open-note="${escapeHtml(note.id)}" data-drag-note="${escapeHtml(note.id)}"><span class="note-list-icon">${note.type === "drawing" ? "✎" : note.type === "pdf" ? "PDF" : "Aa"}</span><span class="note-list-copy"><strong>${escapeHtml(note.title || "Untitled note")}</strong><small>${escapeHtml(notePreview(note))}</small></span></button>`;
+  const folderMarkup = folders.map((folder) => {
+    const items = visible.filter((note) => note.folderId === folder.id);
+    const color = /^#[0-9a-f]{6}$/i.test(folder.color || "") ? folder.color : "#d9b66f";
+    if (search && !items.length && !folder.name.toLowerCase().includes(search)) return "";
+    return `<section class="note-folder" data-note-folder-drop="${escapeHtml(folder.id)}" style="--notebook-color:${color}"><div class="note-folder-heading"><button type="button" class="note-folder-toggle" data-toggle-note-folder="${escapeHtml(folder.id)}"><span class="note-folder-icon">▰</span><strong>${escapeHtml(folder.name)}</strong><span>${folder.expanded ? "⌃" : "⌄"}</span></button><button type="button" class="note-folder-action" data-rename-note-folder="${escapeHtml(folder.id)}" aria-label="Edit ${escapeHtml(folder.name)} notebook">✎</button><button type="button" class="note-folder-action" data-delete-note-folder="${escapeHtml(folder.id)}" aria-label="Delete ${escapeHtml(folder.name)}">×</button></div><div class="note-folder-items" ${folder.expanded ? "" : "hidden"}>${items.length ? items.map(noteButton).join("") : '<div class="note-folder-empty">Drop notes here</div>'}</div></section>`;
+  }).join("");
+  const unfiled = visible.filter((note) => !note.folderId || !folders.some((folder) => folder.id === note.folderId));
+  $("#notes-list").innerHTML = `${folderMarkup}<section class="notes-unfiled-section" data-note-folder-drop=""><div class="notes-unfiled-drop"><strong>Notes outside notebooks</strong><span>Drop here to move a note out</span></div>${unfiled.map(noteButton).join("") || (!folders.length ? '<div class="active-anki-empty">No notes yet.</div>' : "")}</section>`;
+  $$('[data-open-note]', $("#notes-list")).forEach((button) => button.addEventListener("click", () => openNotebookNote(button.dataset.openNote)));
+  $$('[data-open-note]', $("#notes-list")).forEach((button) => button.addEventListener("dblclick", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openNoteActions(button.dataset.openNote);
+  }));
+  $$('[data-drag-note]', $("#notes-list")).forEach((button) => button.addEventListener("dragstart", (event) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/x-study-note", button.dataset.dragNote);
+    $("#notes-list").classList.add("note-drag-active");
+  }));
+  $$('[data-drag-note]', $("#notes-list")).forEach((button) => button.addEventListener("dragend", () => {
+    $("#notes-list").classList.remove("note-drag-active");
+    $$('[data-note-folder-drop].drag-over', $("#notes-list")).forEach((target) => target.classList.remove("drag-over"));
+  }));
+  $$('[data-note-folder-drop]', $("#notes-list")).forEach((target) => {
+    target.addEventListener("dragover", (event) => { event.preventDefault(); target.classList.add("drag-over"); });
+    target.addEventListener("dragleave", () => target.classList.remove("drag-over"));
+    target.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      target.classList.remove("drag-over");
+      $("#notes-list").classList.remove("note-drag-active");
+      moveNotebookNote(event.dataTransfer.getData("text/x-study-note"), target.dataset.noteFolderDrop || null);
+    });
+  });
+  $$('[data-toggle-note-folder]', $("#notes-list")).forEach((button) => button.addEventListener("click", () => {
+    const records = loadNoteFolders(); const folder = records.find((item) => item.id === button.dataset.toggleNoteFolder);
+    if (folder) { folder.expanded = !folder.expanded; saveNoteFolders(records); renderNotesList(); }
+  }));
+  $$('[data-rename-note-folder]', $("#notes-list")).forEach((button) => button.addEventListener("click", () => {
+    openNoteFolderRename(button.dataset.renameNoteFolder);
+  }));
+  $$('[data-delete-note-folder]', $("#notes-list")).forEach((button) => button.addEventListener("click", () => {
+    const records = loadNoteFolders(); const folder = records.find((item) => item.id === button.dataset.deleteNoteFolder);
+    if (!folder || !window.confirm(`Delete the notebook “${folder.name}”? Its notes will move to Unfiled notes.`)) return;
+    saveNoteFolders(records.filter((item) => item.id !== folder.id));
+    saveNotebookNotes(loadNotebookNotes().map((note) => note.folderId === folder.id ? { ...note, folderId: null } : note));
+    renderNotesList();
+  }));
+}
+
+function updateNotebookNote(changes, renderList = true) {
+  if (!activeNoteId) return;
+  const notes = loadNotebookNotes();
+  const index = notes.findIndex((note) => note.id === activeNoteId);
+  if (index < 0) return;
+  notes[index] = { ...notes[index], ...changes, updatedAt: Date.now() };
+  saveNotebookNotes(notes);
+  if (renderList) renderNotesList();
+}
+
+function createNotebookNote(type) {
+  const canvasMode = type === "page" ? "page" : "open";
+  const note = { id: makeLocalId("note"), type: "drawing", canvasMode, pageCount: 1, pageLayout: "pages", pageDocumentContent: "", title: canvasMode === "page" ? "Untitled page" : "Untitled open note", html: "", drawing: "", drawingWidth: canvasMode === "page" ? PAGE_CANVAS_WIDTH : DRAWING_CANVAS_WIDTH, drawingHeight: canvasMode === "page" ? PAGE_CANVAS_HEIGHT : DRAWING_CANVAS_HEIGHT, drawingTexts: [], updatedAt: Date.now() };
+  const notes = loadNotebookNotes();
+  notes.push(note);
+  saveNotebookNotes(notes);
+  openNotebookNote(note.id);
+  window.setTimeout(() => $("#drawing-note-title")?.select(), 20);
+}
+
+let notebookDocumentImportPending = false;
+
+function importedNotePages(text) {
+  const lines = String(text || "").replace(/\r\n?/g, "\n").split("\n");
+  const pages = [];
+  for (let index = 0; index < lines.length; index += 46) {
+    const page = document.createElement("div");
+    lines.slice(index, index + 46).forEach((line) => {
+      const row = document.createElement("div");
+      if (line) row.textContent = line;
+      else row.appendChild(document.createElement("br"));
+      page.appendChild(row);
+    });
+    pages.push(page.innerHTML);
+  }
+  return pages.length ? pages : [""];
+}
+
+function createImportedNotebookNote(payload) {
+  if (!payload?.text?.trim()) throw new Error("No readable text was found in this document.");
+  const documentPages = importedNotePages(payload.text);
+  const note = {
+    id: makeLocalId("note"),
+    type: "drawing",
+    canvasMode: "page",
+    pageCount: documentPages.length,
+    pageLayout: "document",
+    pageDocumentContent: documentPages[0] || "",
+    documentPages,
+    activeDocumentPage: 0,
+    title: importDeckName(payload.name || "Imported notes"),
+    html: "",
+    drawing: "",
+    drawingWidth: PAGE_CANVAS_WIDTH,
+    drawingHeight: PAGE_CANVAS_HEIGHT * documentPages.length + PAGE_CANVAS_GAP * Math.max(0, documentPages.length - 1),
+    drawingTexts: [],
+    updatedAt: Date.now(),
+  };
+  const notes = loadNotebookNotes();
+  notes.push(note);
+  saveNotebookNotes(notes);
+  showAppView("notes");
+  openNotebookNote(note.id);
+  showToast(`${note.title} imported as an editable note.`);
+}
+
+async function createImportedPdfNotebookNote(file) {
+  const assetId = makeLocalId("pdf");
+  await setNotebookAsset(assetId, file.slice(0, file.size, "application/pdf"));
+  const note = {
+    id: makeLocalId("note"),
+    type: "pdf",
+    pdfAssetId: assetId,
+    sourceFileName: file.name,
+    title: importDeckName(file.name || "Imported PDF"),
+    updatedAt: Date.now(),
+  };
+  try {
+    const notes = loadNotebookNotes();
+    notes.push(note);
+    saveNotebookNotes(notes);
+  } catch (error) {
+    await removeNotebookAsset(assetId);
+    throw error;
+  }
+  showAppView("notes");
+  openNotebookNote(note.id);
+  showToast(`${note.title} imported with its original pages and tables.`);
+}
+
+async function displayImportedPdf(note) {
+  const frame = $("#pdf-note-pages");
+  const loading = document.createElement("div");
+  loading.className = "pdf-loading-message";
+  loading.textContent = "Loading PDF pages…";
+  frame.replaceChildren(loading);
+  if (!note?.pdfAssetId) return;
+  const blob = await getNotebookAsset(note.pdfAssetId);
+  if (!blob || activeNoteId !== note.id) return;
+  const request = { noteId: note.id, blob };
+  window.__pendingStudyBuddyPdf = request;
+  window.dispatchEvent(new CustomEvent("studybuddy:open-pdf-note", { detail: request }));
+}
+
+function handleNotebookImportResult(result) {
+  if (!result || result.canceled) return;
+  if (result.error) throw new Error(result.error);
+  if (result.kind === "document") createImportedNotebookNote(result);
+  else if (result.kind === "text") createImportedNotebookNote({ name: result.name, text: result.text });
+  else throw new Error("Choose a PDF, PowerPoint, TXT, or Markdown file.");
+}
+
+function notebookNotePlainText(note) {
+  const htmlToText = (html) => {
+    const container = document.createElement("div");
+    container.innerHTML = html || "";
+    return container.innerText.trim();
+  };
+  if (note.type === "word") return htmlToText(note.html);
+  if (note.type === "pdf") return String(note.extractedText || "").trim();
+  const documentText = (note.documentPages || [note.pageDocumentContent || ""]).map(htmlToText).filter(Boolean).join("\n\n");
+  const canvasText = (note.drawingTexts || []).map((item) => String(item.text || "").trim()).filter(Boolean).join("\n");
+  return [documentText, canvasText].filter(Boolean).join("\n\n");
+}
+
+function createFlashcardsFromNotebookNote(noteId = activeNoteId) {
+  if (noteId === activeNoteId) {
+    const active = activeNotebookNote();
+    if (active?.type === "word") updateNotebookNote({ title: $("#word-note-title").value.trim() || "Untitled note", html: sanitizeNotesHtml($("#word-note-content").innerHTML) }, false);
+    else if (active?.type === "drawing") saveDrawingNote();
+    else if (active?.type === "pdf") updateNotebookNote({ title: $("#pdf-note-title").value.trim() || "Imported PDF" }, false);
+  }
+  const note = loadNotebookNotes().find((item) => item.id === noteId);
+  if (!note) return;
+  const text = notebookNotePlainText(note);
+  if (!text) {
+    showToast("Add typed text to this note before creating flashcards.");
+    return;
+  }
+  const hasCurrentWork = state.editingCustomDeckId || state.editingBuiltInCollectionId || hasAnyStudyItem() || notesPlainText() || $("#custom-deck-name").value.trim();
+  if (hasCurrentWork && !window.confirm("Replace the current Create draft with this note?")) return;
+  resetCustomDraft();
+  $("#custom-deck-name").value = `${note.title || "Imported notes"} flashcards`;
+  setNotesContent(text);
+  showAppView("create");
+  $("#notes-input").scrollIntoView({ behavior: "smooth", block: "center" });
+  $("#notes-input").focus();
+  showToast("Your note is ready to generate into flashcards.");
+}
+
+function openNotebookNote(id) {
+  activeNoteId = id;
+  const note = activeNotebookNote();
+  $("#notes-empty").hidden = Boolean(note);
+  $("#word-note-editor").hidden = !note || note.type !== "word";
+  $("#drawing-note-editor").hidden = !note || note.type !== "drawing";
+  $("#pdf-note-editor").hidden = !note || note.type !== "pdf";
+  if (!note) { renderNotesList(); return; }
+  if (note.type === "word") {
+    $("#word-note-title").value = note.title || "";
+    $("#word-note-content").innerHTML = note.html || "";
+  } else if (note.type === "drawing") {
+    $("#drawing-note-title").value = note.title || "";
+    notePageDocumentContent = note.pageDocumentContent || "";
+    noteDocumentPages = Array.isArray(note.documentPages) && note.documentPages.length ? note.documentPages : [notePageDocumentContent];
+    activeDocumentPage = Math.min(Math.max(0, Number(note.activeDocumentPage) || 0), noteDocumentPages.length - 1);
+    noteDocumentLineSpacing = ["1", "1.15", "1.5", "2"].includes(String(note.documentLineSpacing)) ? String(note.documentLineSpacing) : "1.15";
+    noteShowPageNumbers = Boolean(note.showPageNumbers);
+    $("#document-show-page-numbers").checked = noteShowPageNumbers;
+    configureNoteCanvas(note.canvasMode || "open", Math.max(note.pageCount || 1, noteDocumentPages.length), note.pageLayout === "continuous" ? "document" : note.pageLayout || "pages");
+    loadDrawingNoteImage(note.drawing || "", note.drawingStrokes || [], note.drawingTexts || []);
+  } else if (note.type === "pdf") {
+    $("#pdf-note-title").value = note.title || "Imported PDF";
+    displayImportedPdf(note).catch(() => showToast("This imported PDF could not be opened."));
+  }
+  renderNotesList();
+}
+
+function deleteActiveNotebookNote() {
+  const note = activeNotebookNote();
+  if (!note || !window.confirm(`Delete “${note.title || "Untitled note"}”? This cannot be undone.`)) return;
+  const remaining = loadNotebookNotes().filter((item) => item.id !== note.id);
+  saveNotebookNotes(remaining);
+  if (note.pdfAssetId) removeNotebookAsset(note.pdfAssetId).catch(() => {});
+  activeNoteId = remaining.sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt))[0]?.id || null;
+  openNotebookNote(activeNoteId);
+  showToast("Note deleted.");
+}
+
+function copyLabel(name, existingNames) {
+  const base = String(name || "Untitled").replace(/^Copy(?: \d+)? of /i, "");
+  let candidate = `Copy of ${base}`;
+  let number = 2;
+  while (existingNames.has(candidate.toLowerCase())) candidate = `Copy ${number++} of ${base}`;
+  return candidate;
+}
+
+async function duplicateActiveNotebookNote() {
+  let source = activeNotebookNote();
+  if (!source) return;
+  if (source.type === "word") updateNotebookNote({ title: $("#word-note-title").value.trim() || "Untitled note", html: sanitizeNotesHtml($("#word-note-content").innerHTML) }, false);
+  else if (source.type === "drawing") saveDrawingNote();
+  else if (source.type === "pdf") updateNotebookNote({ title: $("#pdf-note-title").value.trim() || "Imported PDF" }, false);
+  source = activeNotebookNote();
+  const notes = loadNotebookNotes();
+  const duplicate = JSON.parse(JSON.stringify(source));
+  duplicate.id = makeLocalId("note");
+  duplicate.title = copyLabel(source.title || "Untitled note", new Set(notes.map((note) => String(note.title || "").toLowerCase())));
+  duplicate.updatedAt = Date.now();
+  if (source.pdfAssetId) {
+    const sourceBlob = await getNotebookAsset(source.pdfAssetId);
+    if (!sourceBlob) { showToast("The original PDF file could not be found."); return; }
+    duplicate.pdfAssetId = makeLocalId("pdf");
+    await setNotebookAsset(duplicate.pdfAssetId, sourceBlob);
+  }
+  notes.push(duplicate);
+  try { saveNotebookNotes(notes); }
+  catch (error) {
+    if (duplicate.pdfAssetId) await removeNotebookAsset(duplicate.pdfAssetId).catch(() => {});
+    showToast("This note could not be copied because local storage is full.");
+    return;
+  }
+  openNotebookNote(duplicate.id);
+  showToast(`${duplicate.title} created.`);
+}
+
+function openNoteActions(noteId) {
+  const note = loadNotebookNotes().find((item) => item.id === noteId);
+  if (!note) return;
+  if (activeNoteId !== noteId) openNotebookNote(noteId);
+  noteActionsNoteId = noteId;
+  $("#note-actions-dialog-title").textContent = note.title || "Note actions";
+  const canCreateCards = Boolean(notebookNotePlainText(note));
+  $("#note-actions-create-cards").disabled = !canCreateCards;
+  $("#note-actions-create-cards").title = canCreateCards ? "" : "Add typed text before creating flashcards.";
+  $("#note-actions-dialog").showModal();
+}
+
+window.addEventListener("studybuddy:pdf-text-ready", (event) => {
+  if (!event.detail?.noteId || event.detail.noteId !== noteActionsNoteId || !$("#note-actions-dialog").open) return;
+  const note = loadNotebookNotes().find((item) => item.id === event.detail.noteId);
+  const canCreateCards = Boolean(note && notebookNotePlainText(note));
+  $("#note-actions-create-cards").disabled = !canCreateCards;
+  $("#note-actions-create-cards").title = canCreateCards ? "" : "Add typed text before creating flashcards.";
+});
+
+function closeNoteActions() {
+  if ($("#note-actions-dialog").open) $("#note-actions-dialog").close();
+  noteActionsNoteId = null;
+}
+
+function drawingNoteCanvas() { return $("#drawing-note-canvas"); }
+function drawingWorkspaceWidth() { return noteCanvasMode === "page" ? PAGE_CANVAS_WIDTH : DRAWING_CANVAS_WIDTH; }
+function drawingWorkspaceHeight() { return noteCanvasMode === "page" ? PAGE_CANVAS_HEIGHT * notePageCount + PAGE_CANVAS_GAP * Math.max(0, notePageCount - 1) : DRAWING_CANVAS_HEIGHT; }
+
+function configureNoteCanvas(mode, pageCount = notePageCount, pageLayout = notePageLayout) {
+  noteCanvasMode = mode === "page" ? "page" : "open";
+  notePageCount = noteCanvasMode === "page" ? Math.max(1, Number(pageCount) || 1) : 1;
+  notePageLayout = pageLayout === "document" ? "document" : "pages";
+  const svg = drawingNoteCanvas();
+  svg.setAttribute("viewBox", `0 0 ${drawingWorkspaceWidth()} ${drawingWorkspaceHeight()}`);
+  svg.classList.toggle("page-note-surface", noteCanvasMode === "page");
+  const documentMode = noteCanvasMode === "page" && notePageLayout === "document";
+  if (documentMode) {
+    noteDrawingActive = false;
+    currentNoteStroke = null;
+    svg.style.pointerEvents = "none";
+  } else {
+    svg.style.pointerEvents = "auto";
+  }
+  $("#drawing-note-editor").classList.toggle("document-note-mode", documentMode);
+  svg.hidden = false;
+  $("#page-document-pages").hidden = noteCanvasMode !== "page";
+  $("#page-document-pages").classList.toggle("text-editing-active", documentMode);
+  $("#document-text-toolbar").hidden = !documentMode;
+  $$("#drawing-zoom-out, #drawing-zoom-in, #drawing-zoom-fit, #drawing-zoom-value").forEach((control) => { control.hidden = noteCanvasMode === "page"; });
+  $("#toggle-page-layout").hidden = noteCanvasMode !== "page";
+  $("#page-actions").hidden = noteCanvasMode !== "page" || documentMode;
+  $("#remove-note-page").disabled = notePageCount <= 1;
+  $("#toggle-page-layout").textContent = documentMode ? "Drawing pages" : "Document writing";
+  if (noteCanvasMode === "page") renderDocumentPages();
+  if (noteCanvasMode === "page") setDrawingNoteZoom(1);
+  else window.requestAnimationFrame(() => setDrawingNoteZoom(1, true));
+}
+
+function drawingFitZoom() {
+  const canvas = drawingNoteCanvas();
+  const viewport = canvas?.parentElement;
+  if (!viewport) return 1 / 40;
+  const baseWidth = Math.max(1, viewport.clientWidth) * 40;
+  const baseHeight = baseWidth * DRAWING_CANVAS_HEIGHT / DRAWING_CANVAS_WIDTH;
+  const horizontalFit = Math.max(1, viewport.clientWidth - 112) / baseWidth;
+  const verticalFit = Math.max(1, viewport.clientHeight - 112) / baseHeight;
+  return Math.min(horizontalFit, verticalFit);
+}
+
+function setDrawingNoteZoom(value, centerCanvas = false) {
+  const canvas = drawingNoteCanvas();
+  if (!canvas) return;
+  const viewport = canvas.parentElement;
+  const oldWidth = Math.max(1, canvas.scrollWidth || canvas.getBoundingClientRect().width);
+  const oldHeight = Math.max(1, canvas.scrollHeight || canvas.getBoundingClientRect().height);
+  const centerX = centerCanvas ? 0.5 : (viewport.scrollLeft + viewport.clientWidth / 2) / oldWidth;
+  const centerY = centerCanvas ? 0.5 : (viewport.scrollTop + viewport.clientHeight / 2) / oldHeight;
+  const minimumZoom = noteCanvasMode === "page" ? 1 : drawingFitZoom();
+  noteDrawingZoom = Math.min(DRAWING_MAX_ZOOM, Math.max(minimumZoom, Number(value) || 1));
+  const displayWidth = noteCanvasMode === "page" ? Math.min(800, Math.max(520, viewport.clientWidth - 48)) : Math.max(1, viewport.clientWidth) * 40 * noteDrawingZoom;
+  const displayHeight = noteCanvasMode === "page" ? displayWidth * drawingWorkspaceHeight() / PAGE_CANVAS_WIDTH : displayWidth * DRAWING_CANVAS_HEIGHT / DRAWING_CANVAS_WIDTH;
+  canvas.style.width = `${Math.round(displayWidth)}px`;
+  canvas.style.height = `${Math.round(displayHeight)}px`;
+  canvas.style.setProperty("--page-display-height", `${displayWidth * PAGE_CANVAS_HEIGHT / PAGE_CANVAS_WIDTH}px`);
+  canvas.style.backgroundSize = noteCanvasMode === "page" ? "0 0" : `${Math.max(8, displayWidth / 50)}px ${Math.max(8, displayHeight / 100)}px`;
+  $("#drawing-zoom-value").textContent = `${Math.round(noteDrawingZoom * 100)}%`;
+  window.requestAnimationFrame(() => {
+    renderOpenNoteTextLayer();
+    viewport.scrollLeft = Math.max(0, centerX * canvas.scrollWidth - viewport.clientWidth / 2);
+    viewport.scrollTop = Math.max(0, centerY * canvas.scrollHeight - viewport.clientHeight / 2);
+  });
+}
+
+function clearDrawingCanvas() {
+  noteDrawingStrokes = [];
+  noteDrawingTexts = [];
+  currentNoteStroke = null;
+  noteDrawingLegacyImage = "";
+  renderDrawingNoteVectors();
+}
+
+function drawingStrokePath(stroke) {
+  return (stroke.points || []).map((point, index) => `${index ? "L" : "M"}${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
+}
+
+function calligraphyStrokePath(stroke) {
+  const points = stroke.points || [];
+  if (!points.length) return "";
+  const halfWidth = Math.max(1, stroke.width / 2);
+  const nibAngle = -Math.PI / 4;
+  const offsetX = Math.cos(nibAngle) * halfWidth;
+  const offsetY = Math.sin(nibAngle) * halfWidth;
+  if (points.length === 1) {
+    const point = points[0];
+    const crossX = -offsetY * 0.18;
+    const crossY = offsetX * 0.18;
+    return `M${point.x + offsetX + crossX} ${point.y + offsetY + crossY} L${point.x + offsetX - crossX} ${point.y + offsetY - crossY} L${point.x - offsetX - crossX} ${point.y - offsetY - crossY} L${point.x - offsetX + crossX} ${point.y - offsetY + crossY} Z`;
+  }
+  const left = points.map((point) => ({ x: point.x + offsetX, y: point.y + offsetY }));
+  const right = [...points].reverse().map((point) => ({ x: point.x - offsetX, y: point.y - offsetY }));
+  return [...left, ...right].map((point, index) => `${index ? "L" : "M"}${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ") + " Z";
+}
+
+function renderDrawingNoteVectors() {
+  const svg = drawingNoteCanvas();
+  if (!svg) return;
+  const viewport = svg.parentElement;
+  const preservedScrollLeft = viewport.scrollLeft;
+  const preservedScrollTop = viewport.scrollTop;
+  svg.replaceChildren();
+  if (noteCanvasMode === "page") {
+    for (let pageIndex = 0; pageIndex < notePageCount; pageIndex += 1) {
+      const page = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      page.setAttribute("x", "0");
+      page.setAttribute("y", String(pageIndex * (PAGE_CANVAS_HEIGHT + PAGE_CANVAS_GAP)));
+      page.setAttribute("width", String(PAGE_CANVAS_WIDTH));
+      page.setAttribute("height", String(PAGE_CANVAS_HEIGHT));
+      page.setAttribute("rx", "3");
+      page.setAttribute("fill", "#ffffff");
+      page.setAttribute("pointer-events", "none");
+      svg.appendChild(page);
+    }
+  }
+  if (noteDrawingLegacyImage) {
+    const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    image.setAttribute("href", noteDrawingLegacyImage);
+    image.setAttribute("width", String(drawingWorkspaceWidth()));
+    image.setAttribute("height", String(drawingWorkspaceHeight()));
+    image.setAttribute("preserveAspectRatio", "none");
+    image.setAttribute("opacity", "0.7");
+    svg.appendChild(image);
+  }
+  [...noteDrawingStrokes, ...(currentNoteStroke ? [currentNoteStroke] : [])].forEach((stroke) => {
+    if (!stroke.points?.length) return;
+    if (stroke.tool === "calligraphy") {
+      const points = stroke.points;
+      const nibAngle = -Math.PI / 4;
+      if (points.length === 1) {
+        const mark = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const halfLength = stroke.width / 2;
+        mark.setAttribute("d", `M${points[0].x - Math.cos(nibAngle) * halfLength} ${points[0].y - Math.sin(nibAngle) * halfLength} L${points[0].x + Math.cos(nibAngle) * halfLength} ${points[0].y + Math.sin(nibAngle) * halfLength}`);
+        mark.setAttribute("fill", "none");
+        mark.setAttribute("stroke", stroke.color);
+        mark.setAttribute("stroke-width", String(Math.max(1, stroke.width * 0.16)));
+        mark.setAttribute("stroke-linecap", "square");
+        svg.appendChild(mark);
+        return;
+      }
+      for (let index = 1; index < points.length; index += 1) {
+        const from = points[index - 1];
+        const to = points[index];
+        const direction = Math.atan2(to.y - from.y, to.x - from.x);
+        const apparentWidth = Math.max(stroke.width * 0.14, stroke.width * Math.abs(Math.sin(direction - nibAngle)));
+        const segment = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        segment.setAttribute("d", `M${from.x.toFixed(2)} ${from.y.toFixed(2)} L${to.x.toFixed(2)} ${to.y.toFixed(2)}`);
+        segment.setAttribute("fill", "none");
+        segment.setAttribute("stroke", stroke.color);
+        segment.setAttribute("stroke-width", String(apparentWidth));
+        segment.setAttribute("stroke-linecap", "square");
+        segment.setAttribute("stroke-linejoin", "round");
+        svg.appendChild(segment);
+      }
+      return;
+    }
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", drawingStrokePath(stroke));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", stroke.color);
+    path.setAttribute("stroke-width", String(stroke.width));
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    if (stroke.tool === "highlighter") path.setAttribute("opacity", "0.25");
+    if (stroke.tool === "pencil") path.setAttribute("opacity", "0.62");
+    if (stroke.tool === "marker") path.setAttribute("opacity", "0.86");
+    svg.appendChild(path);
+  });
+  renderOpenNoteTextLayer();
+  viewport.scrollLeft = preservedScrollLeft;
+  viewport.scrollTop = preservedScrollTop;
+}
+
+function renderOpenNoteTextLayer() {
+  const svg = drawingNoteCanvas();
+  const layer = document.getElementById("open-note-text-layer");
+  if (!svg || !layer) return;
+  const viewport = svg.parentElement;
+  if (!viewport.dataset.textLayerScrollWired) {
+    viewport.dataset.textLayerScrollWired = "true";
+    viewport.addEventListener("scroll", () => {
+      if (document.activeElement?.closest?.("#open-note-text-layer")) return;
+      renderOpenNoteTextLayer();
+    }, { passive: true });
+  }
+  const preservedScrollLeft = viewport.scrollLeft;
+  const preservedScrollTop = viewport.scrollTop;
+  layer.replaceChildren();
+  const showLayer = activeNotebookNote()?.type === "drawing" && !(noteCanvasMode === "page" && notePageLayout === "document");
+  layer.hidden = !showLayer;
+  if (!showLayer) return;
+  if (layer.parentElement !== document.body) document.body.appendChild(layer);
+  const rect = svg.getBoundingClientRect();
+  const viewportRect = viewport.getBoundingClientRect();
+  const scaleX = rect.width / drawingWorkspaceWidth();
+  const scaleY = rect.height / drawingWorkspaceHeight();
+  const visualScale = noteCanvasMode === "open" ? Math.max(0.1, noteDrawingZoom) : 1;
+  layer.style.left = `${viewportRect.left}px`;
+  layer.style.top = `${viewportRect.top}px`;
+  layer.style.width = `${viewportRect.width}px`;
+  layer.style.height = `${viewportRect.height}px`;
+  noteDrawingTexts.forEach((textItem) => {
+    const shell = document.createElement("div");
+    shell.className = "canvas-text-shell";
+    shell.style.left = `${rect.left - viewportRect.left + textItem.x * scaleX}px`;
+    shell.style.top = `${rect.top - viewportRect.top + textItem.y * scaleY}px`;
+    shell.style.width = `${Math.max(24, Math.min(440, (Number(textItem.screenWidth) || 180) * visualScale))}px`;
+    shell.style.height = `${Math.max(16, Math.min(240, (Number(textItem.screenHeight) || 36) * visualScale))}px`;
+    const removeButton = document.createElement("button");
+    removeButton.className = "canvas-text-delete";
+    removeButton.type = "button";
+    removeButton.setAttribute("aria-label", "Delete text");
+    removeButton.title = "Delete text";
+    removeButton.textContent = "🗑";
+    removeButton.addEventListener("pointerdown", (event) => { event.preventDefault(); event.stopPropagation(); });
+    removeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      noteDrawingTexts = noteDrawingTexts.filter((item) => item.id !== textItem.id);
+      if (selectedCanvasTextId === textItem.id) selectedCanvasTextId = null;
+      renderDrawingNoteVectors();
+      saveDrawingNote();
+    });
+    const editor = document.createElement("textarea");
+    editor.className = "canvas-text-editor";
+    editor.dataset.canvasTextId = textItem.id;
+    editor.value = textItem.text || "";
+    editor.placeholder = "Type here…";
+    editor.setAttribute("aria-label", "Canvas text");
+    editor.style.fontSize = `${Math.max(5, Math.min(72, (Number(textItem.screenFontSize) || 16) * visualScale))}px`;
+    editor.style.fontFamily = textItem.fontFamily || "Arial";
+    editor.style.color = textItem.color || "#171b2d";
+    editor.style.fontWeight = textItem.bold ? "760" : textItem.style === "h1" || textItem.style === "h2" ? "760" : textItem.style === "h3" ? "700" : "400";
+    editor.style.fontStyle = textItem.italic ? "italic" : "normal";
+    const rememberViewport = () => ({
+      left: viewport.scrollLeft,
+      top: viewport.scrollTop,
+    });
+    const restoreViewport = (position) => {
+      if (!position) return;
+      viewport.scrollLeft = position.left;
+      viewport.scrollTop = position.top;
+    };
+    editor.addEventListener("keydown", () => { editor._canvasViewportPosition = rememberViewport(); });
+    editor.addEventListener("input", () => {
+      const viewportPosition = editor._canvasViewportPosition || rememberViewport();
+      textItem.text = editor.value || "";
+      const nextHeight = Math.max(34, Math.min(160, editor.scrollHeight + 2));
+      shell.style.height = `${nextHeight}px`;
+      textItem.screenHeight = nextHeight / visualScale;
+      saveDrawingNote();
+      restoreViewport(viewportPosition);
+      window.requestAnimationFrame(() => {
+        restoreViewport(viewportPosition);
+        window.requestAnimationFrame(() => restoreViewport(viewportPosition));
+      });
+      window.setTimeout(() => restoreViewport(viewportPosition), 50);
+    });
+    editor.addEventListener("pointerdown", (event) => { event.stopPropagation(); selectedCanvasTextId = textItem.id; syncCanvasTextOptions(textItem); });
+    editor.addEventListener("focus", () => { selectedCanvasTextId = textItem.id; syncCanvasTextOptions(textItem); });
+    editor.addEventListener("blur", () => window.setTimeout(() => {
+      if (document.activeElement?.closest?.("#canvas-text-options")) return;
+      if ((textItem.text || "").trim()) return;
+      if (Date.now() - Number(textItem.createdAt || 0) < 600) return;
+      noteDrawingTexts = noteDrawingTexts.filter((item) => item.id !== textItem.id);
+      if (selectedCanvasTextId === textItem.id) selectedCanvasTextId = null;
+      renderDrawingNoteVectors();
+      saveDrawingNote();
+    }, 0));
+    shell.appendChild(editor);
+    shell.appendChild(removeButton);
+    layer.appendChild(shell);
+  });
+  viewport.scrollLeft = preservedScrollLeft;
+  viewport.scrollTop = preservedScrollTop;
+}
+
+function loadDrawingNoteImage(dataUrl, strokes, texts) {
+  noteDrawingLegacyImage = dataUrl || "";
+  noteDrawingStrokes = Array.isArray(strokes) ? strokes : [];
+  noteDrawingTexts = Array.isArray(texts) ? texts.filter((item) => (item?.text || "").trim()) : [];
+  currentNoteStroke = null;
+  noteDrawingHistory = [];
+  noteDrawingRedoHistory = [];
+  renderDrawingNoteVectors();
+}
+
+function drawingNoteSnapshot() {
+  return JSON.stringify({ strokes: noteDrawingStrokes, texts: noteDrawingTexts, legacy: noteDrawingLegacyImage });
+}
+
+function pushDrawingNoteHistory() {
+  noteDrawingHistory.push(drawingNoteSnapshot());
+  if (noteDrawingHistory.length > 40) noteDrawingHistory.shift();
+  noteDrawingRedoHistory = [];
+}
+
+function eraseDrawingAt(point, radius) {
+  const erased = (candidate) => Math.hypot(candidate.x - point.x, candidate.y - point.y) <= radius;
+  const segmentDistance = (from, to) => {
+    const deltaX = to.x - from.x;
+    const deltaY = to.y - from.y;
+    const lengthSquared = deltaX * deltaX + deltaY * deltaY;
+    if (!lengthSquared) return Math.hypot(point.x - from.x, point.y - from.y);
+    const position = Math.max(0, Math.min(1, ((point.x - from.x) * deltaX + (point.y - from.y) * deltaY) / lengthSquared));
+    return Math.hypot(point.x - (from.x + deltaX * position), point.y - (from.y + deltaY * position));
+  };
+  noteDrawingStrokes = noteDrawingStrokes.flatMap((stroke) => {
+    const source = Array.isArray(stroke.points) ? stroke.points : [];
+    if (!source.length) return [];
+    const nearEraser = source.some(erased) || source.slice(1).some((candidate, index) => segmentDistance(source[index], candidate) <= radius);
+    if (!nearEraser) return [stroke];
+    if (source.length === 1) return erased(source[0]) ? [] : [stroke];
+    const sampled = [source[0]];
+    for (let index = 1; index < source.length; index += 1) {
+      const from = source[index - 1];
+      const to = source[index];
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      const steps = Math.max(1, Math.ceil(distance / Math.max(1, radius / 2)));
+      for (let step = 1; step <= steps; step += 1) {
+        const amount = step / steps;
+        sampled.push({ x: from.x + (to.x - from.x) * amount, y: from.y + (to.y - from.y) * amount });
+      }
+    }
+    const fragments = [];
+    let fragment = [];
+    sampled.forEach((candidate) => {
+      if (erased(candidate)) {
+        if (fragment.length > 1) fragments.push({ ...stroke, points: fragment });
+        fragment = [];
+      } else {
+        fragment.push(candidate);
+      }
+    });
+    if (fragment.length > 1) fragments.push({ ...stroke, points: fragment });
+    return fragments;
+  });
+}
+
+function restoreDrawingNoteSnapshot(snapshot, afterRestore) {
+  try {
+    const restored = JSON.parse(snapshot || "{}");
+    noteDrawingStrokes = Array.isArray(restored.strokes) ? restored.strokes : [];
+    noteDrawingTexts = Array.isArray(restored.texts) ? restored.texts : [];
+    noteDrawingLegacyImage = restored.legacy || "";
+  } catch {
+    noteDrawingStrokes = [];
+    noteDrawingTexts = [];
+  }
+  currentNoteStroke = null;
+  renderDrawingNoteVectors();
+  afterRestore?.();
+}
+
+function saveDrawingNote() {
+  updateNotebookNote({ title: $("#drawing-note-title").value.trim() || "Untitled note", canvasMode: noteCanvasMode, pageCount: notePageCount, pageLayout: notePageLayout, pageDocumentContent: notePageDocumentContent, documentPages: noteDocumentPages, activeDocumentPage, documentLineSpacing: noteDocumentLineSpacing, showPageNumbers: noteShowPageNumbers, drawing: noteDrawingLegacyImage, drawingStrokes: noteDrawingStrokes, drawingTexts: noteDrawingTexts, drawingWidth: drawingWorkspaceWidth(), drawingHeight: drawingWorkspaceHeight() }, false);
+  $("#drawing-note-status").textContent = "Saved locally";
+}
+
+function activeDocumentEditor() {
+  return $(`[data-document-page="${activeDocumentPage}"]`);
+}
+
+function documentEditorOverflows(editor) {
+  if (!editor?.textContent && !editor?.querySelector("img,table,ul,ol,h1,h2,h3")) return false;
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  const contentRects = [...range.getClientRects()];
+  if (!contentRects.length) return false;
+  const contentBottom = Math.max(...contentRects.map((rect) => rect.bottom));
+  const styles = window.getComputedStyle(editor);
+  const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0;
+  return contentBottom > editor.getBoundingClientRect().bottom - paddingBottom + 1;
+}
+
+function setActiveDocumentPage(index) {
+  activeDocumentPage = Math.min(Math.max(0, Number(index) || 0), noteDocumentPages.length - 1);
+  $$("[data-document-page-shell]").forEach((shell) => shell.classList.toggle("active", Number(shell.dataset.documentPageShell) === activeDocumentPage));
+  $("#document-page-remove").disabled = noteDocumentPages.length <= 1;
+}
+
+function saveDocumentEditor(editor) {
+  if (!editor) return;
+  const index = Number(editor.dataset.documentPage);
+  if (!Number.isInteger(index) || index < 0) return;
+  if (documentEditorOverflows(editor)) {
+    const pendingInput = editor._pendingInput;
+    editor.innerHTML = editor._lastValidHtml ?? noteDocumentPages[index] ?? "";
+    noteDocumentPages[index] = editor.innerHTML || "";
+    const nextIndex = index + 1;
+    if (nextIndex >= noteDocumentPages.length) noteDocumentPages.push("");
+    notePageCount = Math.max(notePageCount, noteDocumentPages.length);
+    activeDocumentPage = nextIndex;
+    notePageDocumentContent = noteDocumentPages[nextIndex] || "";
+    configureNoteCanvas("page", notePageCount, "document");
+    renderDrawingNoteVectors();
+    renderDocumentPages(nextIndex);
+    saveDrawingNote();
+    window.requestAnimationFrame(() => {
+      const nextEditor = activeDocumentEditor();
+      placeCaretAtDocumentEnd(nextEditor);
+      const carriedText = pendingInput?.inputType === "insertParagraph" ? "\n" : pendingInput?.data;
+      if (carriedText) {
+        document.execCommand("insertText", false, carriedText);
+        saveDocumentEditor(nextEditor);
+      }
+    });
+    return false;
+  }
+  noteDocumentPages[index] = editor.innerHTML || "";
+  editor._lastValidHtml = noteDocumentPages[index];
+  editor._pendingInput = null;
+  setActiveDocumentPage(index);
+  notePageDocumentContent = noteDocumentPages[index];
+  saveDrawingNote();
+  return true;
+}
+
+function placeCaretAtDocumentEnd(editor) {
+  if (!editor) return;
+  editor.focus({ preventScroll: true });
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  range.collapse(false);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function placeCaretInTableCell(cell) {
+  if (!cell) return;
+  const range = document.createRange();
+  range.selectNodeContents(cell);
+  range.collapse(false);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function wireDocumentEditor(editor) {
+  editor._lastValidHtml = editor.innerHTML || "";
+  editor.addEventListener("beforeinput", (event) => {
+    editor._pendingInput = { inputType: event.inputType, data: event.data ?? event.dataTransfer?.getData("text/plain") ?? "" };
+  });
+  editor.addEventListener("focus", () => setActiveDocumentPage(editor.dataset.documentPage));
+  editor.addEventListener("pointerdown", () => setActiveDocumentPage(editor.dataset.documentPage));
+  editor.addEventListener("input", () => {
+    if (!editor._positioningCaret) saveDocumentEditor(editor);
+  });
+  editor.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      const selection = window.getSelection();
+      const selectionElement = selection?.anchorNode?.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection?.anchorNode?.parentElement;
+      const listItem = selectionElement?.closest?.("li");
+      if (listItem && editor.contains(listItem)) {
+        event.preventDefault();
+        const list = listItem.parentElement;
+        if (!listItem.textContent.trim()) {
+          const paragraph = document.createElement("p");
+          paragraph.appendChild(document.createElement("br"));
+          list.after(paragraph);
+          listItem.remove();
+          if (!list.children.length) list.remove();
+          placeCaretInTableCell(paragraph);
+        } else {
+          const nextItem = document.createElement("li");
+          nextItem.appendChild(document.createElement("br"));
+          listItem.after(nextItem);
+          placeCaretInTableCell(nextItem);
+        }
+        saveDocumentEditor(editor);
+        return;
+      }
+    }
+    if (event.key === " ") {
+      const selection = window.getSelection();
+      if (selection?.rangeCount && selection.isCollapsed && editor.contains(selection.anchorNode)) {
+        const anchorElement = selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement;
+        const candidateBlock = anchorElement?.closest("p, div, h1, h2, h3, li");
+        const block = candidateBlock && editor.contains(candidateBlock) ? candidateBlock : editor;
+        const beforeCaret = document.createRange();
+        beforeCaret.selectNodeContents(block);
+        beforeCaret.setEnd(selection.anchorNode, selection.anchorOffset);
+        const currentLine = beforeCaret.toString().split("\n").at(-1);
+        if (currentLine === "-") {
+          event.preventDefault();
+          document.execCommand("delete", false);
+          document.execCommand("insertUnorderedList", false);
+          saveDocumentEditor(editor);
+          return;
+        }
+      }
+    }
+    if (event.key !== "Tab") return;
+    event.preventDefault();
+    const selection = window.getSelection();
+    const selectionElement = selection?.anchorNode?.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection?.anchorNode?.parentElement;
+    const tableCell = selectionElement?.closest?.("td,th");
+    if (tableCell && editor.contains(tableCell)) {
+      const table = tableCell.closest("table");
+      let cells = [...table.querySelectorAll("th,td")];
+      let nextIndex = cells.indexOf(tableCell) + (event.shiftKey ? -1 : 1);
+      if (!event.shiftKey && nextIndex >= cells.length) {
+        const columnCount = table.rows[0]?.cells.length || 1;
+        const row = table.insertRow();
+        for (let index = 0; index < columnCount; index += 1) row.insertCell().appendChild(document.createElement("br"));
+        cells = [...table.querySelectorAll("th,td")];
+        nextIndex = cells.length - columnCount;
+      }
+      placeCaretInTableCell(cells[Math.max(0, nextIndex)]);
+      saveDocumentEditor(editor);
+      return;
+    }
+    if (document.queryCommandState("insertUnorderedList") || document.queryCommandState("insertOrderedList")) {
+      document.execCommand(event.shiftKey ? "outdent" : "indent", false);
+    } else {
+      document.execCommand("insertText", false, "    ");
+    }
+    saveDocumentEditor(editor);
+  });
+}
+
+function renderDocumentPages(focusIndex = null) {
+  const container = $("#page-document-pages");
+  if (!container) return;
+  if (!noteDocumentPages.length) noteDocumentPages = [""];
+  activeDocumentPage = Math.min(Math.max(0, activeDocumentPage), noteDocumentPages.length - 1);
+  container.replaceChildren(...noteDocumentPages.map((html, index) => {
+    const shell = document.createElement("section");
+    shell.className = `document-page-shell${index === activeDocumentPage ? " active" : ""}`;
+    shell.dataset.documentPageShell = String(index);
+    const label = document.createElement("div");
+    label.className = "document-page-number";
+    label.textContent = `Page ${index + 1}`;
+    const editor = document.createElement("div");
+    editor.className = "page-document-content";
+    editor.contentEditable = notePageLayout === "document" ? "true" : "false";
+    editor.setAttribute("role", "textbox");
+    editor.setAttribute("aria-multiline", "true");
+    editor.setAttribute("aria-label", `Document page ${index + 1}`);
+    editor.dataset.documentPage = String(index);
+    editor.dataset.placeholder = "Start typing…";
+    editor.style.lineHeight = noteDocumentLineSpacing;
+    editor.innerHTML = html || "";
+    wireDocumentEditor(editor);
+    const printedNumber = document.createElement("div");
+    printedNumber.className = "document-printed-page-number";
+    printedNumber.textContent = String(index + 1);
+    printedNumber.hidden = !noteShowPageNumbers;
+    shell.append(label, editor, printedNumber);
+    return shell;
+  }));
+  $("#document-page-remove").disabled = noteDocumentPages.length <= 1;
+  if (focusIndex !== null) window.requestAnimationFrame(() => {
+    const editor = $(`[data-document-page="${focusIndex}"]`);
+    editor?.closest(".document-page-shell")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    placeCaretAtDocumentEnd(editor);
+  });
+}
+
+function removeSharedNotePage(pageIndex) {
+  if (notePageCount <= 1) return;
+  const pageSpan = PAGE_CANVAS_HEIGHT + PAGE_CANVAS_GAP;
+  const pageStart = pageIndex * pageSpan;
+  const pageEnd = pageStart + pageSpan;
+  noteDrawingStrokes = noteDrawingStrokes.flatMap((stroke) => {
+    const points = stroke.points || [];
+    if (points.some((point) => point.y >= pageStart && point.y < pageEnd)) return [];
+    if (points.every((point) => point.y < pageEnd)) return [stroke];
+    return [{ ...stroke, points: points.map((point) => ({ ...point, y: point.y - pageSpan })) }];
+  });
+  noteDrawingTexts = noteDrawingTexts.flatMap((item) => {
+    if (item.y >= pageStart && item.y < pageEnd) return [];
+    return [{ ...item, y: item.y >= pageEnd ? item.y - pageSpan : item.y }];
+  });
+  noteDocumentPages.splice(pageIndex, 1);
+  notePageCount -= 1;
+  activeDocumentPage = Math.min(activeDocumentPage, notePageCount - 1);
+  notePageDocumentContent = noteDocumentPages[activeDocumentPage] || "";
+}
+
+function canvasTextScale() {
+  const rect = drawingNoteCanvas().getBoundingClientRect();
+  return drawingWorkspaceWidth() / Math.max(1, rect.width);
+}
+
+function syncCanvasTextOptions(textItem) {
+  $("#canvas-text-options").hidden = false;
+  const scale = canvasTextScale();
+  noteCanvasTextStyle = textItem.style || "body";
+  noteCanvasTextFormat = {
+    fontFamily: textItem.fontFamily || "Arial",
+    screenSize: Math.max(8, Number(textItem.screenFontSize) || Math.round((textItem.fontSize || 18 * scale) / scale)),
+    color: textItem.color || "#171b2d",
+    bold: Boolean(textItem.bold),
+    italic: Boolean(textItem.italic),
+  };
+  $("#canvas-text-font").value = noteCanvasTextFormat.fontFamily;
+  $("#canvas-text-size").value = String([8,10,12,14,16,18,20,22,24,28,32,36,42,48,56,64,72].reduce((best, size) => Math.abs(size - noteCanvasTextFormat.screenSize) < Math.abs(best - noteCanvasTextFormat.screenSize) ? size : best, 18));
+  $("#canvas-text-color").value = noteCanvasTextFormat.color;
+  $("[data-color-palette-for='canvas-text-color']").style.setProperty("--selected-color", noteCanvasTextFormat.color);
+  $("#canvas-text-bold").classList.toggle("active", noteCanvasTextFormat.bold);
+  $("#canvas-text-italic").classList.toggle("active", noteCanvasTextFormat.italic);
+  $$('[data-canvas-text-style]').forEach((button) => button.classList.toggle("active", button.dataset.canvasTextStyle === noteCanvasTextStyle));
+}
+
+function applyCanvasTextFormat(changes) {
+  noteCanvasTextFormat = { ...noteCanvasTextFormat, ...changes };
+  const textItem = noteDrawingTexts.find((item) => item.id === selectedCanvasTextId);
+  if (!textItem) return;
+  Object.assign(textItem, {
+    fontFamily: noteCanvasTextFormat.fontFamily,
+    color: noteCanvasTextFormat.color,
+    bold: noteCanvasTextFormat.bold,
+    italic: noteCanvasTextFormat.italic,
+    fontSize: noteCanvasTextFormat.screenSize * canvasTextScale(),
+    screenFontSize: noteCanvasTextFormat.screenSize,
+    style: noteCanvasTextStyle,
+  });
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+  window.requestAnimationFrame(() => document.querySelector(`#open-note-text-layer [data-canvas-text-id="${textItem.id}"]`)?.focus());
+}
+
+function queueWordNoteSave() {
+  $("#word-note-status").textContent = "Saving…";
+  window.clearTimeout(noteSaveHandle);
+  const noteId = activeNoteId;
+  const title = $("#word-note-title").value.trim() || "Untitled note";
+  const html = sanitizeNotesHtml($("#word-note-content").innerHTML);
+  noteSaveHandle = window.setTimeout(() => {
+    const notes = loadNotebookNotes();
+    const index = notes.findIndex((note) => note.id === noteId);
+    if (index >= 0) {
+      notes[index] = { ...notes[index], title, html, updatedAt: Date.now() };
+      saveNotebookNotes(notes);
+      if (activeNoteId === noteId) {
+        $("#word-note-status").textContent = "Saved locally";
+        renderNotesList();
+      }
+    }
+  }, 250);
+}
+
+function rememberNoteTextSelection() {
+  const selection = window.getSelection();
+  const editor = $("#word-note-content");
+  if (!selection?.rangeCount || !editor.contains(selection.anchorNode)) return;
+  noteTextSelection = selection.getRangeAt(0).cloneRange();
+}
+
+function restoreNoteTextSelection() {
+  const editor = $("#word-note-content");
+  editor.focus();
+  if (!noteTextSelection) return;
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(noteTextSelection);
+}
+
+const fullscreenWorkspaceViews = new Set(["notes"]);
+
+function syncWorkspaceFullscreenControl() {
+  const toggle = $("#notes-only-toggle");
+  if (!toggle) return;
+  if (!fullscreenWorkspaceViews.has(state.currentAppView)) toggle.checked = false;
+}
+
+function setWorkspaceFullscreen(active) {
+  const toggle = $("#notes-only-toggle");
+  if (!toggle) return;
+  toggle.checked = Boolean(active);
+  syncWorkspaceFullscreenControl();
+  window.requestAnimationFrame(() => {
+    if (state.currentAppView === "notes" && activeNotebookNote()?.type === "drawing") {
+      renderOpenNoteTextLayer();
+    }
+  });
+}
+window.setWorkspaceFullscreen = setWorkspaceFullscreen;
+
 function showAppView(view) {
+  const enteringCreate = view === "create" && state.currentAppView !== "create";
+  if (enteringCreate && state.notesHiddenAfterUpdate && state.editingCustomDeckId) {
+    const savedDeck = loadCustomDecks().find((deck) => deck.id === state.editingCustomDeckId);
+    if (savedDeck) setNotesContent(savedDeck.sourceNotes || "", savedDeck.sourceNotesHtml || "");
+    state.notesHiddenAfterUpdate = false;
+  }
+  state.currentAppView = view;
+  const openNoteTextLayer = document.getElementById("open-note-text-layer");
+  if (openNoteTextLayer && view !== "notes") openNoteTextLayer.hidden = true;
+  if (!fullscreenWorkspaceViews.has(view)) setWorkspaceFullscreen(false);
   const showingCourses = view === "courses";
   const showingCourse = view === "course";
   const showingFlashcards = view === "flashcards";
   const showingCreate = view === "create";
+  const showingNotes = view === "notes";
   const showingExport = view === "export";
   const showingCustomStudy = view === "custom-study";
   const showingCustomDelete = view === "custom-delete";
@@ -855,21 +2385,29 @@ function showAppView(view) {
   $("#course-page").hidden = !showingCourse;
   $("#flashcards").hidden = !showingFlashcards;
   $("#create").hidden = !showingCreate;
+  $("#notes-page").hidden = !showingNotes;
   $("#export").hidden = !showingExport;
   $("#custom-study-page").hidden = !showingCustomStudy;
   $("#custom-delete-page").hidden = !showingCustomDelete;
   $("#study-guide-page").hidden = !showingStudyGuide;
   $("#settings-page").hidden = !showingSettings;
-  $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingExport || showingCustomStudy || showingCustomDelete || showingStudyGuide || showingSettings; });
-  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingExport ? "#export" : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
+  $("#birthday-celebration").hidden = view !== "dashboard" || !isBirthdayToday();
+  $$(".topbar, .stats-grid, .dashboard-grid").forEach((section) => { section.hidden = showingCourses || showingCourse || showingFlashcards || showingCreate || showingNotes || showingExport || showingCustomStudy || showingCustomDelete || showingStudyGuide || showingSettings; });
+  const activeHref = showingSettings ? null : showingStudyGuide ? "#study-guide" : showingCustomStudy ? `#${state.customStudyReturnView}` : showingCustomDelete ? `#${state.customDeleteReturnView}` : showingExport ? "#export" : showingNotes ? "#notes" : showingCreate ? "#create" : showingFlashcards ? "#flashcards" : showingCourses || showingCourse ? "#courses" : "#dashboard";
   $$(".primary-nav .nav-item, .mobile-nav a").forEach((item) => {
     const active = item.getAttribute("href") === activeHref;
     item.classList.toggle("active", active);
     if (active) item.setAttribute("aria-current", "page"); else item.removeAttribute("aria-current");
   });
   $("#open-settings").classList.toggle("active", showingSettings);
+  syncWorkspaceFullscreenControl();
   if (showingSettings) populateSettingsForm();
   if (showingCreate || showingFlashcards) renderCustomDecks();
+  if (showingNotes) {
+    const notes = loadNotebookNotes();
+    if (!activeNoteId && notes.length) activeNoteId = notes.sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt))[0].id;
+    openNotebookNote(activeNoteId);
+  }
   if (showingExport) renderExportPage();
   if (view === "dashboard") renderActiveAnkiDecks();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -880,17 +2418,24 @@ function populateSettingsForm() {
   const form = $("#settings-form");
   Object.entries(settings).forEach(([name, value]) => {
     const fields = form.elements[name];
-    if (fields) fields.value = String(value);
+    if (fields) {
+      if (fields.type === "checkbox") fields.checked = Boolean(value);
+      else fields.value = String(value);
+    }
   });
+  const profile = loadProfile();
+  $("#settings-profile-name").value = profile?.name || "";
+  populateBirthdaySelects($("#settings-profile-birth-month"), $("#settings-profile-birth-day"), profile?.birthday || "");
 }
 
 function settingsFromForm() {
   const data = new FormData($("#settings-form"));
   const settings = { ...DEFAULT_SETTINGS };
   Object.keys(settings).forEach((key) => { if (data.has(key)) settings[key] = data.get(key); });
-  ["newCardsPerDay", "maxReviewsPerDay", "graduatingInterval", "easyInterval", "startingEase", "hardInterval", "easyBonus", "intervalModifier", "maximumInterval", "minimumLapseInterval", "leechThreshold"].forEach((key) => { settings[key] = Number(settings[key]); });
-  settings.learningSteps = parseMinuteSteps(settings.learningSteps).join(", ");
-  settings.relearningSteps = parseMinuteSteps(settings.relearningSteps).join(", ");
+  ["newCardsPerDay", "maxReviewsPerDay", "desiredRetention", "dayStartHour", "learnAheadMinutes", "graduatingInterval", "easyInterval", "startingEase", "hardInterval", "easyBonus", "intervalModifier", "maximumInterval", "minimumLapseInterval", "leechThreshold"].forEach((key) => { settings[key] = Number(settings[key]); });
+  ["enableFuzz", "newCardsIgnoreReviewLimit", "buryNewSiblings", "buryReviewSiblings", "buryLearningSiblings"].forEach((key) => { settings[key] = data.has(key); });
+  settings.learningSteps = parseAnkiSteps(settings.learningSteps).join(" ");
+  settings.relearningSteps = parseAnkiSteps(settings.relearningSteps).join(" ");
   return settings;
 }
 
@@ -956,9 +2501,17 @@ function addCourse(courseId) {
   const enrolled = new Set(enrolledCourseIds());
   enrolled.add(courseId);
   localStorage.setItem("study-desk-enrolled-courses", JSON.stringify([...enrolled]));
+  const matchingDeckId = `textbook-${courseId}`;
+  const addedDecks = new Set(addedFlashcardCollectionIds());
+  const hasMatchingDeck = builtInFlashcardCollections.some((collection) => collection.id === matchingDeckId);
+  if (hasMatchingDeck) {
+    addedDecks.add(matchingDeckId);
+    localStorage.setItem("study-desk-added-flashcard-collections", JSON.stringify([...addedDecks]));
+    renderCustomDecks();
+  }
   renderCourseShelf($("#catalog-courses-search").value);
   const course = courses.find((item) => item.id === courseId);
-  showToast(`${course?.title || "Textbook"} added to My textbooks.`);
+  showToast(`${course?.title || "Textbook"} and its study set were added.`);
 }
 
 function removeCourse(courseId, event) {
@@ -973,7 +2526,6 @@ function renderMyCourses(filter = "") {
   const query = filter.trim().toLowerCase();
   const allEnrolled = courses.filter((course) => isEnrolled(course.id));
   const enrolled = allEnrolled.filter((course) => `${course.title} ${course.code} ${course.level} ${course.sourceTitle || ""} ${course.description}`.toLowerCase().includes(query));
-  $("#continue-card").hidden = allEnrolled.length === 0;
   $("#my-course-shelf").innerHTML = enrolled.length ? enrolled.map((course) => `
     <article class="course-tile enrolled-course" data-course="${course.id}">
       <div class="course-cover ${course.color}"><span>${course.icon}</span><small>${course.code}</small></div>
@@ -982,6 +2534,8 @@ function renderMyCourses(filter = "") {
     </article>`).join("") : query ? '<div class="empty-my-courses"><strong>No added textbooks match</strong><span>Try a different title, subject, or code.</span></div>' : '<div class="empty-my-courses"><strong>No textbooks added yet</strong><span>Choose a textbook from the catalog below.</span></div>';
   $$(".enrolled-course").forEach((tile) => tile.addEventListener("click", () => openCourse(tile.dataset.course)));
   $$('[data-remove-course]').forEach((button) => button.addEventListener("click", (event) => removeCourse(button.dataset.removeCourse, event)));
+  const returnAllButton = $("#return-all-textbooks");
+  if (returnAllButton) returnAllButton.disabled = allEnrolled.length === 0;
 }
 
 function resetAnkiReview() {
@@ -1041,9 +2595,25 @@ function renderChapterSidebar() {
   const usesChapters = isAtkins || ["general-chemistry", "central-science"].includes(course.id);
   const groupLabel = isAtkins ? "Part" : "Unit";
   const itemLabel = usesChapters ? "chapters" : "mini-units";
-  $("#chapter-sidebar").innerHTML = `<div class="course-mini ${course.color}"><span>${course.icon}</span><div><strong>${course.code}</strong><small>${course.chapters.length} ${groupLabel.toLowerCase()}s · ${miniUnitCount} ${itemLabel}</small></div></div><p class="chapter-label">Textbook structure</p>${course.chapters.map((unit, unitIndex) => `<div class="unit-group"><button class="chapter-button unit-button ${unitIndex === state.activeChapter ? "active" : ""}" data-unit="${unitIndex}"><span>${groupLabel} ${unitIndex + 1} · ${unit.miniUnits.length} ${itemLabel}</span><strong>${unit.title}</strong></button>${unitIndex === state.activeChapter ? `<div class="mini-unit-list">${unit.miniUnits.map((chapter, miniIndex) => `<button class="mini-unit-button ${miniIndex === state.activeMiniUnit ? "active" : ""}" data-mini-unit="${miniIndex}" aria-label="Chapter ${chapter.number}: ${escapeHtml(chapter.title)}"><span>${chapter.number}</span><strong>${chapter.title}</strong></button>${miniIndex === state.activeMiniUnit && chapter.sections ? `<div class="atkins-section-list">${chapter.sections.map((section, sectionIndex) => `<button type="button" class="atkins-section-button ${sectionIndex === state.activeSection ? "active" : ""}" data-atkins-section="${sectionIndex}">${section.title}</button>`).join("")}</div>` : ""}`).join("")}</div>` : ""}</div>`).join("")}`;
+  $("#chapter-sidebar").innerHTML = `<div class="course-mini ${course.color}"><span>${course.icon}</span><div><strong>${course.code}</strong><small>${course.chapters.length} ${groupLabel.toLowerCase()}s · ${miniUnitCount} ${itemLabel}</small></div></div><p class="chapter-label">Textbook structure</p>${course.chapters.map((unit, unitIndex) => {
+    const unitCollapsed = state.collapsedCourseUnits.has(`${course.id}:${unitIndex}`);
+    return `<div class="unit-group"><button class="chapter-button unit-button ${unitIndex === state.activeChapter ? "active" : ""}" data-unit="${unitIndex}" aria-expanded="${unitIndex === state.activeChapter && !unitCollapsed}"><span>${groupLabel} ${unitIndex + 1} · ${unit.miniUnits.length} ${itemLabel}</span><strong>${unit.title}</strong><i class="structure-chevron">${unitIndex === state.activeChapter && !unitCollapsed ? "⌃" : "⌄"}</i></button>${unitIndex === state.activeChapter && !unitCollapsed ? `<div class="mini-unit-list">${unit.miniUnits.map((chapter, miniIndex) => {
+      const chapterKey = `${course.id}:${unitIndex}:${miniIndex}`;
+      const chapterCollapsed = state.collapsedCourseChapters.has(chapterKey);
+      const hasSections = Boolean(chapter.sections?.length);
+      return `<button class="mini-unit-button ${miniIndex === state.activeMiniUnit ? "active" : ""}" data-mini-unit="${miniIndex}" aria-label="Chapter ${chapter.number}: ${escapeHtml(chapter.title)}" ${hasSections ? `aria-expanded="${miniIndex === state.activeMiniUnit && !chapterCollapsed}"` : ""}><span>${chapter.number}</span><strong>${chapter.title}</strong>${hasSections ? `<i class="structure-chevron">${miniIndex === state.activeMiniUnit && !chapterCollapsed ? "⌃" : "⌄"}</i>` : ""}</button>${miniIndex === state.activeMiniUnit && hasSections && !chapterCollapsed ? `<div class="atkins-section-list">${chapter.sections.map((section, sectionIndex) => `<button type="button" class="atkins-section-button ${sectionIndex === state.activeSection ? "active" : ""}" data-atkins-section="${sectionIndex}">${section.title}</button>`).join("")}</div>` : ""}`;
+    }).join("")}</div>` : ""}</div>`;
+  }).join("")}`;
   $$("[data-unit]", $("#chapter-sidebar")).forEach((button) => button.addEventListener("click", () => {
-    state.activeChapter = Number(button.dataset.unit);
+    const nextUnit = Number(button.dataset.unit);
+    const key = `${course.id}:${nextUnit}`;
+    if (nextUnit === state.activeChapter) {
+      if (state.collapsedCourseUnits.has(key)) state.collapsedCourseUnits.delete(key); else state.collapsedCourseUnits.add(key);
+      renderChapterSidebar();
+      return;
+    }
+    state.activeChapter = nextUnit;
+    state.collapsedCourseUnits.delete(key);
     state.activeMiniUnit = 0;
     state.activeSection = 0;
     state.activeView = "lesson";
@@ -1054,7 +2624,15 @@ function renderChapterSidebar() {
     renderLesson();
   }));
   $$("[data-mini-unit]", $("#chapter-sidebar")).forEach((button) => button.addEventListener("click", () => {
-    state.activeMiniUnit = Number(button.dataset.miniUnit);
+    const nextMiniUnit = Number(button.dataset.miniUnit);
+    const chapterKey = `${course.id}:${state.activeChapter}:${nextMiniUnit}`;
+    if (nextMiniUnit === state.activeMiniUnit && course.chapters[state.activeChapter].miniUnits[nextMiniUnit].sections?.length) {
+      if (state.collapsedCourseChapters.has(chapterKey)) state.collapsedCourseChapters.delete(chapterKey); else state.collapsedCourseChapters.add(chapterKey);
+      renderChapterSidebar();
+      return;
+    }
+    state.activeMiniUnit = nextMiniUnit;
+    state.collapsedCourseChapters.delete(chapterKey);
     state.activeSection = 0;
     state.activeView = "lesson";
     resetAnkiReview();
@@ -1082,9 +2660,13 @@ function renderLesson() {
   let body = "";
   if (state.activeView === "lesson") {
     const activeSection = chapter.sections?.[state.activeSection];
-    const sectionOutline = activeSection ? `<div class="atkins-section-outline"><span>Section group</span><h4>${escapeHtml(activeSection.title)}</h4>${activeSection.topics.length ? `<ul>${activeSection.topics.map((topic) => `<li>${escapeHtml(topic)}</li>`).join("")}</ul>` : ""}</div>` : "";
-    const equationList = chapter.equations?.length ? `<div class="atkins-equations"><h4>Equations and applications</h4>${chapter.equations.map(([name, application, equation]) => `<div><strong>${escapeHtml(name)}</strong><span class="equation-display">${escapeHtml(equation)}</span><span>${escapeHtml(application)}</span></div>`).join("")}</div>` : "";
-    body = `<article class="lesson-article"><p class="lesson-number">Chapter ${chapter.number} · ${state.activeCourse.id === "physical-chemistry" ? "Part" : "Unit"} ${state.activeChapter + 1} of ${state.activeCourse.chapters.length}</p><h3>${chapter.title}</h3><p class="unit-context">${unit.title}</p><div class="textbook-alignment"><strong>Textbook-aligned</strong><span>${escapeHtml(state.activeCourse.studyBasis)}</span></div>${sectionOutline}<p class="lesson-lead">${chapter.summary}</p><h4>Key ideas</h4><ul>${chapter.takeaways.map((idea) => `<li>${idea}</li>`).join("")}</ul>${equationList}<button class="button primary-button complete-lesson" type="button">${completed ? "✓ Chapter completed" : "Mark chapter complete"}</button></article>`;
+    const sectionOutline = activeSection ? `<div class="atkins-section-outline"><span>Sections</span><h4>${escapeHtml(activeSection.title)}</h4>${activeSection.topics.length ? `<div class="textbook-section-topics">${activeSection.topics.map((topic) => {
+      const cleanedTopic = String(topic).replace(/^\s*[-–—•]\s*/, "").trim();
+      const match = cleanedTopic.match(/^([A-Z]?\d+(?:\.\d+)*)[.:]?\s+(.+)$/);
+      return match ? `<div><b>${escapeHtml(match[1])}</b><span>${escapeHtml(match[2])}</span></div>` : `<div><span>${escapeHtml(cleanedTopic)}</span></div>`;
+    }).join("")}</div>` : ""}</div>` : "";
+    const equationList = chapter.equations?.length ? `<div class="atkins-equations"><h4>Equations and applications</h4>${chapter.equations.map(([name, application, equation]) => `<div><strong>${escapeHtml(name)}</strong><span class="equation-display">${textbookEquationHtml(equation)}</span><span>${escapeHtml(application)}</span></div>`).join("")}</div>` : "";
+    body = `<article class="lesson-article"><p class="lesson-number">Chapter ${chapter.number} · ${state.activeCourse.id === "physical-chemistry" ? "Part" : "Unit"} ${state.activeChapter + 1} of ${state.activeCourse.chapters.length}</p><h3>${chapter.title}</h3><p class="unit-context">${unit.title}</p>${sectionOutline}<p class="lesson-lead">${chapter.summary}</p><h4>Key ideas</h4><ul>${chapter.takeaways.map((idea) => `<li>${idea}</li>`).join("")}</ul>${equationList}<button class="button primary-button complete-lesson" type="button">${completed ? "✓ Chapter completed" : "Mark chapter complete"}</button></article>`;
   } else if (state.activeView === "flashcards") {
     body = renderFlashcardView();
   } else if (state.activeView === "anki") {
@@ -1097,8 +2679,8 @@ function renderLesson() {
   }
   $("#lesson-view").innerHTML = tabs + body;
   $$("[data-view]", $("#lesson-view")).forEach((button) => button.addEventListener("click", () => { state.activeView = button.dataset.view; renderLesson(); }));
-  $$("[data-anki-unit], [data-anki-mini]", $("#lesson-view")).forEach((input) => input.addEventListener("change", updateAnkiDeckSelection));
-  $$("[data-flashcard-unit], [data-flashcard-mini]", $("#lesson-view")).forEach((input) => input.addEventListener("change", updateFlashcardDeckSelection));
+  $$("[data-anki-unit], [data-anki-mini], [data-anki-section]", $("#lesson-view")).forEach((input) => input.addEventListener("change", updateAnkiDeckSelection));
+  $$("[data-flashcard-unit], [data-flashcard-mini], [data-flashcard-section]", $("#lesson-view")).forEach((input) => input.addEventListener("change", updateFlashcardDeckSelection));
   $$("[data-feynman-unit], [data-feynman-mini]", $("#lesson-view")).forEach((input) => input.addEventListener("change", updateFeynmanDeckSelection));
   const selectAll = $("[data-select-all]", $("#lesson-view"));
   if (selectAll) selectAll.addEventListener("click", () => { state.selectedAnkiDecks = allAnkiDeckKeys(); renderLesson(); });
@@ -1117,7 +2699,7 @@ function renderLesson() {
   const startFlashcards = $("[data-start-flashcards]", $("#lesson-view"));
   if (startFlashcards) startFlashcards.addEventListener("click", startFlashcardReview);
   const removeAnkiCardButton = $("[data-remove-anki-card]", $("#lesson-view"));
-  if (removeAnkiCardButton) removeAnkiCardButton.addEventListener("click", removeCurrentAnkiCard);
+  if (removeAnkiCardButton) removeAnkiCardButton.addEventListener("dblclick", removeCurrentAnkiCard);
   const restoreAnkiCardsButton = $("[data-restore-anki-cards]", $("#lesson-view"));
   if (restoreAnkiCardsButton) restoreAnkiCardsButton.addEventListener("click", restoreRemovedAnkiCards);
   const startFeynman = $("[data-start-feynman]", $("#lesson-view"));
@@ -1141,17 +2723,20 @@ function renderLesson() {
   const previousFlashcard = $("[data-previous-flashcard]", $("#lesson-view"));
   if (previousFlashcard) previousFlashcard.addEventListener("click", () => { state.flashcardPosition = Math.max(0, state.flashcardPosition - 1); renderLesson(); });
   const nextFlashcard = $("[data-next-flashcard]", $("#lesson-view"));
-  if (nextFlashcard) nextFlashcard.addEventListener("click", () => { state.flashcardPosition = (state.flashcardPosition + 1) % state.flashcardQueue.length; renderLesson(); });
+  if (nextFlashcard) nextFlashcard.addEventListener("click", () => {
+    if (state.flashcardPosition === state.flashcardQueue.length - 1) recordStudyActivity();
+    state.flashcardPosition = (state.flashcardPosition + 1) % state.flashcardQueue.length;
+    renderLesson();
+  });
   const ankiCard = $(".anki-card", $("#lesson-view"));
   if (ankiCard) ankiCard.addEventListener("click", () => {
     const review = $(".anki-review", $("#lesson-view"));
-    review.classList.toggle("revealed");
-    review.classList.add("ratings-ready");
+    if (!review.classList.contains("revealed")) setTextbookAnkiReveal(review, true);
   });
   const revealAnkiButton = $("[data-reveal-anki]", $("#lesson-view"));
   if (revealAnkiButton) revealAnkiButton.addEventListener("click", () => {
     const review = $(".anki-review", $("#lesson-view"));
-    review.classList.add("revealed", "ratings-ready");
+    setTextbookAnkiReveal(review, true);
   });
   $$("[data-anki-rating]", $("#lesson-view")).forEach((button) => button.addEventListener("click", () => rateAnkiCard(button.dataset.ankiRating)));
   $$("[data-answer]", $("#lesson-view")).forEach((button) => button.addEventListener("click", () => answerQuiz(button)));
@@ -1169,27 +2754,27 @@ function renderLesson() {
 
 function selectedFlashcardChapters() {
   const selected = new Set(state.selectedFlashcardDecks || []);
-  return state.activeCourse.chapters.flatMap((unit, unitIndex) => unit.miniUnits.map((chapter, miniIndex) => ({ unitIndex, miniIndex, chapter })).filter((item) => selected.has(ankiDeckKey(item.unitIndex, item.miniIndex))));
+  return textbookStudySlices().filter((item) => selected.has(item.key));
 }
 
 function renderFlashcardView() {
-  if (state.selectedFlashcardDecks === null) state.selectedFlashcardDecks = [ankiDeckKey(state.activeChapter, state.activeMiniUnit)];
+  if (state.selectedFlashcardDecks === null) state.selectedFlashcardDecks = defaultTextbookDeckKeys();
   if (!state.flashcardReviewActive) {
     const selected = new Set(state.selectedFlashcardDecks);
     const removed = removedAnkiCardKeys();
     const selectedChapters = selectedFlashcardChapters();
-    const cardCount = selectedChapters.reduce((total, item) => total + item.chapter.cards.filter((_, cardIndex) => !removed.has(ankiCardKey(item.unitIndex, item.miniIndex, cardIndex))).length, 0);
+    const cardCount = selectedChapters.reduce((total, item) => total + item.cardIndexes.filter((cardIndex) => !removed.has(ankiCardKey(item.unitIndex, item.miniIndex, cardIndex))).length, 0);
     const unitPicker = state.activeCourse.chapters.map((unit, unitIndex) => {
-      const unitKeys = unit.miniUnits.map((_, miniIndex) => ankiDeckKey(unitIndex, miniIndex));
+      const unitKeys = textbookStudySlices().filter((slice) => slice.unitIndex === unitIndex).map((slice) => slice.key);
       const selectedCount = unitKeys.filter((key) => selected.has(key)).length;
-      return `<div class="anki-unit-picker"><label class="anki-unit-choice"><input type="checkbox" data-flashcard-unit="${unitIndex}" ${selectedCount === unitKeys.length ? "checked" : ""}><span><small>Unit ${unitIndex + 1} · ${unit.miniUnits.length} mini-units</small><strong>${escapeHtml(unit.title)}</strong></span></label><div class="anki-mini-picker">${unit.miniUnits.map((miniUnit, miniIndex) => { const key = ankiDeckKey(unitIndex, miniIndex); const available = miniUnit.cards.filter((_, cardIndex) => !removed.has(ankiCardKey(unitIndex, miniIndex, cardIndex))).length; return `<label><input type="checkbox" data-flashcard-mini="${key}" ${selected.has(key) ? "checked" : ""}><span><small>Chapter ${miniUnit.number} · ${available} cards</small><strong>${escapeHtml(miniUnit.title)}</strong></span></label>`; }).join("")}</div></div>`;
+      return `<div class="anki-unit-picker"><label class="anki-unit-choice"><input type="checkbox" data-flashcard-unit="${unitIndex}" ${selectedCount === unitKeys.length ? "checked" : ""}><span><small>Unit ${unitIndex + 1} · ${unit.miniUnits.length} mini-units</small><strong>${escapeHtml(unit.title)}</strong></span></label><div class="anki-mini-picker">${unit.miniUnits.map((miniUnit, miniIndex) => textbookPickerMarkup(miniUnit, unitIndex, miniIndex, selected, removed, "flashcard")).join("")}</div></div>`;
     }).join("");
     return `<section class="practice-view anki-setup"><p class="lesson-number">Normal flashcards</p><h3>Choose units and mini-units</h3><p>Study every selected card freely. This mode does not change Anki due dates or scheduling.</p><div class="anki-selection-bar"><strong>${selectedChapters.length} mini-units · ${cardCount} cards</strong><div><button type="button" data-select-all-flashcards>Select all</button><button type="button" data-clear-flashcards>Clear</button></div></div><div class="anki-deck-picker">${unitPicker}</div><button class="button primary-button start-anki" type="button" data-start-flashcards ${cardCount ? "" : "disabled"}>Study ${cardCount} flashcards</button></section>`;
   }
   const item = state.flashcardQueue[state.flashcardPosition];
   const reviewChapter = state.activeCourse.chapters[item.unitIndex].miniUnits[item.miniIndex];
   const card = reviewChapter.cards[item.cardIndex];
-  const equation = card[2] ? `<span class="anki-equation" aria-label="Equation">${escapeHtml(card[2])}</span>` : "";
+  const equation = card[2] ? `<span class="anki-equation" aria-label="Equation">${textbookEquationHtml(card[2])}</span>` : "";
   return `<section class="practice-view flashcard-study"><button class="flashcard-back" type="button" data-flashcard-back>← Change selection</button><div class="anki-session-heading"><p class="lesson-number">Flashcard ${state.flashcardPosition + 1} of ${state.flashcardQueue.length}</p><span class="flashcard-mode-label">No scheduling</span></div><h3>${escapeHtml(reviewChapter.title)}</h3><p class="anki-card-source">Unit ${item.unitIndex + 1} · Chapter ${reviewChapter.number}</p><div class="anki-review"><button class="anki-card" type="button"><span>${card[2] ? "Equation" : "Question"}</span><strong>${escapeHtml(card[0])}</strong><em>Click to show answer</em><div class="anki-answer">${equation}<p>${escapeHtml(card[1])}</p></div></button></div><div class="flashcard-navigation"><button type="button" data-previous-flashcard ${state.flashcardPosition === 0 ? "disabled" : ""}>← Previous</button><button type="button" data-next-flashcard>${state.flashcardPosition === state.flashcardQueue.length - 1 ? "Restart deck" : "Next →"}</button></div></section>`;
 }
 
@@ -1197,13 +2782,11 @@ function updateFlashcardDeckSelection(event) {
   const selected = new Set(state.selectedFlashcardDecks || []);
   if (event.currentTarget.dataset.flashcardUnit !== undefined) {
     const unitIndex = Number(event.currentTarget.dataset.flashcardUnit);
-    state.activeCourse.chapters[unitIndex].miniUnits.forEach((_, miniIndex) => {
-      const key = ankiDeckKey(unitIndex, miniIndex);
-      if (event.currentTarget.checked) selected.add(key); else selected.delete(key);
-    });
+    textbookStudySlices().filter((slice) => slice.unitIndex === unitIndex).forEach((slice) => { if (event.currentTarget.checked) selected.add(slice.key); else selected.delete(slice.key); });
   } else {
-    const key = event.currentTarget.dataset.flashcardMini;
-    if (event.currentTarget.checked) selected.add(key); else selected.delete(key);
+    const key = event.currentTarget.dataset.flashcardSection || event.currentTarget.dataset.flashcardMini;
+    const keys = event.currentTarget.dataset.flashcardMini ? textbookStudySlices().filter((slice) => slice.key === key || slice.key.startsWith(`${key}-`)).map((slice) => slice.key) : [key];
+    keys.forEach((item) => { if (event.currentTarget.checked) selected.add(item); else selected.delete(item); });
   }
   state.selectedFlashcardDecks = allAnkiDeckKeys().filter((key) => selected.has(key));
   renderLesson();
@@ -1211,7 +2794,7 @@ function updateFlashcardDeckSelection(event) {
 
 function startFlashcardReview() {
   const removed = removedAnkiCardKeys();
-  state.flashcardQueue = selectedFlashcardChapters().flatMap(({ unitIndex, miniIndex, chapter }) => chapter.cards.map((_, cardIndex) => ({ unitIndex, miniIndex, cardIndex })).filter((item) => !removed.has(ankiCardKey(item.unitIndex, item.miniIndex, item.cardIndex))));
+  state.flashcardQueue = selectedFlashcardChapters().flatMap(({ unitIndex, miniIndex, cardIndexes }) => cardIndexes.map((cardIndex) => ({ unitIndex, miniIndex, cardIndex })).filter((item) => !removed.has(ankiCardKey(item.unitIndex, item.miniIndex, item.cardIndex))));
   if (!state.flashcardQueue.length) return;
   shuffleInPlace(state.flashcardQueue);
   state.flashcardPosition = 0;
@@ -1220,12 +2803,12 @@ function startFlashcardReview() {
 }
 
 function renderAnkiView(chapter) {
-  if (state.selectedAnkiDecks === null) state.selectedAnkiDecks = [ankiDeckKey(state.activeChapter, state.activeMiniUnit)];
+  if (state.selectedAnkiDecks === null) state.selectedAnkiDecks = defaultTextbookDeckKeys();
   if (!state.ankiReviewActive) {
     const selected = new Set(state.selectedAnkiDecks);
     const removed = removedAnkiCardKeys();
     const selectedChapters = selectedAnkiChapters();
-    const selectedCards = selectedChapters.flatMap((item) => item.chapter.cards.map((_, cardIndex) => ({ ...item, cardIndex })).filter((card) => !removed.has(ankiCardKey(card.unitIndex, card.miniIndex, card.cardIndex))));
+    const selectedCards = selectedChapters.flatMap((item) => item.cardIndexes.map((cardIndex) => ({ ...item, cardIndex })).filter((card) => !removed.has(ankiCardKey(card.unitIndex, card.miniIndex, card.cardIndex))));
     const preparedCards = selectedCards.map((card) => prepareAnkiSessionCard(card, ankiCardKey(card.unitIndex, card.miniIndex, card.cardIndex)));
     const dailyPlan = dailyAnkiPlan(preparedCards, `course:${state.activeCourse.id}`);
     const selectedCardCount = dailyPlan.queue.length;
@@ -1233,9 +2816,9 @@ function renderAnkiView(chapter) {
     const nextDue = selectedCards.map((card) => ankiScheduleFor(ankiCardKey(card.unitIndex, card.miniIndex, card.cardIndex)).due).filter((due) => due > Date.now()).sort((a, b) => a - b)[0];
     const removedCount = [...removed].filter((key) => key.startsWith(`${state.activeCourse.id}-`)).length;
     const unitPicker = state.activeCourse.chapters.map((unit, unitIndex) => {
-      const unitKeys = unit.miniUnits.map((_, miniIndex) => ankiDeckKey(unitIndex, miniIndex));
+      const unitKeys = textbookStudySlices().filter((slice) => slice.unitIndex === unitIndex).map((slice) => slice.key);
       const selectedCount = unitKeys.filter((key) => selected.has(key)).length;
-      return `<div class="anki-unit-picker"><label class="anki-unit-choice"><input type="checkbox" data-anki-unit="${unitIndex}" ${selectedCount === unitKeys.length ? "checked" : ""}><span><small>Unit ${unitIndex + 1} · ${unit.miniUnits.length} mini-units</small><strong>${unit.title}</strong></span></label><div class="anki-mini-picker">${unit.miniUnits.map((miniUnit, miniIndex) => { const key = ankiDeckKey(unitIndex, miniIndex); const available = miniUnit.cards.filter((_, cardIndex) => !removed.has(ankiCardKey(unitIndex, miniIndex, cardIndex))).length; const due = miniUnit.cards.filter((_, cardIndex) => !removed.has(ankiCardKey(unitIndex, miniIndex, cardIndex)) && isAnkiCardDue(ankiCardKey(unitIndex, miniIndex, cardIndex))).length; return `<label><input type="checkbox" data-anki-mini="${key}" ${selected.has(key) ? "checked" : ""}><span><small>Chapter ${miniUnit.number} · ${due} due / ${available} total</small><strong>${miniUnit.title}</strong></span></label>`; }).join("")}</div></div>`;
+      return `<div class="anki-unit-picker"><label class="anki-unit-choice"><input type="checkbox" data-anki-unit="${unitIndex}" ${selectedCount === unitKeys.length ? "checked" : ""}><span><small>Unit ${unitIndex + 1} · ${unit.miniUnits.length} mini-units</small><strong>${unit.title}</strong></span></label><div class="anki-mini-picker">${unit.miniUnits.map((miniUnit, miniIndex) => textbookPickerMarkup(miniUnit, unitIndex, miniIndex, selected, removed, "anki")).join("")}</div></div>`;
     }).join("");
     return `<section class="practice-view anki-setup"><p class="lesson-number">Spaced-repetition review</p><h3>Choose units and mini-units</h3><p>Your current limit introduces up to ${Math.max(0, Math.floor(numericSetting("newCardsPerDay")))} new cards per day. Learning cards and reviews due today are carried forward automatically.</p><div class="anki-selection-bar"><strong><span id="anki-selected-count">${selectedChapters.length}</span> mini-units</strong><div><button type="button" data-select-all>Select all</button><button type="button" data-clear-selection>Clear</button></div></div><div class="anki-today-panel"><span>Today</span><div><strong>${dailyPlan.newCards.length}</strong><small>New</small></div><div><strong>${todayReviewCount}</strong><small>Review</small></div></div>${!selectedCardCount && nextDue ? `<div class="anki-next-due">Nothing is due now. Next review ${escapeHtml(relativeDueTime(nextDue))}.</div>` : ""}${removedCount ? `<div class="anki-removed-note"><span>${removedCount} removed ${removedCount === 1 ? "card" : "cards"}</span><button type="button" data-restore-anki-cards>Restore removed cards</button></div>` : ""}<div class="anki-deck-picker">${unitPicker}</div><button class="button primary-button start-anki" type="button" data-start-anki ${selectedCardCount ? "" : "disabled"}>Start today's ${selectedCardCount} cards</button></section>`;
   }
@@ -1245,11 +2828,49 @@ function renderAnkiView(chapter) {
   const cardFront = cleanAnkiStudyText(card[0]);
   const cardBack = cleanAnkiStudyText(card[1]);
   const intervals = ankiRatingIntervals(ankiScheduleFor(queueItem.scheduleKey));
-  const equation = card[2] ? `<span class="anki-equation" aria-label="Equation">${escapeHtml(card[2])}</span>` : "";
-  return `<section class="practice-view anki-study"><button class="anki-back" type="button">← Change unit selection</button><div class="anki-session-heading"><p class="lesson-number">Anki review · ${state.ankiQueue.length} ${state.ankiQueue.length === 1 ? "card" : "cards"} remaining</p><span class="anki-time">◷ <strong id="anki-elapsed">00:00</strong></span></div><h3>${reviewChapter.title}</h3><div class="anki-card-meta"><p class="anki-card-source">Chapter ${reviewChapter.number}</p><button type="button" data-remove-anki-card>Remove from deck</button></div><div class="anki-review"><button class="anki-card" type="button"><span>${card[2] ? "Equation" : "Question"}</span><strong>${escapeHtml(cardFront)}</strong><em>Click to show answer</em><div class="anki-answer">${equation}<p>${escapeHtml(cardBack)}</p></div></button>${ankiSessionCountsMarkup(state.ankiQueue, queueItem.sessionType)}<button class="button primary-button anki-reveal-button" type="button" data-reveal-anki>Reveal answer</button><div class="anki-ratings" aria-label="Schedule this card's next review"><button type="button" data-anki-rating="again"><span>${formatReviewInterval(intervals.again)}</span><strong>Again</strong></button><button type="button" data-anki-rating="hard"><span>${formatReviewInterval(intervals.hard)}</span><strong>Hard</strong></button><button type="button" data-anki-rating="good"><span>${formatReviewInterval(intervals.good)}</span><strong>Good</strong></button><button type="button" data-anki-rating="easy"><span>${formatReviewInterval(intervals.easy)}</span><strong>Easy</strong></button></div></div></section>`;
+  const equation = card[2] ? `<span class="anki-equation" aria-label="Equation">${textbookEquationHtml(card[2])}</span>` : "";
+  return `<section class="practice-view anki-study"><button class="anki-back" type="button">← Change unit selection</button><div class="anki-session-heading"><p class="lesson-number">Anki review · ${state.ankiQueue.length} ${state.ankiQueue.length === 1 ? "card" : "cards"} remaining</p><span class="anki-time">◷ <strong id="anki-elapsed">00:00</strong></span></div><h3>${reviewChapter.title}</h3><div class="anki-card-meta"><p class="anki-card-source">Chapter ${reviewChapter.number}</p></div><div class="anki-review"><button class="anki-card" type="button" aria-pressed="false" aria-label="Show answer"><span>${card[2] ? "Equation" : "Question"}</span><strong>${escapeHtml(cardFront)}</strong><em>Click to show answer</em><div class="anki-answer">${equation}<p>${escapeHtml(cardBack)}</p></div></button>${ankiSessionCountsMarkup(state.ankiQueue, queueItem.sessionType)}<button class="button primary-button anki-reveal-button" type="button" data-reveal-anki>Reveal answer</button><div class="anki-ratings" aria-label="Schedule this card's next review"><button type="button" data-anki-rating="again"><span>${formatReviewInterval(intervals.again)}</span><strong>Again</strong></button><button type="button" data-anki-rating="hard"><span>${formatReviewInterval(intervals.hard)}</span><strong>Hard</strong></button><button type="button" data-anki-rating="good"><span>${formatReviewInterval(intervals.good)}</span><strong>Good</strong></button><button type="button" data-anki-rating="easy"><span>${formatReviewInterval(intervals.easy)}</span><strong>Easy</strong></button><button type="button" class="anki-remove-choice" data-remove-anki-card title="Double-click to remove this card" aria-label="Double-click to remove this card"><strong>Remove</strong></button></div></div></section>`;
 }
 
-function ankiDeckKey(unitIndex, miniIndex) { return `${unitIndex}-${miniIndex}`; }
+function setTextbookAnkiReveal(review, revealed) {
+  if (!review) return;
+  review.classList.toggle("revealed", revealed);
+  review.classList.add("ratings-ready");
+  const card = $(".anki-card", review);
+  if (card) {
+    card.setAttribute("aria-pressed", String(revealed));
+    card.setAttribute("aria-label", revealed ? "Answer shown" : "Show answer");
+  }
+}
+
+function ankiDeckKey(unitIndex, miniIndex, sectionIndex = null) { return sectionIndex === null ? `${unitIndex}-${miniIndex}` : `${unitIndex}-${miniIndex}-${sectionIndex}`; }
+
+function textbookStudySlices() {
+  return state.activeCourse.chapters.flatMap((unit, unitIndex) => unit.miniUnits.flatMap((chapter, miniIndex) => {
+    const sectionSlices = (chapter.sections || []).filter((section) => Array.isArray(section.cardIndexes));
+    if (!sectionSlices.length) return [{ key: ankiDeckKey(unitIndex, miniIndex), unitIndex, miniIndex, sectionIndex: null, chapter, section: null, cardIndexes: chapter.cards.map((_, index) => index) }];
+    return sectionSlices.map((section, sectionIndex) => ({ key: ankiDeckKey(unitIndex, miniIndex, sectionIndex), unitIndex, miniIndex, sectionIndex, chapter, section, cardIndexes: section.cardIndexes }));
+  }));
+}
+
+function defaultTextbookDeckKeys() {
+  const matching = textbookStudySlices().filter((slice) => slice.unitIndex === state.activeChapter && slice.miniIndex === state.activeMiniUnit);
+  const section = matching.find((slice) => slice.sectionIndex === state.activeSection);
+  return [section?.key || matching[0]?.key || ankiDeckKey(state.activeChapter, state.activeMiniUnit)];
+}
+
+function textbookPickerMarkup(chapter, unitIndex, miniIndex, selected, removed, mode) {
+  const slices = textbookStudySlices().filter((slice) => slice.unitIndex === unitIndex && slice.miniIndex === miniIndex);
+  const chapterKey = ankiDeckKey(unitIndex, miniIndex);
+  const allSelected = slices.every((slice) => selected.has(slice.key));
+  const countFor = (slice) => slice.cardIndexes.filter((cardIndex) => !removed.has(ankiCardKey(unitIndex, miniIndex, cardIndex))).length;
+  const dueFor = (slice) => slice.cardIndexes.filter((cardIndex) => !removed.has(ankiCardKey(unitIndex, miniIndex, cardIndex)) && isAnkiCardDue(ankiCardKey(unitIndex, miniIndex, cardIndex))).length;
+  const attribute = mode === "anki" ? "data-anki-mini" : "data-flashcard-mini";
+  const sectionAttribute = mode === "anki" ? "data-anki-section" : "data-flashcard-section";
+  const total = slices.reduce((sum, slice) => sum + countFor(slice), 0);
+  const due = slices.reduce((sum, slice) => sum + dueFor(slice), 0);
+  return `<div class="textbook-chapter-picker"><label><input type="checkbox" ${attribute}="${chapterKey}" ${allSelected ? "checked" : ""}><span><small>Chapter ${chapter.number} · ${mode === "anki" ? `${due} due / ` : ""}${total} total</small><strong>${escapeHtml(chapter.title)}</strong></span></label>${slices[0]?.section ? `<div class="textbook-subsection-picker">${slices.map((slice) => `<label><input type="checkbox" ${sectionAttribute}="${slice.key}" ${selected.has(slice.key) ? "checked" : ""}><span><small>${mode === "anki" ? `${dueFor(slice)} due / ` : ""}${countFor(slice)} cards</small><strong>${escapeHtml(slice.section.title)}</strong></span></label>`).join("")}</div>` : ""}</div>`;
+}
 
 function ankiCardKey(unitIndex, miniIndex, cardIndex) { return `${state.activeCourse.id}-${unitIndex}-${miniIndex}-${cardIndex}`; }
 
@@ -1260,15 +2881,86 @@ function ankiSchedules() {
 
 function ankiScheduleFor(key) {
   const value = ankiSchedules()[key];
-  return value && typeof value === "object" ? value : { due: 0, intervalDays: 0, ease: numericSetting("startingEase") / 100, repetitions: 0 };
+  return value && typeof value === "object" ? value : { due: 0, intervalDays: 0, repetitions: 0, reps: 0, lapses: 0, state: 0 };
 }
 
-function isAnkiCardDue(key, now = Date.now()) { const schedule = ankiScheduleFor(key); return !schedule.suspended && schedule.due <= now; }
+function nextAnkiDayCutoff(now = new Date()) {
+  const hour = Math.max(0, Math.min(23, Math.floor(numericSetting("dayStartHour"))));
+  const cutoff = new Date(now);
+  cutoff.setHours(hour, 0, 0, 0);
+  if (now >= cutoff) cutoff.setDate(cutoff.getDate() + 1);
+  return cutoff.getTime();
+}
+
+function fsrsCardFromSchedule(schedule, now = new Date()) {
+  if (schedule.fsrs) {
+    return { ...schedule.fsrs, due: new Date(schedule.fsrs.due), last_review: schedule.fsrs.last_review ? new Date(schedule.fsrs.last_review) : undefined };
+  }
+  if (!schedule.lastReviewed && !schedule.repetitions && !schedule.reps) return window.FSRS.createEmptyCard(now);
+  const interval = Math.max(0, Number(schedule.intervalDays) || 0);
+  const importedStability = Number(schedule.stability);
+  const importedDifficulty = Number(schedule.difficulty);
+  return {
+    due: new Date(Number(schedule.due) || now.getTime()), stability: Math.max(0.1, importedStability || interval || 0.2),
+    difficulty: Math.max(1, Math.min(10, importedDifficulty || 11 - (Number(schedule.ease) || 2.5) * 2.4)),
+    elapsed_days: interval, scheduled_days: Math.round(interval), reps: Number(schedule.repetitions || schedule.reps) || 1,
+    lapses: Number(schedule.lapses) || 0, learning_steps: 0,
+    state: interval >= 1 ? window.FSRS.State.Review : (schedule.lastRating === "again" ? window.FSRS.State.Relearning : window.FSRS.State.Learning),
+    last_review: schedule.lastReviewed ? new Date(schedule.lastReviewed) : now,
+  };
+}
+
+function serializedFsrsCard(card) {
+  return { ...card, due: new Date(card.due).getTime(), last_review: card.last_review ? new Date(card.last_review).getTime() : null };
+}
+
+function fsrsScheduler() {
+  const settings = loadSettings();
+  return window.FSRS.fsrs(window.FSRS.generatorParameters({
+    request_retention: Math.max(0.7, Math.min(0.99, Number(settings.desiredRetention) / 100 || 0.9)),
+    maximum_interval: Math.max(1, Number(settings.maximumInterval) || 36500),
+    enable_fuzz: settings.enableFuzz !== false,
+    enable_short_term: true,
+    learning_steps: parseAnkiSteps(settings.learningSteps),
+    relearning_steps: parseAnkiSteps(settings.relearningSteps),
+  }));
+}
+
+function isAnkiCardDue(key, now = Date.now()) {
+  const schedule = ankiScheduleFor(key);
+  if (schedule.suspended) return false;
+  const card = fsrsCardFromSchedule(schedule, new Date(now));
+  const due = new Date(card.due).getTime();
+  return card.state === window.FSRS.State.Review ? due < nextAnkiDayCutoff(new Date(now)) : due <= now;
+}
+
+const ANKI_BURIED_KEY = "study-desk-anki-buried-v2";
+const ANKI_REVIEW_LOG_KEY = "study-desk-anki-review-log-v2";
+
+function buriedAnkiKeys() {
+  try {
+    const value = JSON.parse(localStorage.getItem(ANKI_BURIED_KEY) || "{}");
+    return value.day === localAnkiDayKey() ? new Set(value.keys || []) : new Set();
+  } catch { return new Set(); }
+}
+
+function buryAnkiSiblings(answered, queue) {
+  if (!answered?.noteId) return;
+  const settings = loadSettings();
+  const buried = buriedAnkiKeys();
+  queue.forEach((candidate) => {
+    if (candidate.noteId !== answered.noteId || candidate.scheduleKey === answered.scheduleKey) return;
+    if ((candidate.sessionType === "new" && settings.buryNewSiblings) || (candidate.sessionType === "review" && settings.buryReviewSiblings) || (candidate.sessionType === "learning" && settings.buryLearningSiblings)) buried.add(candidate.scheduleKey);
+  });
+  if (buried.size) localStorage.setItem(ANKI_BURIED_KEY, JSON.stringify({ day: localAnkiDayKey(), keys: [...buried] }));
+}
 
 const ANKI_DAILY_NEW_STORAGE_KEY = "study-desk-anki-daily-new-v1";
 
 function localAnkiDayKey(now = new Date()) {
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const studyDay = new Date(now);
+  studyDay.setHours(studyDay.getHours() - Math.max(0, Math.min(23, Math.floor(numericSetting("dayStartHour")))));
+  return `${studyDay.getFullYear()}-${String(studyDay.getMonth() + 1).padStart(2, "0")}-${String(studyDay.getDate()).padStart(2, "0")}`;
 }
 
 function ankiDailyNewState() {
@@ -1294,29 +2986,38 @@ function dailyAnkiPlan(cards, scope) {
   const reviewLimit = Math.max(0, Math.floor(Number(settings.maxReviewsPerDay)));
   const daily = ankiDailyNewState();
   const started = new Set(Array.isArray(daily.scopes[scope]) ? daily.scopes[scope] : []);
-  const newCards = cards.filter((card) => card.sessionType === "new" && !ankiScheduleFor(card.scheduleKey).suspended);
+  const buried = buriedAnkiKeys();
+  const availableCards = cards.filter((card) => !buried.has(card.scheduleKey));
+  const newCards = availableCards.filter((card) => card.sessionType === "new" && !ankiScheduleFor(card.scheduleKey).suspended);
   const alreadyStarted = newCards.filter((card) => started.has(card.scheduleKey)).slice(0, dailyLimit);
   const notStarted = newCards.filter((card) => !started.has(card.scheduleKey));
   const availableNew = settings.newCardOrder === "added" ? notStarted : shuffleInPlace(notStarted);
-  const openNewSlots = Math.max(0, dailyLimit - started.size);
+  const dueReviewPool = availableCards.filter((card) => card.sessionType === "review" && isAnkiCardDue(card.scheduleKey));
+  const openNewSlots = !settings.newCardsIgnoreReviewLimit && dueReviewPool.length >= reviewLimit ? 0 : Math.max(0, dailyLimit - started.size);
   const selectedNew = [...alreadyStarted, ...availableNew.slice(0, openNewSlots)];
-  const dueLearning = cards.filter((card) => card.sessionType === "learning" && isAnkiCardDue(card.scheduleKey));
-  const dueReview = cards.filter((card) => card.sessionType === "review" && isAnkiCardDue(card.scheduleKey)).sort((a, b) => ankiScheduleFor(a.scheduleKey).due - ankiScheduleFor(b.scheduleKey).due).slice(0, reviewLimit);
+  const learnAheadCutoff = Date.now() + Math.max(0, Number(settings.learnAheadMinutes) || 0) * 60000;
+  const learningCards = availableCards.filter((card) => card.sessionType === "learning" && !ankiScheduleFor(card.scheduleKey).suspended);
+  const dueLearning = learningCards.filter((card) => Number(ankiScheduleFor(card.scheduleKey).due) <= Date.now());
+  const aheadLearning = learningCards.filter((card) => Number(ankiScheduleFor(card.scheduleKey).due) > Date.now() && Number(ankiScheduleFor(card.scheduleKey).due) <= learnAheadCutoff);
+  const orderedReviews = settings.reviewOrder === "random" ? shuffleInPlace([...dueReviewPool]) : dueReviewPool.sort((a, b) => ankiScheduleFor(a.scheduleKey).due - ankiScheduleFor(b.scheduleKey).due);
+  const dueReview = orderedReviews.slice(0, reviewLimit);
   // Learning cards are never displaced by the new-card or review limits.
   // They are placed before new material so overdue work is pushed forward.
   const learningQueue = shuffleInPlace([...dueLearning]);
+  const learnAheadQueue = shuffleInPlace([...aheadLearning]);
   const reviewQueue = [...dueReview];
   const newQueue = settings.newCardOrder === "added" ? [...selectedNew] : shuffleInPlace([...selectedNew]);
   let queue;
-  if (settings.newReviewOrder === "new-first") queue = [...newQueue, ...learningQueue, ...reviewQueue];
+  if (settings.newReviewOrder === "new-first") queue = [...newQueue, ...learningQueue, ...reviewQueue, ...learnAheadQueue];
   else if (settings.newReviewOrder === "mix") {
     const established = [...learningQueue, ...reviewQueue];
     queue = [];
     while (established.length || newQueue.length) { if (established.length) queue.push(established.shift()); if (newQueue.length) queue.push(newQueue.shift()); }
-  } else queue = [...learningQueue, ...reviewQueue, ...newQueue];
+    queue.push(...learnAheadQueue);
+  } else queue = [...learningQueue, ...reviewQueue, ...newQueue, ...learnAheadQueue];
   return {
     newCards: selectedNew,
-    learningCards: shuffleInPlace([...dueLearning]),
+    learningCards: shuffleInPlace([...dueLearning, ...aheadLearning]),
     reviewCards: shuffleInPlace([...dueReview]),
     queue,
   };
@@ -1334,21 +3035,24 @@ function activeAnkiSummary(cards, scope) {
 
 function dashboardAnkiEntries() {
   const removed = removedAnkiCardKeys();
-  const textbookEntries = courses.filter((course) => isEnrolled(course.id)).map((course) => {
-    const cards = course.chapters.flatMap((unit, unitIndex) => unit.miniUnits.flatMap((chapter, miniIndex) => chapter.cards.map((card, cardIndex) => ({ card, key: `${course.id}-${unitIndex}-${miniIndex}-${cardIndex}` })).filter((item) => !removed.has(item.key))));
-    const summary = activeAnkiSummary(cards.map((item) => prepareAnkiSessionCard(item.card, item.key)), `course:${course.id}`);
-    return { id: course.id, name: course.title, kind: "Textbook", target: "course", ...summary };
-  });
-  const personalEntries = loadCustomDecks().map((deck) => {
-    const cards = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(deck.id, card.id)));
-    return { id: deck.id, name: deck.name, kind: "Personal set", target: "deck", ...activeAnkiSummary(cards, `deck:${deck.id}`) };
-  });
-  const builtInEntries = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((original) => {
-    const collection = effectiveBuiltInCollection(original);
-    const cards = collection.units.flatMap((unit) => unit.cards || []).map((card) => prepareAnkiSessionCard(card, customAnkiKey(collection.id, card.id)));
-    return { id: collection.id, name: collection.name, kind: "Built-in deck", target: "deck", ...activeAnkiSummary(cards, `deck:${collection.id}`) };
-  });
-  return [...textbookEntries, ...personalEntries, ...builtInEntries].filter((entry) => entry.total > 0).sort((a, b) => b.reviewCount + b.learningCount - (a.reviewCount + a.learningCount) || a.name.localeCompare(b.name));
+  const active = loadActiveAnkiDecks();
+  const activeFolders = new Set(active.filter((entry) => entry.target === "deck" && entry.id.startsWith("folder:")).map((entry) => entry.id.slice(7)));
+  const groupedDeckIds = new Set(loadStudyFolders().filter((folder) => activeFolders.has(folder.id)).flatMap((folder) => folder.deckIds));
+  const entries = active.map((saved) => {
+    if (saved.target === "course") {
+      const course = courses.find((item) => item.id === saved.id);
+      if (!course || !isEnrolled(course.id)) return null;
+      const cards = course.chapters.flatMap((unit, unitIndex) => unit.miniUnits.flatMap((chapter, miniIndex) => chapter.cards.map((card, cardIndex) => ({ card, key: `${course.id}-${unitIndex}-${miniIndex}-${cardIndex}` })).filter((item) => !removed.has(item.key))));
+      return { ...saved, name: course.title, kind: "Textbook", ...activeAnkiSummary(cards.map((item) => prepareAnkiSessionCard(item.card, item.key)), `course:${course.id}`) };
+    }
+    if (!saved.id.startsWith("folder:") && groupedDeckIds.has(saved.id)) return null;
+    const deck = findStudyDeck(saved.id);
+    if (!deck) return null;
+    const folder = saved.id.startsWith("folder:") ? loadStudyFolders().find((item) => item.id === saved.id.slice(7)) : null;
+    const cards = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
+    return { ...saved, name: deck.name, kind: folder ? `Folder · ${folder.deckIds.length} sets` : deck.builtIn ? "Built-in deck" : "Personal set", starred: isStudyItemStarred(folder ? saved.id : `deck:${saved.id}`), ...activeAnkiSummary(cards, `deck:${deck.id}`) };
+  }).filter(Boolean).map((entry) => ({ ...entry, completedToday: entry.completedDay === localAnkiDayKey() }));
+  return entries.sort((a, b) => Number(Boolean(b.starred)) - Number(Boolean(a.starred)) || Number(a.completedToday) - Number(b.completedToday) || b.total - a.total || a.name.localeCompare(b.name));
 }
 
 function renderActiveAnkiDecks() {
@@ -1357,8 +3061,9 @@ function renderActiveAnkiDecks() {
   const entries = dashboardAnkiEntries();
   const total = entries.reduce((sum, entry) => sum + entry.total, 0);
   $("#active-anki-total").textContent = `${total} due`;
-  list.innerHTML = entries.length ? entries.map((entry) => `<article class="active-anki-item"><div class="active-anki-copy"><small>${escapeHtml(entry.kind)}</small><strong>${escapeHtml(entry.name)}</strong><div class="active-anki-counts"><span><b>${entry.newCount}</b> new</span><span><b>${entry.learningCount}</b> learning</span><span><b>${entry.reviewCount}</b> review</span></div></div><button class="button primary-button active-anki-start" type="button" data-dashboard-anki="${escapeHtml(entry.id)}" data-dashboard-anki-target="${entry.target}">Study now</button></article>`).join("") : '<div class="active-anki-empty">No Anki cards are due today. Add a textbook or study deck to begin a daily review.</div>';
+  list.innerHTML = entries.length ? entries.map((entry) => `<article class="active-anki-item ${entry.completedToday ? "completed" : ""}"><div class="active-anki-copy"><small>${entry.starred ? '<span class="active-anki-star" aria-label="Starred">★</span> ' : ""}${escapeHtml(entry.kind)}</small><strong>${escapeHtml(entry.name)}</strong>${entry.completedToday ? '<div class="active-anki-complete-label">✓ Completed today</div>' : `<div class="active-anki-counts"><span><b>${entry.newCount}</b> new</span><span><b>${entry.learningCount}</b> learning</span><span><b>${entry.reviewCount}</b> review</span></div>`}</div><div class="active-anki-actions"><button class="button primary-button active-anki-start" type="button" data-dashboard-anki="${escapeHtml(entry.id)}" data-dashboard-anki-target="${entry.target}" ${entry.total ? "" : "disabled"}>${entry.completedToday ? "Done" : entry.total ? "Study now" : "Nothing due"}</button><button class="active-anki-remove" type="button" data-remove-active-anki="${escapeHtml(entry.id)}" data-remove-active-target="${entry.target}" aria-label="Remove ${escapeHtml(entry.name)} from Active Anki">Remove</button></div></article>`).join("") : '<div class="active-anki-empty">No active Anki decks yet. Open Anki for a study set or textbook to add it here.</div>';
   $$('[data-dashboard-anki]', list).forEach((button) => button.addEventListener("click", () => openDashboardAnki(button.dataset.dashboardAnki, button.dataset.dashboardAnkiTarget)));
+  $$('[data-remove-active-anki]', list).forEach((button) => button.addEventListener("click", () => removeActiveAnkiDeck(button.dataset.removeActiveAnki, button.dataset.removeActiveTarget)));
 }
 
 function openDashboardAnki(id, target) {
@@ -1380,8 +3085,9 @@ function openDashboardAnki(id, target) {
 }
 
 function ankiSessionTypeForSchedule(schedule) {
-  if (!schedule.lastReviewed && !schedule.repetitions) return "new";
-  if ((Number(schedule.intervalDays) || 0) < 1 || schedule.lastRating === "again") return "learning";
+  const card = fsrsCardFromSchedule(schedule);
+  if (card.state === window.FSRS.State.New) return "new";
+  if (card.state === window.FSRS.State.Learning || card.state === window.FSRS.State.Relearning) return "learning";
   return "review";
 }
 
@@ -1390,7 +3096,7 @@ function prepareAnkiSessionCard(card, scheduleKey) {
   const prepared = Array.isArray(card)
     ? card
     : { ...card, front: cleanAnkiStudyText(card.front), back: cleanAnkiStudyText(card.back) };
-  return { ...prepared, scheduleKey, sessionType: ankiSessionTypeForSchedule(schedule), learningStep: 0 };
+  return { ...prepared, scheduleKey, noteId: prepared.noteId || prepared.id || scheduleKey, sessionType: ankiSessionTypeForSchedule(schedule) };
 }
 
 function cleanAnkiStudyText(value) {
@@ -1412,77 +3118,51 @@ function ankiSessionCounts(cards) {
 
 function ankiSessionCountsMarkup(cards, currentType = "new") {
   const counts = ankiSessionCounts(cards);
-  return `<div class="anki-session-counts" data-current-type="${currentType}" aria-label="${counts.new} new, ${counts.learning} learning, ${counts.review} review cards remaining; current card is ${currentType}"><span class="anki-count-new">${counts.new}</span><b>+</b><span class="anki-count-learning">${counts.learning}</span><b>+</b><span class="anki-count-review">${counts.review}</span><div class="anki-type-markers" aria-hidden="true"><i class="anki-type-marker-new"></i><i class="anki-type-marker-learning"></i><i class="anki-type-marker-review"></i></div><small>New · Learning · Review</small></div>`;
+  return `<div class="anki-session-counts" data-current-type="${currentType}" aria-label="${counts.new} new, ${counts.learning} learning, ${counts.review} review cards remaining; current card is ${currentType}"><span class="anki-count-group anki-count-group-new"><strong class="anki-count-new">${counts.new}</strong><small>New</small></span><b aria-hidden="true">+</b><span class="anki-count-group anki-count-group-learning"><strong class="anki-count-learning">${counts.learning}</strong><small>Learning</small></span><b aria-hidden="true">+</b><span class="anki-count-group anki-count-group-review"><strong class="anki-count-review">${counts.review}</strong><small>Review</small></span></div>`;
 }
 
 function applyAnkiSessionRating(card, rating, selectedIntervalDays) {
   if (ankiScheduleFor(card.scheduleKey).suspended) return true;
-  // A day-or-longer interval graduates the card from today's active session.
-  // Short learning steps stay in the queue and are shown again before the
-  // session can finish, even when their real due time has not elapsed yet.
-  if ((Number(selectedIntervalDays) || 0) >= 1) return true;
-  if (card.sessionType === "review") {
-    if (rating === "again") {
-      card.sessionType = "learning";
-      card.learningStep = 1;
-      return false;
-    }
-    return true;
-  }
-  if (rating === "easy") return true;
-  if (card.sessionType === "new") card.sessionType = "learning";
-  if (rating === "again") {
-    card.learningStep = 0;
-    return false;
-  }
-  if (rating === "hard") return false;
-  if ((card.learningStep || 0) >= 1) return true;
-  card.learningStep = 1;
-  return false;
+  const schedule = ankiScheduleFor(card.scheduleKey);
+  card.sessionType = ankiSessionTypeForSchedule(schedule);
+  const due = Number(schedule.due) || 0;
+  const learnAhead = Math.max(0, numericSetting("learnAheadMinutes")) * 60000;
+  return card.sessionType === "review" || due > Date.now() + learnAhead;
 }
 
-function saveAnkiRating(scheduleKey, rating) {
+function saveAnkiRating(scheduleKey, rating, durationMs = 0) {
   const settings = loadSettings();
   const schedules = ankiSchedules();
   const current = ankiScheduleFor(scheduleKey);
-  const intervals = ankiRatingIntervals(current);
-  const intervalDays = intervals[rating];
-  const easeChange = rating === "again" ? -0.2 : rating === "hard" ? -0.15 : rating === "easy" ? 0.15 : 0;
-  const lapses = (Number(current.lapses) || 0) + (rating === "again" && current.repetitions ? 1 : 0);
+  const now = new Date();
+  const grade = { again: window.FSRS.Rating.Again, hard: window.FSRS.Rating.Hard, good: window.FSRS.Rating.Good, easy: window.FSRS.Rating.Easy }[rating];
+  const result = fsrsScheduler().next(fsrsCardFromSchedule(current, now), now, grade);
+  const nextCard = result.card;
+  const intervalDays = Math.max(0, (new Date(nextCard.due).getTime() - now.getTime()) / 86400000);
+  const lapses = Number(nextCard.lapses) || 0;
   const leech = lapses >= Math.max(1, Number(settings.leechThreshold) || 8);
   schedules[scheduleKey] = {
-    due: Date.now() + intervalDays * 86400000,
-    intervalDays,
-    ease: Math.max(1.3, (Number(current.ease) || Number(settings.startingEase) / 100 || 2.5) + easeChange),
-    repetitions: rating === "again" ? 0 : (Number(current.repetitions) || 0) + 1,
-    lastReviewed: Date.now(),
+    due: new Date(nextCard.due).getTime(), intervalDays: Number(nextCard.scheduled_days) || intervalDays,
+    repetitions: Number(nextCard.reps) || 0, reps: Number(nextCard.reps) || 0,
+    stability: nextCard.stability, difficulty: nextCard.difficulty, state: nextCard.state,
+    lastReviewed: now.getTime(),
     lastRating: rating,
-    lapses,
-    leech,
+    lapses, leech, fsrs: serializedFsrsCard(nextCard),
     suspended: Boolean(current.suspended) || (leech && settings.leechAction === "suspend"),
   };
   localStorage.setItem("study-desk-anki-schedules", JSON.stringify(schedules));
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem(ANKI_REVIEW_LOG_KEY) || "[]"); } catch { logs = []; }
+  logs.push({ id: `${now.getTime()}-${scheduleKey}`, cardKey: scheduleKey, rating, review: now.getTime(), elapsedDays: result.log.elapsed_days, scheduledDays: result.log.scheduled_days, state: result.log.state, stability: result.log.stability, difficulty: result.log.difficulty, durationMs: Math.max(0, Math.min(60000, Math.round(Number(durationMs) || 0))) });
+  localStorage.setItem(ANKI_REVIEW_LOG_KEY, JSON.stringify(logs.slice(-100000)));
   return intervalDays;
 }
 
 function ankiRatingIntervals(schedule) {
-  const settings = loadSettings();
-  const interval = Math.max(0, Number(schedule.intervalDays) || 0);
-  const ease = Math.max(1.3, Number(schedule.ease) || Number(settings.startingEase) / 100 || 2.5);
-  const learning = parseMinuteSteps(settings.learningSteps).map((minutes) => minutes / 1440);
-  const relearning = parseMinuteSteps(settings.relearningSteps).map((minutes) => minutes / 1440);
-  const graduation = Math.max(1, Number(settings.graduatingInterval) || 1);
-  const easyGraduation = Math.max(graduation, Number(settings.easyInterval) || 4);
-  if (!schedule.repetitions) return { again: learning[0], hard: learning[Math.min(1, learning.length - 1)], good: learning.length > 1 ? learning[1] : graduation, easy: easyGraduation };
-  if (interval < 1 || schedule.lastRating === "again") return { again: relearning[0], hard: Math.min(15 / 1440, Math.max(relearning[0], (relearning[1] || relearning[0]) * 0.75)), good: Math.max(Number(settings.minimumLapseInterval) || 1, graduation), easy: easyGraduation };
-  const modifier = Math.max(0.1, Number(settings.intervalModifier) / 100 || 1);
-  const maximum = Math.max(1, Number(settings.maximumInterval) || 36500);
-  return {
-    again: relearning[0],
-    hard: Math.min(maximum, Math.max(1, interval * (Number(settings.hardInterval) / 100 || 1.2) * modifier)),
-    good: Math.min(maximum, Math.max(2, interval * ease * modifier)),
-    easy: Math.min(maximum, Math.max(easyGraduation, interval * ease * (Number(settings.easyBonus) / 100 || 1.3) * modifier)),
-  };
+  const now = new Date();
+  const preview = fsrsScheduler().repeat(fsrsCardFromSchedule(schedule, now), now);
+  const intervalFor = (grade) => Math.max(0, (new Date(preview[grade].card.due).getTime() - now.getTime()) / 86400000);
+  return { again: intervalFor(window.FSRS.Rating.Again), hard: intervalFor(window.FSRS.Rating.Hard), good: intervalFor(window.FSRS.Rating.Good), easy: intervalFor(window.FSRS.Rating.Easy) };
 }
 
 function formatReviewInterval(days) {
@@ -1504,25 +3184,23 @@ function removedAnkiCardKeys() {
 }
 
 function allAnkiDeckKeys() {
-  return state.activeCourse.chapters.flatMap((unit, unitIndex) => unit.miniUnits.map((_, miniIndex) => ankiDeckKey(unitIndex, miniIndex)));
+  return textbookStudySlices().map((slice) => slice.key);
 }
 
 function selectedAnkiChapters() {
   const selected = new Set(state.selectedAnkiDecks || []);
-  return state.activeCourse.chapters.flatMap((unit, unitIndex) => unit.miniUnits.map((chapter, miniIndex) => ({ unitIndex, miniIndex, chapter })).filter((item) => selected.has(ankiDeckKey(item.unitIndex, item.miniIndex))));
+  return textbookStudySlices().filter((item) => selected.has(item.key));
 }
 
 function updateAnkiDeckSelection(event) {
   const selected = new Set(state.selectedAnkiDecks || []);
   if (event.currentTarget.dataset.ankiUnit !== undefined) {
     const unitIndex = Number(event.currentTarget.dataset.ankiUnit);
-    state.activeCourse.chapters[unitIndex].miniUnits.forEach((_, miniIndex) => {
-      const key = ankiDeckKey(unitIndex, miniIndex);
-      if (event.currentTarget.checked) selected.add(key); else selected.delete(key);
-    });
+    textbookStudySlices().filter((slice) => slice.unitIndex === unitIndex).forEach((slice) => { if (event.currentTarget.checked) selected.add(slice.key); else selected.delete(slice.key); });
   } else {
-    const key = event.currentTarget.dataset.ankiMini;
-    if (event.currentTarget.checked) selected.add(key); else selected.delete(key);
+    const key = event.currentTarget.dataset.ankiSection || event.currentTarget.dataset.ankiMini;
+    const keys = event.currentTarget.dataset.ankiMini ? textbookStudySlices().filter((slice) => slice.key === key || slice.key.startsWith(`${key}-`)).map((slice) => slice.key) : [key];
+    keys.forEach((item) => { if (event.currentTarget.checked) selected.add(item); else selected.delete(item); });
   }
   state.selectedAnkiDecks = allAnkiDeckKeys().filter((key) => selected.has(key));
   renderLesson();
@@ -1532,9 +3210,10 @@ function startAnkiReview() {
   const selectedChapters = selectedAnkiChapters();
   if (!selectedChapters.length) return;
   const removed = removedAnkiCardKeys();
-  const candidates = selectedChapters.flatMap(({ unitIndex, miniIndex, chapter }) => chapter.cards.map((_, cardIndex) => ({ unitIndex, miniIndex, cardIndex })).filter((item) => !removed.has(ankiCardKey(item.unitIndex, item.miniIndex, item.cardIndex))).map((item) => prepareAnkiSessionCard(item, ankiCardKey(item.unitIndex, item.miniIndex, item.cardIndex))));
+  const candidates = selectedChapters.flatMap(({ unitIndex, miniIndex, cardIndexes }) => cardIndexes.map((cardIndex) => ({ unitIndex, miniIndex, cardIndex })).filter((item) => !removed.has(ankiCardKey(item.unitIndex, item.miniIndex, item.cardIndex))).map((item) => prepareAnkiSessionCard(item, ankiCardKey(item.unitIndex, item.miniIndex, item.cardIndex))));
   const scope = `course:${state.activeCourse.id}`;
   const plan = dailyAnkiPlan(candidates, scope);
+  activateAnkiDeck(state.activeCourse.id, "course");
   state.ankiQueue = plan.queue;
   if (!state.ankiQueue.length) return;
   markDailyNewCardsStarted(scope, plan.newCards);
@@ -1542,6 +3221,7 @@ function startAnkiReview() {
   state.ankiSessionTotal = state.ankiQueue.length;
   state.ankiReviewActive = true;
   state.ankiStartedAt = Date.now();
+  state.ankiCardShownAt = Date.now();
   renderLesson();
 }
 
@@ -1683,6 +3363,7 @@ function finishFeynmanPrompt(timedOut) {
   if (status) status.textContent = timedOut ? "Time’s up. Review your explanation and identify what you missed." : "Response complete. Review the gaps before moving on.";
   $("[data-finish-feynman]")?.setAttribute("hidden", "");
   $("[data-next-feynman]")?.removeAttribute("hidden");
+  recordStudyActivity();
   showToast(timedOut ? "Feynman writing time finished." : "Feynman response completed.");
 }
 
@@ -1700,6 +3381,53 @@ function formatElapsed(milliseconds) {
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function freestyleFeynmanDurationSeconds() {
+  const amountInput = $("#freestyle-feynman-time");
+  const amount = Math.max(1, Math.min(120, Math.floor(Number(amountInput.value) || 1)));
+  amountInput.value = String(amount);
+  return $("#freestyle-feynman-unit").value === "seconds" ? amount : amount * 60;
+}
+
+function updateFreestyleFeynmanTimer() {
+  if (!freestyleFeynmanStartedAt) return;
+  const remaining = Math.max(0, freestyleFeynmanDuration * 1000 - (Date.now() - freestyleFeynmanStartedAt));
+  $("#freestyle-feynman-countdown").textContent = formatElapsed(remaining);
+  if (remaining <= 0) {
+    window.clearInterval(freestyleFeynmanTimerHandle);
+    freestyleFeynmanTimerHandle = null;
+    freestyleFeynmanStartedAt = null;
+    $("#freestyle-feynman-status").textContent = "Time is up. Finish your current thought, then review what you could not explain clearly.";
+    recordStudyActivity();
+  }
+}
+
+function startFreestyleFeynman({ clearResponse = true } = {}) {
+  const prompt = $("#freestyle-feynman-prompt-input").value.trim() || "Free writing session";
+  freestyleFeynmanDuration = freestyleFeynmanDurationSeconds();
+  freestyleFeynmanStartedAt = Date.now();
+  window.clearInterval(freestyleFeynmanTimerHandle);
+  $("#freestyle-feynman-setup").hidden = true;
+  $("#freestyle-feynman-session").hidden = false;
+  $("#freestyle-feynman-prompt").textContent = prompt;
+  if (clearResponse) $("#freestyle-feynman-response").value = "";
+  $("#freestyle-feynman-status").textContent = "Timer running. Keep developing your explanation.";
+  updateFreestyleFeynmanTimer();
+  freestyleFeynmanTimerHandle = window.setInterval(updateFreestyleFeynmanTimer, 250);
+  $("#freestyle-feynman-response").focus();
+}
+
+function resetFreestyleFeynman() {
+  window.clearInterval(freestyleFeynmanTimerHandle);
+  freestyleFeynmanTimerHandle = null;
+  freestyleFeynmanStartedAt = null;
+  freestyleFeynmanDuration = 0;
+  $("#freestyle-feynman-session").hidden = true;
+  $("#freestyle-feynman-setup").hidden = false;
+  $("#freestyle-feynman-response").value = "";
+  $("#freestyle-feynman-status").textContent = "Timer running. Keep developing your explanation.";
+  $("#freestyle-feynman-prompt-input").focus();
+}
+
 function updateAnkiTimer() {
   const display = $("#anki-elapsed");
   if (display && state.ankiStartedAt) display.textContent = formatElapsed(Date.now() - state.ankiStartedAt);
@@ -1709,16 +3437,23 @@ function rateAnkiCard(rating) {
   if (!$(".anki-review", $("#lesson-view"))?.classList.contains("ratings-ready")) return;
   const queueItem = state.ankiQueue.shift();
   if (!queueItem) return;
-  const selectedIntervalDays = saveAnkiRating(queueItem.scheduleKey, rating);
+  const selectedIntervalDays = saveAnkiRating(queueItem.scheduleKey, rating, Date.now() - (state.ankiCardShownAt || Date.now()));
+  buryAnkiSiblings(queueItem, state.ankiQueue);
+  const buried = buriedAnkiKeys();
+  state.ankiQueue = state.ankiQueue.filter((card) => !buried.has(card.scheduleKey));
   const graduated = applyAnkiSessionRating(queueItem, rating, selectedIntervalDays);
   if (!graduated) state.ankiQueue.push(queueItem);
   const finished = state.ankiQueue.length === 0;
   const elapsed = state.ankiStartedAt ? formatElapsed(Date.now() - state.ankiStartedAt) : "00:00";
   if (finished) {
+    recordStudyActivity();
+    markActiveAnkiComplete(state.activeCourse.id, "course");
     state.ankiReviewActive = false;
     state.ankiStartedAt = null;
+    state.ankiCardShownAt = null;
     state.ankiPosition = 0;
   }
+  if (!finished) state.ankiCardShownAt = Date.now();
   renderLesson();
   if (finished) showToast(`Anki session complete in ${elapsed} — no New, Learning, or Review cards remain.`);
 }
@@ -1741,6 +3476,7 @@ function answerQuiz(button) {
   $(".quiz-feedback", quizElement).textContent = correct ? "Correct — you’ve got it." : `Not quite. The answer is ${quiz.options[quiz.answer]}.`;
   const answered = $$('.offline-quiz[data-answered="true"]', $("#lesson-view"));
   const correctCount = answered.filter((item) => item.dataset.correct === "true").length;
+  if (answered.length === quizzes.length) recordStudyActivity();
   $("#quiz-score").textContent = answered.length === quizzes.length ? `${correctCount} of ${quizzes.length} correct` : `${answered.length} of ${quizzes.length} answered`;
 }
 
@@ -1748,11 +3484,13 @@ function toggleLessonComplete(key) {
   const completed = new Set(JSON.parse(localStorage.getItem("study-desk-completed-lessons") || "[]"));
   if (completed.has(key)) completed.delete(key); else completed.add(key);
   localStorage.setItem("study-desk-completed-lessons", JSON.stringify([...completed]));
+  if (completed.has(key)) recordStudyActivity();
   renderLesson();
   showToast(completed.has(key) ? "Lesson completed — progress saved on this Mac." : "Lesson marked incomplete.");
 }
 
 const STUDY_ALARMS_KEY = "your-study-buddy-alarms-v1";
+const STUDY_ALARMS_AVAILABLE = false;
 
 function loadStudyAlarms() {
   try { const alarms = JSON.parse(localStorage.getItem(STUDY_ALARMS_KEY) || "[]"); return Array.isArray(alarms) ? alarms : []; }
@@ -1787,7 +3525,10 @@ function renderStudyAlarms() {
   }));
 }
 
-function restoreTasks() { renderStudyAlarms(); }
+function restoreTasks() {
+  if (!STUDY_ALARMS_AVAILABLE) return;
+  renderStudyAlarms();
+}
 function wireTaskCheckbox() {}
 
 function addStudyAlarm(title, description, timestamp) {
@@ -1802,6 +3543,59 @@ function addStudyAlarm(title, description, timestamp) {
 
 const CUSTOM_DECKS_KEY = "your-study-buddy-custom-decks";
 const STUDY_FOLDERS_KEY = "your-study-buddy-study-folders";
+const STARRED_STUDY_ITEMS_KEY = "your-study-buddy-starred-study-items-v1";
+const ACTIVE_ANKI_DECKS_KEY = "your-study-buddy-active-anki-decks-v1";
+
+function starredStudyItems() {
+  try { return new Set(JSON.parse(localStorage.getItem(STARRED_STUDY_ITEMS_KEY) || "[]")); }
+  catch { return new Set(); }
+}
+
+function isStudyItemStarred(itemId) {
+  return starredStudyItems().has(itemId);
+}
+
+function toggleStudyItemStar(itemId) {
+  const starred = starredStudyItems();
+  if (starred.has(itemId)) starred.delete(itemId); else starred.add(itemId);
+  localStorage.setItem(STARRED_STUDY_ITEMS_KEY, JSON.stringify([...starred]));
+  renderCustomDecks();
+  renderActiveAnkiDecks();
+}
+
+function loadActiveAnkiDecks() {
+  try {
+    const entries = JSON.parse(localStorage.getItem(ACTIVE_ANKI_DECKS_KEY) || "[]");
+    return Array.isArray(entries) ? entries.filter((entry) => entry?.id && ["course", "deck"].includes(entry.target)) : [];
+  } catch { return []; }
+}
+
+function storeActiveAnkiDecks(entries) {
+  localStorage.setItem(ACTIVE_ANKI_DECKS_KEY, JSON.stringify(entries));
+}
+
+function activateAnkiDeck(id, target) {
+  const entries = loadActiveAnkiDecks();
+  const existing = entries.find((entry) => entry.id === id && entry.target === target);
+  if (existing) existing.lastOpenedAt = Date.now();
+  else entries.push({ id, target, activatedAt: Date.now(), lastOpenedAt: Date.now(), completedDay: "" });
+  storeActiveAnkiDecks(entries);
+  renderActiveAnkiDecks();
+}
+
+function markActiveAnkiComplete(id, target) {
+  const entries = loadActiveAnkiDecks();
+  const existing = entries.find((entry) => entry.id === id && entry.target === target);
+  if (existing) existing.completedDay = localAnkiDayKey();
+  else entries.push({ id, target, activatedAt: Date.now(), lastOpenedAt: Date.now(), completedDay: localAnkiDayKey() });
+  storeActiveAnkiDecks(entries);
+  renderActiveAnkiDecks();
+}
+
+function removeActiveAnkiDeck(id, target) {
+  storeActiveAnkiDecks(loadActiveAnkiDecks().filter((entry) => entry.id !== id || entry.target !== target));
+  renderActiveAnkiDecks();
+}
 
 function makeLocalId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -1882,9 +3676,54 @@ function setStudyFolderColor(folderId, color) {
 function assignDeckToFolder(deckId, folderId) {
   const folders = loadStudyFolders().map((folder) => ({ ...folder, deckIds: folder.deckIds.filter((id) => id !== deckId) }));
   const destination = folders.find((folder) => folder.id === folderId);
-  if (destination) destination.deckIds.push(deckId);
+  if (destination) {
+    destination.deckIds.push(deckId);
+    destination.expanded = true;
+  }
   storeStudyFolders(folders);
   renderCustomDecks();
+}
+
+function wireStudySetDragAndDrop() {
+  let draggedDeckId = "";
+  const cards = $$('[data-drag-deck]');
+  const targets = $$('[data-drop-folder]');
+  const clearTargets = () => targets.forEach((target) => target.classList.remove("deck-drop-active"));
+  cards.forEach((card) => {
+    card.addEventListener("dragstart", (event) => {
+      draggedDeckId = card.dataset.dragDeck;
+      card.classList.add("dragging-study-set");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", draggedDeckId);
+    });
+    card.addEventListener("dragend", () => {
+      draggedDeckId = "";
+      card.classList.remove("dragging-study-set");
+      clearTargets();
+    });
+  });
+  targets.forEach((target) => {
+    target.addEventListener("dragover", (event) => {
+      if (!draggedDeckId && !event.dataTransfer.types.includes("text/plain")) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      clearTargets();
+      target.classList.add("deck-drop-active");
+    });
+    target.addEventListener("dragleave", (event) => {
+      if (!target.contains(event.relatedTarget)) target.classList.remove("deck-drop-active");
+    });
+    target.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const deckId = draggedDeckId || event.dataTransfer.getData("text/plain");
+      if (!deckId) return;
+      const folderId = target.dataset.dropFolder || "";
+      const folder = loadStudyFolders().find((item) => item.id === folderId);
+      assignDeckToFolder(deckId, folderId);
+      showToast(folder ? `Study set moved to ${folder.name}.` : "Study set moved out of its folder.");
+    });
+  });
 }
 
 function renameStudyFolder(folderId) {
@@ -1919,14 +3758,6 @@ function saveStudyFolderEditor() {
   showToast(existing ? `${name} updated.` : `${name} created.`);
 }
 
-function openMoveDeckDialog(deckId) {
-  const folders = loadStudyFolders();
-  const current = folders.find((folder) => folder.deckIds.includes(deckId))?.id || "";
-  state.movingStudyDeckId = deckId;
-  $("#move-deck-folder").innerHTML = `<option value="">No folder</option>${folders.map((folder) => `<option value="${folder.id}" ${folder.id === current ? "selected" : ""}>${escapeHtml(folder.name)}</option>`).join("")}`;
-  $("#move-deck-dialog").showModal();
-}
-
 function deleteStudyFolder(folderId) {
   const folders = loadStudyFolders();
   const folder = folders.find((item) => item.id === folderId);
@@ -1958,6 +3789,7 @@ function renderExportPage() {
     select.disabled = true;
     $("#export-study-set").disabled = true;
     $("#export-selection-summary").textContent = "Create or add a study set before exporting.";
+    renderNoteExportPage();
     return;
   }
   select.disabled = false;
@@ -1966,6 +3798,7 @@ function renderExportPage() {
   select.innerHTML = groups.map((group) => `<optgroup label="${escapeHtml(group)}">${decks.filter((deck) => deck.group === group).map((deck) => `<option value="${escapeHtml(deck.id)}">${escapeHtml(deck.name)} · ${deck.cards.length} cards</option>`).join("")}</optgroup>`).join("");
   if (decks.some((deck) => deck.id === previous)) select.value = previous;
   updateExportSummary();
+  renderNoteExportPage();
 }
 
 function selectedExportDeck() {
@@ -2002,14 +3835,273 @@ function browserDownload(name, format, text) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function downloadExportBlob(name, extension, blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${safeExportName(name)}.${extension}`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+}
+
+async function blobAsDataUrl(blob) {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("The exported file could not be prepared."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function saveExportedNoteBlob(note, extension, blob) {
+  const payload = { name: safeExportName(note.title || note.sourceFileName || "Note"), extension, data: await blobAsDataUrl(blob) };
+  if (window.desktopApp?.exportNote) {
+    const result = await window.desktopApp.exportNote(payload);
+    if (result?.error) throw new Error(result.error);
+    return result;
+  }
+  const handler = window.webkit?.messageHandlers?.noteExport;
+  if (handler) { handler.postMessage(payload); return { native: true }; }
+  downloadExportBlob(payload.name, extension, blob);
+  return { downloaded: true };
+}
+
+let noteExportState = { noteId: "", contentBounds: null, selection: null, viewBounds: null, dragging: false, dragStart: null };
+
+function exportableNotes() {
+  return loadNotebookNotes().slice().sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+}
+
+function noteExportDimensions(note) {
+  const pageCount = Math.max(1, Number(note?.pageCount) || Number(note?.documentPages?.length) || 1);
+  return note?.canvasMode === "page"
+    ? { width: PAGE_CANVAS_WIDTH, height: PAGE_CANVAS_HEIGHT * pageCount + PAGE_CANVAS_GAP * Math.max(0, pageCount - 1) }
+    : { width: Math.max(1, Number(note?.drawingWidth) || DRAWING_CANVAS_WIDTH), height: Math.max(1, Number(note?.drawingHeight) || DRAWING_CANVAS_HEIGHT) };
+}
+
+function clampExportBounds(bounds, dimensions) {
+  const x = Math.max(0, Math.min(dimensions.width - 1, Number(bounds?.x) || 0));
+  const y = Math.max(0, Math.min(dimensions.height - 1, Number(bounds?.y) || 0));
+  const width = Math.max(1, Math.min(dimensions.width - x, Number(bounds?.width) || 1));
+  const height = Math.max(1, Math.min(dimensions.height - y, Number(bounds?.height) || 1));
+  return { x, y, width, height };
+}
+
+function noteContentBounds(note) {
+  const dimensions = noteExportDimensions(note);
+  if (note?.canvasMode === "page" || note?.pageLayout === "document") return { x: 0, y: 0, ...dimensions };
+  if (note?.drawing) return { x: 0, y: 0, ...dimensions };
+  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+  const include = (x, y, padding = 0) => {
+    if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) return;
+    minX = Math.min(minX, Number(x) - padding); minY = Math.min(minY, Number(y) - padding);
+    maxX = Math.max(maxX, Number(x) + padding); maxY = Math.max(maxY, Number(y) + padding);
+  };
+  (note?.drawingStrokes || []).forEach((stroke) => (stroke.points || []).forEach((point) => include(point.x, point.y, Math.max(3, Number(stroke.width) || 2) / 2)));
+  (note?.drawingTexts || []).forEach((item) => {
+    const fontSize = Math.max(8, Number(item.screenFontSize) || Number(item.fontSize) || 16);
+    const width = Math.max(24, Number(item.screenWidth) || 180);
+    const height = Math.max(fontSize * 1.35, Number(item.screenHeight) || 36);
+    include(item.x, item.y); include(Number(item.x) + width, Number(item.y) + height);
+  });
+  if (!Number.isFinite(minX)) return { x: 0, y: 0, width: Math.min(800, dimensions.width), height: Math.min(600, dimensions.height) };
+  const padding = Math.max(20, Math.min(80, Math.max(maxX - minX, maxY - minY) * 0.04));
+  return clampExportBounds({ x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 }, dimensions);
+}
+
+function paddedNoteExportView(bounds, note) {
+  const dimensions = noteExportDimensions(note);
+  const paddingX = Math.max(12, bounds.width * .08); const paddingY = Math.max(12, bounds.height * .08);
+  return clampExportBounds({ x: bounds.x - paddingX, y: bounds.y - paddingY, width: bounds.width + paddingX * 2, height: bounds.height + paddingY * 2 }, dimensions);
+}
+
+function selectedExportNote() {
+  return exportableNotes().find((note) => note.id === $("#export-note-select")?.value);
+}
+
+function noteExportFormats(note) {
+  if (note?.type === "pdf") return [{ value: "pdf", label: "PDF · Original document" }];
+  if (note?.type === "word" || note?.pageLayout === "document") return [{ value: "html", label: "HTML · Keeps formatting" }, { value: "txt", label: "TXT · Plain text" }];
+  return [{ value: "png", label: "PNG · Cropped image" }];
+}
+
+function renderNoteExportPage() {
+  const select = $("#export-note-select");
+  if (!select) return;
+  const notes = exportableNotes();
+  const previous = noteExportState.noteId || select.value;
+  if (!notes.length) {
+    select.innerHTML = '<option value="">No notes available</option>';
+    select.disabled = true;
+    $("#export-note-button").disabled = true;
+    $("#export-note-summary").textContent = "Create or import a note before exporting.";
+    $("#export-note-preview-empty").hidden = false;
+    return;
+  }
+  select.disabled = false;
+  $("#export-note-button").disabled = false;
+  select.innerHTML = notes.map((note) => `<option value="${escapeHtml(note.id)}">${escapeHtml(note.title || "Untitled note")}</option>`).join("");
+  select.value = notes.some((note) => note.id === previous) ? previous : notes[0].id;
+  configureSelectedNoteExport();
+}
+
+function configureSelectedNoteExport() {
+  const note = selectedExportNote();
+  if (!note) return;
+  noteExportState.noteId = note.id;
+  noteExportState.contentBounds = noteContentBounds(note);
+  noteExportState.selection = { ...noteExportState.contentBounds };
+  noteExportState.viewBounds = paddedNoteExportView(noteExportState.contentBounds, note);
+  const format = $("#export-note-format");
+  format.innerHTML = noteExportFormats(note).map((item) => `<option value="${item.value}">${item.label}</option>`).join("");
+  const isCanvas = note.type === "drawing" && note.pageLayout !== "document";
+  $("#export-note-crop-fields").hidden = !isCanvas;
+  $("#export-note-crop-actions").hidden = !isCanvas;
+  $("#export-note-help").hidden = !isCanvas;
+  $("#export-note-preview").style.cursor = isCanvas ? "crosshair" : "default";
+  $("#export-note-summary").textContent = note.type === "pdf" ? "The original imported PDF will be exported." : isCanvas ? "Only the outlined section will be exported. Open notes start fitted to their actual content." : "This typed note will keep its text and basic formatting.";
+  syncNoteExportCropInputs();
+  drawNoteExportPreview();
+}
+
+function syncNoteExportCropInputs() {
+  const selection = noteExportState.selection;
+  if (!selection) return;
+  [["x", "#export-note-crop-x"], ["y", "#export-note-crop-y"], ["width", "#export-note-crop-width"], ["height", "#export-note-crop-height"]].forEach(([key, selector]) => {
+    const input = $(selector); if (input) input.value = String(Math.round(selection[key]));
+  });
+}
+
+function documentNoteHtml(note) {
+  if (note.type === "word") return note.html || "";
+  const pages = Array.isArray(note.documentPages) && note.documentPages.length ? note.documentPages : [note.pageDocumentContent || ""];
+  return pages.map((page, index) => `<section class="note-page" data-page="${index + 1}">${page || ""}</section>`).join("\n");
+}
+
+function textFromHtml(html) {
+  const node = document.createElement("div"); node.innerHTML = html || ""; return node.innerText || "";
+}
+
+function drawWrappedExportText(ctx, text, x, y, maxWidth, lineHeight) {
+  String(text || "").split("\n").forEach((paragraph, paragraphIndex) => {
+    const words = paragraph.split(/\s+/); let line = "";
+    if (!paragraph && paragraphIndex >= 0) { y += lineHeight; return; }
+    words.forEach((word) => {
+      const trial = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(trial).width > maxWidth) { ctx.fillText(line, x, y); y += lineHeight; line = word; }
+      else line = trial;
+    });
+    if (line) { ctx.fillText(line, x, y); y += lineHeight; }
+  });
+  return y;
+}
+
+async function loadExportImage(source) {
+  if (!source) return null;
+  return await new Promise((resolve) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = () => resolve(null); image.src = source; });
+}
+
+async function paintNoteExport(ctx, note, sourceBounds, targetWidth, targetHeight, includeSelection = false) {
+  ctx.save(); ctx.clearRect(0, 0, targetWidth, targetHeight); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, targetWidth, targetHeight);
+  const scale = Math.min(targetWidth / sourceBounds.width, targetHeight / sourceBounds.height);
+  const offsetX = (targetWidth - sourceBounds.width * scale) / 2; const offsetY = (targetHeight - sourceBounds.height * scale) / 2;
+  ctx.translate(offsetX, offsetY); ctx.scale(scale, scale); ctx.translate(-sourceBounds.x, -sourceBounds.y);
+  if (note.type === "drawing" && note.pageLayout !== "document") {
+    if (note.drawing) { const image = await loadExportImage(note.drawing); if (image) { ctx.save(); ctx.globalAlpha = .7; ctx.drawImage(image, 0, 0, noteExportDimensions(note).width, noteExportDimensions(note).height); ctx.restore(); } }
+    (note.drawingStrokes || []).forEach((stroke) => {
+      const points = stroke.points || []; if (!points.length) return;
+      ctx.save(); ctx.strokeStyle = stroke.color || "#171b2d"; ctx.fillStyle = stroke.color || "#171b2d"; ctx.lineCap = stroke.tool === "calligraphy" ? "square" : "round"; ctx.lineJoin = "round";
+      if (stroke.tool === "highlighter") ctx.globalAlpha = .25; else if (stroke.tool === "pencil") ctx.globalAlpha = .62; else if (stroke.tool === "marker") ctx.globalAlpha = .86;
+      if (stroke.tool === "calligraphy" && points.length > 1) {
+        const nibAngle = -Math.PI / 4;
+        for (let index = 1; index < points.length; index += 1) { const from = points[index - 1]; const to = points[index]; const direction = Math.atan2(to.y - from.y, to.x - from.x); ctx.lineWidth = Math.max((Number(stroke.width) || 2) * .14, (Number(stroke.width) || 2) * Math.abs(Math.sin(direction - nibAngle))); ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke(); }
+      } else { ctx.lineWidth = Math.max(1, Number(stroke.width) || 2); ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y); points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y)); points.length === 1 ? ctx.fillRect(points[0].x, points[0].y, ctx.lineWidth, ctx.lineWidth) : ctx.stroke(); }
+      ctx.restore();
+    });
+    (note.drawingTexts || []).forEach((item) => {
+      const size = Math.max(8, Number(item.screenFontSize) || Number(item.fontSize) || 16); ctx.save(); ctx.fillStyle = item.color || "#171b2d"; ctx.font = `${item.italic ? "italic " : ""}${item.bold || /^h[1-3]$/.test(item.style || "") ? "700 " : "400 "}${size}px ${item.fontFamily || "Arial"}`; ctx.textBaseline = "top"; drawWrappedExportText(ctx, item.text || "", Number(item.x) || 0, Number(item.y) || 0, Math.max(24, Number(item.screenWidth) || 180), size * 1.25); ctx.restore();
+    });
+  } else {
+    ctx.fillStyle = "#171b2d"; ctx.font = "18px Arial"; ctx.textBaseline = "top"; drawWrappedExportText(ctx, textFromHtml(documentNoteHtml(note)), sourceBounds.x + 40, sourceBounds.y + 40, Math.max(120, sourceBounds.width - 80), 27);
+  }
+  ctx.restore();
+  return { scale, offsetX, offsetY };
+}
+
+async function drawNoteExportPreview() {
+  const canvas = $("#export-note-preview"); const note = selectedExportNote(); if (!canvas || !note) return;
+  const ctx = canvas.getContext("2d"); const empty = $("#export-note-preview-empty"); empty.hidden = true;
+  if (note.type === "pdf") { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#f4f4f8"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#5b5bd6"; ctx.font = "700 26px Arial"; ctx.textAlign = "center"; ctx.fillText("PDF", canvas.width / 2, canvas.height / 2 - 10); ctx.fillStyle = "#73798d"; ctx.font = "16px Arial"; ctx.fillText("The original document will be exported", canvas.width / 2, canvas.height / 2 + 25); ctx.textAlign = "start"; return; }
+  const view = noteExportState.viewBounds || noteContentBounds(note); await paintNoteExport(ctx, note, view, canvas.width, canvas.height);
+  if (note.type !== "drawing" || note.pageLayout === "document") return;
+  const selection = noteExportState.selection; const scale = Math.min(canvas.width / view.width, canvas.height / view.height); const ox = (canvas.width - view.width * scale) / 2; const oy = (canvas.height - view.height * scale) / 2;
+  const x = ox + (selection.x - view.x) * scale; const y = oy + (selection.y - view.y) * scale; const width = selection.width * scale; const height = selection.height * scale;
+  ctx.save(); ctx.fillStyle = "rgba(23,27,45,.34)"; ctx.beginPath(); ctx.rect(0, 0, canvas.width, canvas.height); ctx.rect(x, y, width, height); ctx.fill("evenodd"); ctx.strokeStyle = "#5b5bd6"; ctx.lineWidth = 4; ctx.setLineDash([12, 8]); ctx.strokeRect(x, y, width, height); ctx.restore();
+}
+
+function updateNoteExportSelectionFromInputs() {
+  const note = selectedExportNote(); if (!note) return;
+  const values = { x: Number($("#export-note-crop-x").value), y: Number($("#export-note-crop-y").value), width: Number($("#export-note-crop-width").value), height: Number($("#export-note-crop-height").value) };
+  noteExportState.selection = clampExportBounds(values, noteExportDimensions(note));
+  const selection = noteExportState.selection; const content = noteExportState.contentBounds;
+  const x = Math.min(selection.x, content.x); const y = Math.min(selection.y, content.y); const right = Math.max(selection.x + selection.width, content.x + content.width); const bottom = Math.max(selection.y + selection.height, content.y + content.height);
+  noteExportState.viewBounds = clampExportBounds({ x, y, width: right - x, height: bottom - y }, noteExportDimensions(note));
+  syncNoteExportCropInputs(); drawNoteExportPreview();
+}
+
+async function exportSelectedNote() {
+  const note = selectedExportNote(); if (!note) { showToast("Choose a note to export."); return; }
+  const format = $("#export-note-format").value;
+  $("#export-note-status").textContent = "Preparing your note…";
+  if (format === "pdf") {
+    const blob = await getNotebookAsset(note.pdfAssetId); if (!blob) { $("#export-note-status").textContent = "The original PDF could not be found."; showToast("The PDF could not be exported."); return; }
+    const result = await saveExportedNoteBlob(note, "pdf", blob); if (result?.canceled) { $("#export-note-status").textContent = "Export canceled."; return; }
+  } else if (format === "html") {
+    const body = documentNoteHtml(note); const file = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(note.title || "Note")}</title><style>body{margin:0;background:#eee;font:16px/1.5 Arial,sans-serif}.note-page{box-sizing:border-box;width:8.5in;min-height:11in;margin:24px auto;padding:.75in;background:#fff;box-shadow:0 2px 12px #bbb}@media print{body{background:#fff}.note-page{margin:0;box-shadow:none;break-after:page}}</style></head><body>${body}</body></html>`; const result = await saveExportedNoteBlob(note, "html", new Blob([file], { type: "text/html;charset=utf-8" })); if (result?.canceled) { $("#export-note-status").textContent = "Export canceled."; return; }
+  } else if (format === "txt") { const result = await saveExportedNoteBlob(note, "txt", new Blob([notebookNotePlainText(note)], { type: "text/plain;charset=utf-8" })); if (result?.canceled) { $("#export-note-status").textContent = "Export canceled."; return; } }
+  else {
+    const selection = noteExportState.selection || noteContentBounds(note); const maxDimension = 4096; const scale = Math.min(2, maxDimension / Math.max(selection.width, selection.height)); const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(selection.width * scale)); canvas.height = Math.max(1, Math.round(selection.height * scale)); await paintNoteExport(canvas.getContext("2d"), note, selection, canvas.width, canvas.height); const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png")); if (!blob) throw new Error("The image could not be created."); const result = await saveExportedNoteBlob(note, "png", blob); if (result?.canceled) { $("#export-note-status").textContent = "Export canceled."; return; }
+  }
+  $("#export-note-status").textContent = `${note.title || "Note"} exported as ${format.toUpperCase()}.`; showToast("Note exported.");
+}
+
 async function exportSelectedStudyDeck() {
   const deck = selectedExportDeck();
   if (!deck) { showToast("Choose a flashcard set to export."); return; }
   const format = $('input[name="exportFormat"]:checked')?.value || "apkg";
+  async function portableImageData(source) {
+    if (!source) return "";
+    if (String(source).startsWith("data:")) return String(source);
+    try {
+      const response = await fetch(source);
+      if (!response.ok) return "";
+      const blob = await response.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => resolve("");
+        reader.readAsDataURL(blob);
+      });
+    } catch (_) { return ""; }
+  }
+  const exportedCards = await Promise.all(deck.cards.map(async (card) => ({
+    front: String(card.front || ""),
+    back: String(card.back || ""),
+    frontImage: await portableImageData(card.frontImage),
+    backImage: await portableImageData(card.backImage),
+    scheduleKey: customAnkiKey(card.sourceDeckId || deck.id, card.id),
+    schedule: ankiScheduleFor(customAnkiKey(card.sourceDeckId || deck.id, card.id)),
+  })));
+  let reviewLogs = [];
+  try { reviewLogs = JSON.parse(localStorage.getItem(ANKI_REVIEW_LOG_KEY) || "[]"); } catch { reviewLogs = []; }
+  const exportedKeys = new Set(exportedCards.map((card) => card.scheduleKey));
   const payload = {
     name: safeExportName(deck.name),
     format,
-    cards: deck.cards.map((card) => ({ front: String(card.front || ""), back: String(card.back || "") })),
+    cards: exportedCards,
+    reviewLogs: reviewLogs.filter((log) => exportedKeys.has(log.cardKey)),
   };
   $("#export-status").textContent = `Preparing ${payload.cards.length} cards…`;
   if (window.desktopApp?.exportStudyDeck) {
@@ -2109,11 +4201,320 @@ function handleCardPaste(event, target) {
   acceptCardImage(file, target);
 }
 
+function confirmImageRemoval(button, removeImage) {
+  if (button.dataset.confirmingRemove === "true") { delete button.dataset.confirmingRemove; removeImage(); return; }
+  button.dataset.confirmingRemove = "true"; const originalLabel = button.textContent; button.textContent = "Click again to remove"; button.classList.add("confirming-remove");
+  window.setTimeout(() => { if (!button.isConnected || button.dataset.confirmingRemove !== "true") return; delete button.dataset.confirmingRemove; button.textContent = originalLabel; button.classList.remove("confirming-remove"); }, 2500);
+}
+
+function cardTextArea(target) {
+  if (!target) return null;
+  if (target.kind === "manual") return $(`#manual-card-${target.side}`);
+  return $(`[data-draft-${target.side}="${target.index}"]`);
+}
+
+function openDrawingTool(target) {
+  state.pendingDrawingTarget = target;
+  state.drawingTool = "pen";
+  state.drawingHistory = [];
+  $$('[data-drawing-tool]').forEach((button) => button.classList.toggle("active", button.dataset.drawingTool === "pen"));
+  const canvas = $("#flashcard-drawing-canvas");
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  const property = target.side === "front" ? "frontImage" : "backImage";
+  const existing = target.kind === "manual" ? (target.side === "front" ? state.manualFrontImage : state.manualBackImage) : state.customDraft[target.index]?.[property];
+  const remember = () => { state.drawingHistory = [canvas.toDataURL("image/png")]; };
+  if (existing) {
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+      const width = image.naturalWidth * scale; const height = image.naturalHeight * scale;
+      context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+      remember();
+    };
+    image.onerror = remember;
+    image.src = existing;
+  } else remember();
+  $("#drawing-dialog-title").textContent = `Draw on the ${target.side}`;
+  $("#drawing-dialog").showModal();
+}
+
+function closeDrawingTool() {
+  $("#drawing-dialog").close();
+  state.pendingDrawingTarget = null;
+  state.drawingHistory = [];
+}
+
+const MATH_GLOSSARY = [
+  { group: "Calculus", name: "Indefinite integral", syntax: "∫ f(x) dx", description: "Antiderivative of a function" },
+  { group: "Calculus", name: "Definite integral", syntax: "\\int_{a}^{b} f(x) dx", description: "Accumulation from lower bound a to upper bound b" },
+  { group: "Calculus", name: "Double integral", syntax: "∬ᴿ f(x,y) dA", description: "Integral over a two-dimensional region" },
+  { group: "Calculus", name: "Triple integral", syntax: "∭ⱽ f(x,y,z) dV", description: "Integral over a three-dimensional region" },
+  { group: "Calculus", name: "Contour integral", syntax: "∮꜀ f(z) dz", description: "Integral along a closed curve" },
+  { group: "Calculus", name: "Derivative operator", syntax: "\\frac{d}{dx}[f(x)]", description: "Differentiate a function with respect to x" },
+  { group: "Calculus", name: "First derivative", syntax: "\\frac{dy}{dx}", description: "Rate of change of y with respect to x" },
+  { group: "Calculus", name: "Second derivative", syntax: "\\frac{d^2y}{dx^2}", description: "Derivative of the first derivative" },
+  { group: "Calculus", name: "Partial derivative", syntax: "\\frac{\\partial f}{\\partial x}", description: "Differentiate a multivariable function with respect to x" },
+  { group: "Calculus", name: "Second partial derivative", syntax: "\\frac{\\partial^2 f}{\\partial x^2}", description: "Second partial derivative with respect to x" },
+  { group: "Calculus", name: "Mixed partial derivative", syntax: "\\frac{\\partial^2 f}{\\partial x \\partial y}", description: "Differentiate with respect to two variables" },
+  { group: "Calculus", name: "Limit", syntax: "\\lim_{x \\to a} f(x)", description: "Value approached as x approaches a" },
+  { group: "Vector calculus", name: "Gradient", syntax: "∇f", description: "Vector of partial derivatives" },
+  { group: "Vector calculus", name: "Divergence", syntax: "∇ · F", description: "Scalar measure of a vector field's outward flow" },
+  { group: "Vector calculus", name: "Curl", syntax: "∇ × F", description: "Rotation of a vector field" },
+  { group: "Algebra", name: "Fraction", syntax: "\\frac{a}{b}", description: "A numerator stacked over a denominator" },
+  { group: "Algebra", name: "Square root", syntax: "√(x)", description: "Principal square root" },
+  { group: "Algebra", name: "Summation", syntax: "\\sum_{i=1}^{n} a_i", description: "Sum terms over an index" },
+  { group: "Algebra", name: "Product", syntax: "\\prod_{i=1}^{n} a_i", description: "Multiply terms over an index" },
+  { group: "Algebra", name: "Infinity", syntax: "∞", description: "An unbounded quantity" },
+  { group: "Relations", name: "Approximately equal", syntax: "≈", description: "Values are approximately equal" },
+  { group: "Relations", name: "Not equal", syntax: "≠", description: "Values are not equal" },
+  { group: "Relations", name: "Less than or equal", syntax: "≤", description: "Less than or equal to" },
+  { group: "Relations", name: "Greater than or equal", syntax: "≥", description: "Greater than or equal to" },
+  { group: "Relations", name: "Proportional to", syntax: "∝", description: "One quantity varies proportionally with another" },
+  { group: "Greek letters", name: "Alpha", syntax: "α", description: "Lowercase alpha" },
+  { group: "Greek letters", name: "Beta", syntax: "β", description: "Lowercase beta" },
+  { group: "Greek letters", name: "Gamma", syntax: "γ", description: "Lowercase gamma" },
+  { group: "Greek letters", name: "Delta", syntax: "Δ", description: "Uppercase delta; often represents change" },
+  { group: "Greek letters", name: "Theta", syntax: "θ", description: "Lowercase theta; often represents an angle" },
+  { group: "Greek letters", name: "Lambda", syntax: "λ", description: "Lowercase lambda" },
+  { group: "Greek letters", name: "Mu", syntax: "μ", description: "Lowercase mu" },
+  { group: "Greek letters", name: "Pi", syntax: "π", description: "Lowercase pi" },
+  { group: "Greek letters", name: "Sigma", syntax: "σ", description: "Lowercase sigma" },
+];
+
+function renderMathGlossary(query = "") {
+  const normalized = String(query).trim().toLowerCase();
+  const matches = MATH_GLOSSARY.filter((entry) => !normalized || `${entry.group} ${entry.name} ${entry.syntax} ${entry.description}`.toLowerCase().includes(normalized));
+  const groupOrder = ["Algebra", "Relations", "Calculus", "Vector calculus", "Greek letters"];
+  const groups = [...new Set(matches.map((entry) => entry.group))].sort((a, b) => groupOrder.indexOf(a) - groupOrder.indexOf(b));
+  $("#math-glossary-list").innerHTML = matches.length ? groups.map((group) => `<div class="math-glossary-group">${escapeHtml(group)}</div>${matches.filter((entry) => entry.group === group).map((entry) => `<button type="button" class="math-glossary-entry" data-math-entry="${MATH_GLOSSARY.indexOf(entry)}"><strong>${mathDisplayHtml(entry.syntax)}</strong><span><b>${escapeHtml(entry.name)}</b><br>${escapeHtml(entry.description)}</span><small>Insert</small></button>`).join("")}`).join("") : '<div class="math-glossary-empty">No matching math notation.</div>';
+  $$('[data-math-entry]', $("#math-glossary-list")).forEach((button) => button.addEventListener("click", () => {
+    const entry = MATH_GLOSSARY[Number(button.dataset.mathEntry)];
+    const input = $("#math-expression");
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.setRangeText(entry.syntax, start, end, "end");
+    updateMathPreview();
+    input.focus();
+  }));
+}
+
+function readableMathSyntax(value) {
+  const symbols = { "\\alpha":"α", "\\beta":"β", "\\gamma":"γ", "\\Delta":"Δ", "\\delta":"δ", "\\theta":"θ", "\\lambda":"λ", "\\mu":"μ", "\\pi":"π", "\\sigma":"σ", "\\Sigma":"Σ", "\\int":"∫", "\\iint":"∬", "\\iiint":"∭", "\\oint":"∮", "\\partial":"∂", "\\nabla":"∇", "\\infty":"∞", "\\prod":"Π", "\\times":"×", "\\div":"÷", "\\pm":"±", "\\ne":"≠", "\\approx":"≈", "\\propto":"∝", "\\le":"≤", "\\ge":"≥", "\\rightarrow":"→", "\\rightleftharpoons":"⇌" };
+  let text = String(value || "").trim();
+  Object.entries(symbols).forEach(([syntax, symbol]) => { text = text.split(syntax).join(symbol); });
+  text = text.replace(/\\sqrt\{([^{}]+)\}/g, "√($1)").replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1)/($2)");
+  const superscript = { 0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹","+":"⁺","-":"⁻" };
+  const subscript = { 0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"₈",9:"₉","+":"₊","-":"₋" };
+  text = text.replace(/\^\{?([0-9+-]+)\}?/g, (_, chars) => [...chars].map((char) => superscript[char] || char).join(""));
+  text = text.replace(/_\{?([0-9+-]+)\}?/g, (_, chars) => [...chars].map((char) => subscript[char] || char).join(""));
+  return text;
+}
+
+function mathDisplayHtml(value) {
+  let html = escapeHtml(String(value || ""));
+  html = html.replace(/\\(?:left|right)\b/g, "");
+  html = html.replace(/\\text\{([^{}]*)\}/g, "$1");
+  html = html.replace(/\\binom\{([^{}]+)\}\{([^{}]+)\}/g, "C<sub>$1,$2</sub>");
+  html = html.replace(/\\hat\s*\{?([A-Za-z])\}?/g, "$1̂").replace(/\\bar\s*\{?([A-Za-z])\}?/g, "$1̄");
+  html = html.replace(/\\dot\s*\{?([A-Za-z])\}?/g, "$1̇");
+  // Give relation signs their own spacing and baseline. A negative result also
+  // receives a true mathematical minus so it cannot disappear into the equals.
+  html = html.replace(/\s*=\s*(-)?/g, (_match, negative) => `<span class="math-relation" aria-label="equals">=</span>${negative ? '<span class="math-negative" aria-label="negative">−</span>' : ''}`);
+  html = html.replace(/\\lim_\{([^{}]+)\}/g, '<span class="math-limit"><span>lim</span><small>$1</small></span>');
+  html = html.replace(/\\(int|sum|prod)_\{([^{}]+)\}\^\{([^{}]+)\}/g, (_match, command, lower, upper) => `<span class="math-bounded"><sup>${upper}</sup><span>${({ int: "∫", sum: "Σ", prod: "Π" })[command]}</span><sub>${lower}</sub></span>`);
+  html = html.replace(/\\(int|sum|prod)_([^\s^{}]+)\^\{([^{}]+)\}/g, (_match, command, lower, upper) => `<span class="math-bounded"><sup>${upper}</sup><span>${({ int: "∫", sum: "Σ", prod: "Π" })[command]}</span><sub>${lower}</sub></span>`);
+  html = html.replace(/\\(int|sum|prod)_(\\[A-Za-z]+|[A-Za-z0-9]+)\^(\\[A-Za-z]+|[A-Za-z0-9]+)/g, (_match, command, lower, upper) => `<span class="math-bounded"><sup>${upper}</sup><span>${({ int: "∫", sum: "Σ", prod: "Π" })[command]}</span><sub>${lower}</sub></span>`);
+  const replaceFractions = (text) => {
+    let output = text;
+    let searchFrom = 0;
+    while (true) {
+      const start = output.indexOf("\\frac{", searchFrom);
+      if (start < 0) break;
+      const readGroup = (openIndex) => {
+        let depth = 0;
+        for (let index = openIndex; index < output.length; index += 1) {
+          if (output[index] === "{") depth += 1;
+          if (output[index] === "}" && --depth === 0) return { content: output.slice(openIndex + 1, index), end: index };
+        }
+        return null;
+      };
+      const numerator = readGroup(start + 5);
+      const denominator = numerator && output[numerator.end + 1] === "{" ? readGroup(numerator.end + 1) : null;
+      if (!numerator || !denominator) { searchFrom = start + 5; continue; }
+      const replacement = `<span class="math-fraction"><span>${replaceFractions(numerator.content)}</span><span>${replaceFractions(denominator.content)}</span></span>`;
+      output = output.slice(0, start) + replacement + output.slice(denominator.end + 1);
+      searchFrom = start + replacement.length;
+    }
+    return output;
+  };
+  html = replaceFractions(html);
+  const commands = { "\\rightleftharpoons":"⇌", "\\rightarrow":"→", "\\Rightarrow":"⇒", "\\partial":"∂", "\\nabla":"∇", "\\infty":"∞", "\\varepsilon":"ε", "\\epsilon":"ε", "\\kappa":"κ", "\\tau":"τ", "\\phi":"φ", "\\chi":"χ", "\\Psi":"Ψ", "\\arcsin":"arcsin", "\\arccos":"arccos", "\\arctan":"arctan", "\\alpha":"α", "\\beta":"β", "\\gamma":"γ", "\\Delta":"Δ", "\\delta":"δ", "\\theta":"θ", "\\lambda":"λ", "\\sigma":"σ", "\\langle":"⟨", "\\rangle":"⟩", "\\times":"×", "\\approx":"≈", "\\propto":"∝", "\\quad":" ", "\\sin":"sin", "\\cos":"cos", "\\tan":"tan", "\\sec":"sec", "\\csc":"csc", "\\cot":"cot", "\\log":"log", "\\ln":"ln", "\\lim":"lim", "\\div":"÷", "\\pm":"±", "\\ne":"≠", "\\le":"≤", "\\ge":"≥", "\\mid":"|", "\\cap":"∩", "\\cup":"∪", "\\cdots":"…", "\\circ":"°", "\\mu":"μ", "\\rho":"ρ", "\\eta":"η", "\\pi":"π", "\\Sigma":"Σ", "\\to":"→", "\\,":" " };
+  Object.entries(commands).sort(([left], [right]) => right.length - left.length).forEach(([syntax, symbol]) => { html = html.split(syntax).join(symbol); });
+  html = html.replace(/\\(iint|iiint|oint|int|sum|prod)\b/g, (_match, command) => ({ int: "∫", iint: "∬", iiint: "∭", oint: "∮", sum: "Σ", prod: "Π" })[command]);
+  html = html.replace(/\\sqrt\{([^{}]+)\}/g, "√($1)");
+  html = html.replace(/\^\{([^{}]+)\}/g, "<sup>$1</sup>").replace(/\^([+-]?\d+|[A-Za-z])/g, "<sup>$1</sup>");
+  html = html.replace(/_\{([^{}]+)\}/g, "<sub>$1</sub>").replace(/_([+-]?\d+|[A-Za-z])/g, "<sub>$1</sub>");
+  return html.replace(/\n/g, "<br>");
+}
+
+function textbookEquationHtml(value) {
+  let equation = String(value || "");
+  equation = equation.replace(/\(([^()]+?)\s+\/\s+([^()]+?)\)/g, "\\frac{$1}{$2}");
+  equation = equation.replace(/([A-Za-z0-9ΔχΠλνμρ]+)\/\(([^()]+)\)/g, "\\frac{$1}{$2}");
+  equation = equation.replace(/([A-Za-z0-9ΔχΠλνμρ\[\]₀-₉⁺⁻°]+)\s*\/\s*([A-Za-z0-9ΔχΠλνμρ\[\]₀-₉⁺⁻°]+)/g, "\\frac{$1}{$2}");
+  return mathDisplayHtml(equation);
+}
+
+function updateMathPreview() {
+  const value = $("#math-expression").value.trim();
+  $("#math-preview").innerHTML = value ? mathDisplayHtml(value) : "Your expression will appear here.";
+}
+function editableMathRange(textarea) {
+  const value = textarea?.value || "";
+  const selectionStart = textarea?.selectionStart ?? value.length;
+  const selectionEnd = textarea?.selectionEnd ?? selectionStart;
+  if (selectionEnd > selectionStart) return { start: selectionStart, end: selectionEnd, value: value.slice(selectionStart, selectionEnd), editing: true };
+  const lineStart = value.lastIndexOf("\n", Math.max(0, selectionStart - 1)) + 1;
+  const nextBreak = value.indexOf("\n", selectionStart);
+  const lineEnd = nextBreak < 0 ? value.length : nextBreak;
+  const line = value.slice(lineStart, lineEnd);
+  const looksLikeMath = /\\(?:frac|sqrt|lim|int|iint|iiint|oint|sum|prod|partial|nabla|alpha|beta|gamma|Delta|theta|lambda|mu|pi|sigma|infty)\b|[∫∬∭∮ΣΠ√∂∇∞]/.test(line);
+  if (!looksLikeMath) return { start: selectionStart, end: selectionEnd, value: "", editing: false };
+  const leading = line.match(/^\s*/)?.[0].length || 0;
+  const trailing = line.match(/\s*$/)?.[0].length || 0;
+  return { start: lineStart + leading, end: lineEnd - trailing, value: line.trim(), editing: true };
+}
+function openMathTool(target) {
+  const textarea = cardTextArea(target);
+  const range = editableMathRange(textarea);
+  state.pendingMathTarget = { ...target, ...range };
+  $("#math-expression").value = range.value;
+  $("#math-glossary-search").value = "";
+  renderMathGlossary();
+  $("#math-dialog-title").textContent = `${range.editing ? "Edit" : "Insert"} math on the ${target.side}`;
+  updateMathPreview();
+  $("#math-dialog").showModal();
+  $("#math-expression").focus();
+}
+function closeMathTool() { $("#math-dialog").close(); state.pendingMathTarget = null; }
+function insertMathIntoCard() {
+  const target = state.pendingMathTarget; const expression = $("#math-expression").value.trim();
+  if (!target || !expression) { showToast("Enter a math expression first."); return; }
+  const textarea = cardTextArea(target); if (!textarea) return;
+  const before = textarea.value.slice(0, target.start); const after = textarea.value.slice(target.end);
+  const spacing = target.editing ? expression : `${before && !/\s$/.test(before) ? " " : ""}${expression}${after && !/^\s/.test(after) ? " " : ""}`;
+  textarea.value = `${before}${spacing}${after}`;
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  closeMathTool(); textarea.focus(); showToast(target.editing ? "Math updated." : "Math inserted into the card.");
+}
+
+const CODE_KEYWORDS = {
+  python: "and as assert async await break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield",
+  javascript: "async await break case catch class const continue debugger default delete do else export extends false finally for from function get if import in instanceof let new null of return set static super switch this throw true try typeof undefined var void while yield",
+  typescript: "abstract any as async await boolean break case catch class const constructor continue declare default delete do else enum export extends false finally for from function get if implements import in infer instanceof interface keyof let namespace never new null number object of private protected public readonly return set static string super switch symbol this throw true try type typeof undefined unknown var void while yield",
+  java: "abstract assert boolean break byte case catch char class const continue default do double else enum extends false final finally float for goto if implements import instanceof int interface long native new null package private protected public return short static strictfp super switch synchronized this throw throws transient true try void volatile while",
+  c: "auto break case char const continue default do double else enum extern float for goto if inline int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while",
+  cpp: "alignas alignof and asm auto bitand bool break case catch char class compl concept const constexpr continue co_await co_return co_yield decltype default delete do double dynamic_cast else enum explicit export extern false float for friend if inline int long mutable namespace new noexcept not nullptr operator or private protected public register reinterpret_cast requires return short signed sizeof static static_cast struct switch template this thread_local throw true try typedef typeid typename union unsigned using virtual void volatile wchar_t while xor",
+  csharp: "abstract as async await base bool break byte case catch char checked class const continue decimal default delegate do double else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal is lock long namespace new null object operator out override params private protected public readonly record ref return sbyte sealed short sizeof stackalloc static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using virtual void volatile while",
+  swift: "associatedtype break case catch class continue default defer deinit do else enum extension fallthrough false fileprivate for func guard if import in init inout internal is let nil open operator override private protocol public repeat rethrows return self static struct subscript super switch throw throws true try typealias var where while",
+  sql: "add all alter and any as asc backup between by case check column constraint create database default delete desc distinct drop exec exists foreign from full group having in index inner insert into is join key left like limit not null on or order outer primary procedure right rownum select set table top truncate union unique update values view where",
+  r: "break else FALSE for function if in Inf NA NaN next NULL repeat return TRUE while",
+  bash: "case do done elif else esac export fi for function if in local readonly return then until while",
+};
+
+function highlightCodeLine(line, language = "") {
+  const aliases = { js: "javascript", jsx: "javascript", ts: "typescript", py: "python", rb: "ruby", sh: "bash", shell: "bash", "c++": "cpp", cs: "csharp", "c#": "csharp" };
+  const normalized = aliases[String(language || "").toLowerCase()] || String(language || "").toLowerCase();
+  const keywords = new Set(String(CODE_KEYWORDS[normalized] || "").split(" ").filter(Boolean));
+  const tokens = /(\/\/.*$|#.*$|--.*$)|(\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_$][\w$]*\b)/g;
+  let result = ""; let cursor = 0;
+  for (const match of line.matchAll(tokens)) {
+    result += escapeHtml(line.slice(cursor, match.index));
+    const value = escapeHtml(match[0]);
+    if (match[1]) result += `<span class="code-token-comment">${value}</span>`;
+    else if (match[2]) result += `<span class="code-token-string">${value}</span>`;
+    else if (match[3]) result += `<span class="code-token-number">${value}</span>`;
+    else if (keywords.has(match[4])) result += `<span class="code-token-keyword">${value}</span>`;
+    else result += value;
+    cursor = match.index + match[0].length;
+  }
+  return result + escapeHtml(line.slice(cursor));
+}
+
+function codeBlockHtml(code, language = "", numbered = true) {
+  const lines = String(code || "").replace(/\r\n?/g, "\n").split("\n");
+  const label = language ? `<span class="study-code-language">${escapeHtml(language)}</span>` : "";
+  return `<span class="study-code-block ${numbered ? "with-line-numbers" : ""}">${label}<code>${lines.map((line, index) => `<span class="study-code-line">${numbered ? `<i>${index + 1}</i>` : ""}<b>${highlightCodeLine(line, language) || "&nbsp;"}</b></span>`).join("")}</code></span>`;
+}
+
+function studyTextHtml(value) {
+  const text = String(value || "");
+  let cursor = 0;
+  let html = "";
+  const pattern = /```([^\n]*)\n([\s\S]*?)```/g;
+  for (const match of text.matchAll(pattern)) {
+    html += mathDisplayHtml(text.slice(cursor, match.index));
+    const metadata = String(match[1] || "").trim().split(":");
+    html += codeBlockHtml(match[2].replace(/\n$/, ""), metadata[0], metadata[1] !== "plain");
+    cursor = match.index + match[0].length;
+  }
+  return html + mathDisplayHtml(text.slice(cursor));
+}
+
+function updateCodePreview() {
+  const code = $("#code-expression").value;
+  $("#code-preview-content").innerHTML = code ? codeBlockHtml(code, $("#code-language").value, $("#code-line-numbers").checked) : '<span class="code-preview-empty">Your code will appear here.</span>';
+}
+
+function openCodeTool(target) {
+  const textarea = cardTextArea(target);
+  const value = textarea?.value || "";
+  const caret = textarea?.selectionStart ?? value.length;
+  const blocks = [...value.matchAll(/```([^\n]*)\n([\s\S]*?)```/g)];
+  const block = blocks.find((match) => caret >= match.index && caret <= match.index + match[0].length);
+  const selectionStart = textarea?.selectionStart ?? value.length;
+  const selectionEnd = textarea?.selectionEnd ?? selectionStart;
+  const selectedCode = selectionEnd > selectionStart ? value.slice(selectionStart, selectionEnd) : "";
+  const metadata = block ? String(block[1] || "").trim().split(":") : [];
+  const editing = Boolean(block || selectedCode);
+  state.pendingCodeTarget = { ...target, start: block?.index ?? selectionStart, end: block ? block.index + block[0].length : selectionEnd, editing };
+  $("#code-expression").value = block ? block[2].replace(/\n$/, "") : selectedCode;
+  $("#code-language").value = metadata[0] || "";
+  $("#code-line-numbers").checked = !block || metadata[1] !== "plain";
+  $("#code-dialog-title").textContent = `${editing ? "Edit" : "Insert"} code on the ${target.side}`;
+  updateCodePreview();
+  $("#code-dialog").showModal();
+  $("#code-expression").focus();
+}
+
+function closeCodeTool() { $("#code-dialog").close(); state.pendingCodeTarget = null; }
+
+function insertCodeIntoCard() {
+  const target = state.pendingCodeTarget;
+  const code = $("#code-expression").value.replace(/\r\n?/g, "\n").trimEnd();
+  if (!target || !code.trim()) { showToast("Enter at least one line of code first."); return; }
+  const textarea = cardTextArea(target);
+  if (!textarea) return;
+  const language = $("#code-language").value;
+  const metadata = `${language}${$("#code-line-numbers").checked ? ":lines" : ":plain"}`;
+  const snippet = `\`\`\`${metadata}\n${code}\n\`\`\``;
+  const before = textarea.value.slice(0, target.start);
+  const after = textarea.value.slice(target.end);
+  textarea.value = target.editing
+    ? `${before}${snippet}${after}`
+    : `${before}${before && !before.endsWith("\n") ? "\n" : ""}${snippet}${after && !after.startsWith("\n") ? "\n" : ""}${after}`;
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  closeCodeTool();
+  textarea.focus();
+  showToast(target.editing ? "Code updated." : "Code added to the card.");
+}
+
 function cleanNoteLine(line) {
   return line
     .replace(/^\s{0,3}#{1,6}\s+/, "")
     .replace(/^\s*(?:[-*•]|\d+[.)])\s+/, "")
-    .replace(/\*\*|__|`/g, "")
+    .replace(/\*{1,3}|__|`/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -2209,6 +4610,11 @@ function setNotesContent(text = "", html = "") {
   const editor = notesEditor();
   if (html) editor.innerHTML = sanitizeNotesHtml(html);
   else editor.textContent = text;
+}
+
+function clearNotesAfterUpdate() {
+  setNotesContent();
+  state.notesHiddenAfterUpdate = true;
 }
 
 function sanitizeNotesHtml(rawHtml) {
@@ -2339,7 +4745,7 @@ function parseAnkiNotes(fileName, sourceText) {
     if (!front || !back) return;
     const key = front.toLocaleLowerCase();
     const existing = cardsByFront.get(key);
-    cardsByFront.set(key, { id: existing?.id || makeLocalId("card"), front, back, imported: true });
+    cardsByFront.set(key, { id: existing?.id || makeLocalId("card"), noteId: `anki-note-${note.id}`, front, back, imported: true, importedSchedule: note.schedule || null, importedReviews: note.reviews || [] });
   });
   return { cards: [...cardsByFront.values()], separator, headers };
 }
@@ -2367,11 +4773,16 @@ function generateCardsFromNotes(notes) {
   const cards = [];
   const seen = new Set();
   const addCard = (front, back) => {
-    const cleanFront = front.replace(/\s+/g, " ").trim();
+    const cleanFront = front.replace(/^(?:the\s+)?(?:use|introduction)\s+of\s+/i, "").replace(/\s+/g, " ").trim();
     const cleanBack = back.replace(/\s+/g, " ").trim();
     if (cleanFront.length < 4 || cleanBack.length < 3 || cleanFront.toLowerCase() === cleanBack.toLowerCase()) return;
-    const key = cleanFront.toLowerCase();
-    if (seen.has(key) || cards.length >= 300) return;
+    const key = cleanFront.toLowerCase().replace(/^the\s+/, "").replace(/\s*\(\d{4}\)$/, "").trim();
+    if (seen.has(key)) {
+      const existing = cards.find((card) => card.front.toLowerCase().replace(/^the\s+/, "").replace(/\s*\(\d{4}\)$/, "").trim() === key);
+      if (existing && cleanBack.length > existing.back.length) existing.back = cleanBack;
+      return;
+    }
+    if (cards.length >= 300) return;
     seen.add(key);
     cards.push({ id: makeLocalId("card"), front: cleanFront, back: cleanBack });
   };
@@ -2380,6 +4791,24 @@ function generateCardsFromNotes(notes) {
   const rawLines = notes.replace(/\r/g, "").split("\n").filter((line) => {
     if (lessonHeadingInfo(line)) return false;
     return !/^Page\s+\d+\s*:/i.test(cleanNoteLine(line));
+  });
+
+  // Slides often identify vocabulary with italics or bold inside an
+  // explanatory paragraph instead of using a "term: definition" line.
+  rawLines.forEach((rawLine) => {
+    if (/^\s*#{1,6}\s+/.test(rawLine)) return;
+    const matches = [...rawLine.matchAll(/(?<!\*)\*{1,3}([^*\n]{2,80}?)\*{1,3}(?!\*)/g)];
+    if (!matches.length) return;
+    const context = cleanNoteLine(rawLine);
+    matches.forEach((match) => {
+      let term = cleanNoteLine(match[1]).replace(/^\d+[.)]\s+/, "").replace(/[.:;,]+$/, "");
+      const followingWord = context.slice(context.toLowerCase().indexOf(term.toLowerCase()) + term.length).match(/^\s+([a-z][a-z-]+)/)?.[1];
+      if (term.split(/\s+/).length === 1 && followingWord && !/^(?:and|or|to|in|of|for|with|which|that|was|were|is|are)$/.test(followingWord)) term = `${term} ${followingWord}`;
+      const words = term.match(/[A-Za-z0-9'-]+/g) || [];
+      const remainder = context.replace(term, "").trim();
+      if (!term || words.length > 8 || /^https?:/i.test(term) || /^\(?\d{4}\s*[-–—]\s*\d{4}\)?$/.test(term) || context.toLowerCase() === term.toLowerCase() || /^\([^)]*\)$/.test(remainder) || new RegExp(`^(?:the\\s+)?(?:psychological\\s+)?process\\s+known\\s+as\\s+${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[.]?$`, "i").test(context)) return;
+      addCard(term, context);
+    });
   });
   const outlineLines = rawLines.map((raw, sourceIndex) => {
     const expanded = raw.replace(/\t/g, "  ");
@@ -2417,10 +4846,12 @@ function generateCardsFromNotes(notes) {
     });
 
     const splitTermDetail = (value) => {
+      const namedProcess = value.match(/^(?:\d+[.)]\s*)?(?:The\s+)?(?:psychological\s+)?process\s+known\s+as\s+(.+?)[.]?$/i);
+      if (namedProcess) return [namedProcess[1].trim().replace(/[.]$/, ""), ""];
       const colon = value.match(/^([^:]{2,70}):\s+(.{3,})$/);
       if (colon) return [colon[1].trim(), colon[2].trim()];
       const paren = value.match(/^([^()]{2,65})\s*\(([^()]{4,})\)$/);
-      if (paren && !/^(?:more info|[A-Z0-9-]{1,6})$/i.test(paren[2])) return [paren[1].trim(), paren[2].trim()];
+      if (paren && !/^(?:more info|[A-Z0-9-]{1,6}|[A-Z][A-Za-z .'-]+,\s*\d{4})$/i.test(paren[2])) return [paren[1].trim(), paren[2].trim()];
       return [value.trim(), ""];
     };
     const readableDetail = (node) => {
@@ -2429,11 +4860,11 @@ function generateCardsFromNotes(notes) {
       if (node.children.length) return `${term}: ${node.children.map((child) => splitTermDetail(child.text)[0]).join(", ")}`;
       return term;
     };
-    const looksLikeFact = (value) => /\b(?:is|are|was|were|has|have|contains?|containing|comes?|carry|carries|forms?|supports?|assists?|lines?|secretes?|translates?|modif(?:y|ies)|synthesizes?|produces?|production|breaks?|controls?|maintains?|occurs?|affects?|found|pumped|released|acquired|transferred|tolerates?|switch(?:es)?|starts?)\b|\bvia\b|→/i.test(value);
+    const looksLikeFact = (value) => /\b(?:is|are|was|were|has|have|known as|contains?|containing|comes?|carry|carries|forms?|supports?|assists?|lines?|secretes?|translates?|modif(?:y|ies)|synthesizes?|produces?|production|breaks?|controls?|maintains?|occurs?|affects?|found|pumped|released|acquired|transferred|tolerates?|switch(?:es)?|starts?)\b|\bvia\b|→/i.test(value);
     const looksLikeTerm = (node) => {
       const [term, detail] = splitTermDetail(node.text);
       const words = term.match(/[A-Za-z0-9+'-]+/g) || [];
-      return Boolean(detail) || (words.length > 0 && words.length <= 7 && term.length <= 65 && !/[,;.!?]$/.test(term) && !looksLikeFact(term));
+      return Boolean(detail) || (words.length > 0 && words.length <= 7 && term.length <= 65 && !/^\(?\d{4}\s*[-–—]\s*\d{4}\)?$/.test(term) && !/[,;.!?]$/.test(term) && !looksLikeFact(term));
     };
     const addOutlineNode = (node) => {
       const [term, inlineDetail] = splitTermDetail(node.text);
@@ -2443,7 +4874,7 @@ function generateCardsFromNotes(notes) {
       else if (inlineDetail) addCard(term, inlineDetail);
       else if (node.parent?.kind === "bullet") {
         const fact = term.match(/^(.{2,55}?)\s+(is|are|has|have|synthesizes?|translates?|produces?|breaks?|controls?|maintains?|supports?|assists?|forms?|lines?|secretes?|carries?|contains?)\s+(.{3,})$/i);
-        if (fact && !/\b(?:and|or)$/i.test(fact[1])) addCard(fact[1], `${fact[2].charAt(0).toUpperCase()}${fact[2].slice(1)} ${fact[3]}`);
+        if (fact && !/^(?:a|an|the|if|certain|some|these|those|this)\b/i.test(fact[1]) && !/\b(?:and|or)$/i.test(fact[1])) addCard(fact[1], `${fact[2].charAt(0).toUpperCase()}${fact[2].slice(1)} ${fact[3]}`);
       }
       node.children.forEach(addOutlineNode);
     };
@@ -2453,7 +4884,7 @@ function generateCardsFromNotes(notes) {
         const firstTermIndex = flatOutline ? root.children.findIndex(looksLikeTerm) : -1;
         if (firstTermIndex >= 0) {
           const openingFacts = root.children.slice(0, firstTermIndex).map((child) => child.text).filter(looksLikeFact);
-          if (openingFacts.length >= 2) addCard(root.text, openingFacts.join("; "));
+          if (openingFacts.length && !/[?]$/.test(root.text) && !/^(?:overview|background|introduction|ambition|conclusion|summary)$/i.test(root.text)) addCard(root.text, openingFacts.join("; "));
           for (let index = firstTermIndex; index < root.children.length;) {
             const node = root.children[index];
             if (!looksLikeTerm(node)) { index += 1; continue; }
@@ -2468,7 +4899,7 @@ function generateCardsFromNotes(notes) {
           return;
         }
         const directFacts = root.children.filter((child) => !child.children.length && looksLikeFact(child.text)).map((child) => child.text);
-        if (directFacts.length >= 2) addCard(root.text, directFacts.join("; "));
+        if (directFacts.length && !/[?]$/.test(root.text) && !/^(?:overview|background|introduction|ambition|conclusion|summary)$/i.test(root.text)) addCard(root.text, directFacts.join("; "));
         root.children.forEach(addOutlineNode);
       } else addOutlineNode(root);
     });
@@ -2680,7 +5111,20 @@ function renderCustomFeynmanDraft() {
 
 function updateCustomSaveButtons() {
   const button = $("#generate-note-cards");
-  if (state.editingCustomDeckId) button.disabled = false;
+  // A study set may contain any combination of the three study item types.
+  // One valid item in any single category is enough to save the set.
+  button.disabled = false;
+}
+
+function hasAnyStudyItem() {
+  const hasCard = state.customDraft.some((card) =>
+    Boolean((String(card.front || "").trim() || card.frontImage) && (String(card.back || "").trim() || card.backImage))
+  );
+  const hasQuestion = state.customQuestionDraft.some((question) =>
+    Boolean(String(question.prompt || "").trim() && String(question.answer || "").trim())
+  );
+  const hasFeynman = state.customFeynmanDraft.some((item) => Boolean(String(item.prompt || "").trim()));
+  return hasCard || hasQuestion || hasFeynman;
 }
 
 function renderCustomDraft() {
@@ -2690,7 +5134,7 @@ function renderCustomDraft() {
   $("#flashcard-tab-count").textContent = state.customDraft.length;
   empty.hidden = state.customDraft.length > 0;
   updateCustomSaveButtons();
-  list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
+  list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="front" data-image-index="${index}">Draw</button><button type="button" data-math-draft="front" data-image-index="${index}">Math syntax</button><button type="button" data-code-draft="front" data-image-index="${index}">Code</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="back" data-image-index="${index}">Draw</button><button type="button" data-math-draft="back" data-image-index="${index}">Math syntax</button><button type="button" data-code-draft="back" data-image-index="${index}">Code</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftFront)].front = input.value; }));
   $$('[data-draft-back]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftBack)].back = input.value; }));
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("paste", (event) => handleCardPaste(event, { kind: "draft", side: "front", index: Number(input.dataset.draftFront) })));
@@ -2699,10 +5143,11 @@ function renderCustomDraft() {
     state.pendingCardImageTarget = { kind: "draft", side: button.dataset.chooseDraftImage, index: Number(button.dataset.imageIndex) };
     $("#flashcard-image-file").click();
   }));
+  $$('[data-draw-draft]', list).forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "draft", side: button.dataset.drawDraft, index: Number(button.dataset.imageIndex) })));
+  $$('[data-math-draft]', list).forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "draft", side: button.dataset.mathDraft, index: Number(button.dataset.imageIndex) })));
+  $$('[data-code-draft]', list).forEach((button) => button.addEventListener("click", () => openCodeTool({ kind: "draft", side: button.dataset.codeDraft, index: Number(button.dataset.imageIndex) })));
   $$('[data-remove-draft-image]', list).forEach((button) => button.addEventListener("click", () => {
-    const card = state.customDraft[Number(button.dataset.imageIndex)];
-    if (card) card[button.dataset.removeDraftImage === "front" ? "frontImage" : "backImage"] = "";
-    renderCustomDraft();
+    confirmImageRemoval(button, () => { const card = state.customDraft[Number(button.dataset.imageIndex)]; if (card) card[button.dataset.removeDraftImage === "front" ? "frontImage" : "backImage"] = ""; renderCustomDraft(); });
   }));
   $$('[data-remove-draft]', list).forEach((button) => button.addEventListener("click", () => {
     state.customDraft.splice(Number(button.dataset.removeDraft), 1);
@@ -2726,6 +5171,8 @@ function resetCustomDraft() {
   state.customImportSource = null;
   state.editingCustomDeckId = null;
   state.editingBuiltInCollectionId = null;
+  state.appendNotesToExistingSet = false;
+  state.notesHiddenAfterUpdate = false;
   state.manualFrontImage = "";
   state.manualBackImage = "";
   state.pendingCardImageTarget = null;
@@ -2748,11 +5195,13 @@ function resetCustomDraft() {
 }
 
 function personalDeckMarkup(deck, folders) {
-  return `<article class="custom-deck-item personal-deck-item"><button type="button" class="deck-wrench" data-edit-custom="${deck.id}" aria-label="Edit ${escapeHtml(deck.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5-5l2.1 2.1-2.4 2.4-2.1-2.1a4 4 0 0 0 5 5l-7.5 7.5a2 2 0 1 0 2.8 2.8l7.5-7.5a4 4 0 0 0 5-5L18 8.6 15.6 6.2l2.1-2.1Z" /></svg></button><div class="built-in-deck-label">Personal set</div><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-move-deck="${deck.id}">Move</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`;
+  const starred = isStudyItemStarred(`deck:${deck.id}`);
+  return `<article class="custom-deck-item personal-deck-item draggable-study-set ${starred ? "starred-study-item" : ""}" draggable="true" data-drag-deck="${deck.id}"><button type="button" class="study-item-star" data-toggle-study-star="deck:${deck.id}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${escapeHtml(deck.name)}">${starred ? "★" : "☆"}</button><button type="button" class="deck-wrench" data-edit-custom="${deck.id}" aria-label="Edit ${escapeHtml(deck.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5-5l2.1 2.1-2.4 2.4-2.1-2.1a4 4 0 0 0 5 5l-7.5 7.5a2 2 0 1 0 2.8 2.8l7.5-7.5a4 4 0 0 0 5-5L18 8.6 15.6 6.2l2.1-2.1Z" /></svg></button><div class="built-in-deck-label">Personal set</div><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" data-duplicate-study-set="${deck.id}">Duplicate</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`;
 }
 
 function builtInAddedDeckMarkup(collection, folders) {
-  return `<article class="custom-deck-item built-in-deck-item added-built-in-deck"><div class="built-in-deck-label">Built-in · ${collection.units.length} ${collection.unitLabel || "units"}</div><h3>${escapeHtml(collection.name)}</h3><p>${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman topics</p><div class="custom-deck-actions"><button type="button" data-study-built-in-collection="${collection.id}">Study</button><button type="button" data-move-deck="${collection.id}">Move</button><button type="button" data-edit-built-in-collection="${collection.id}">Edit</button><button type="button" class="remove-built-in-deck" data-delete-built-in-collection="${collection.id}">Delete</button></div></article>`;
+  const starred = isStudyItemStarred(`deck:${collection.id}`);
+  return `<article class="custom-deck-item built-in-deck-item added-built-in-deck draggable-study-set ${starred ? "starred-study-item" : ""}" draggable="true" data-drag-deck="${collection.id}"><button type="button" class="study-item-star" data-toggle-study-star="deck:${collection.id}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${escapeHtml(collection.name)}">${starred ? "★" : "☆"}</button><div class="built-in-deck-label">Built-in · ${collection.units.length} ${collection.unitLabel || "units"}</div><h3>${escapeHtml(collection.name)}</h3><p>${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman topics</p><div class="custom-deck-actions"><button type="button" data-study-built-in-collection="${collection.id}">Study</button><button type="button" data-edit-built-in-collection="${collection.id}">Edit</button><button type="button" data-duplicate-study-set="${collection.id}">Duplicate</button><button type="button" class="remove-built-in-deck" data-delete-built-in-collection="${collection.id}">Delete</button></div></article>`;
 }
 
 function renderCustomDecks() {
@@ -2763,30 +5212,33 @@ function renderCustomDecks() {
   const decks = allDecks.filter(matchesStudyQuery);
   const addedCollections = allAddedCollections.filter(matchesStudyQuery);
   const validIds = new Set([...allDecks.map((deck) => deck.id), ...allAddedCollections.map((collection) => collection.id)]);
-  const folders = loadStudyFolders().map((folder) => ({ ...folder, deckIds: [...new Set(folder.deckIds)].filter((id) => validIds.has(id)) }));
+  const folders = loadStudyFolders().map((folder) => ({ ...folder, deckIds: [...new Set(folder.deckIds)].filter((id) => validIds.has(id)) })).sort((a, b) => Number(isStudyItemStarred(`folder:${b.id}`)) - Number(isStudyItemStarred(`folder:${a.id}`)));
   storeStudyFolders(folders);
   const filedIds = new Set(folders.flatMap((folder) => folder.deckIds));
   $("#saved-deck-count").textContent = allDecks.length;
   $("#flashcards-deck-count").textContent = allDecks.length + allAddedCollections.length;
-  const creatorMarkup = decks.length ? decks.map((deck) => `<article class="custom-deck-item"><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`).join("") : '<div class="custom-deck-empty">Your saved study sets will appear here.</div>';
+  const creatorMarkup = decks.length ? decks.map((deck) => `<article class="custom-deck-item"><h3>${escapeHtml(deck.name)}</h3><p>${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts</p><div class="custom-deck-actions"><button type="button" data-study-custom="${deck.id}">Study</button><button type="button" data-edit-custom="${deck.id}">Edit</button><button type="button" data-duplicate-study-set="${deck.id}">Duplicate</button><button type="button" class="delete-custom-deck" data-delete-custom="${deck.id}">Delete</button></div></article>`).join("") : '<div class="custom-deck-empty">Your saved study sets will appear here.</div>';
   const deckById = new Map([...decks.map((deck) => [deck.id, { type: "personal", value: deck }]), ...addedCollections.map((collection) => [collection.id, { type: "built-in", value: collection }])]);
   const cardMarkup = (record) => record.type === "personal" ? personalDeckMarkup(record.value, folders) : builtInAddedDeckMarkup(record.value, folders);
   const folderMarkup = folders.map((folder) => {
-    const records = folder.deckIds.map((id) => deckById.get(id)).filter(Boolean);
+    const records = folder.deckIds.map((id) => deckById.get(id)).filter(Boolean).sort((a, b) => Number(isStudyItemStarred(`deck:${b.value.id}`)) - Number(isStudyItemStarred(`deck:${a.value.id}`)));
     if (studyQuery && !folder.name.toLowerCase().includes(studyQuery) && !records.length) return "";
-    return `<section class="study-folder ${folder.expanded ? "expanded" : ""}" style="--folder-color:${folder.color}"><div class="study-folder-tab"><button type="button" class="study-folder-toggle" data-toggle-folder="${folder.id}" aria-expanded="${folder.expanded}"><span class="folder-shape-icon" aria-hidden="true"></span><span><span class="section-label">Folder</span><strong>${escapeHtml(folder.name)}</strong><small>${records.length} ${records.length === 1 ? "study set" : "study sets"}</small></span><span class="folder-chevron" aria-hidden="true">⌄</span></button><div class="study-folder-actions"><button type="button" class="button primary-button" data-study-folder="${folder.id}" ${records.length ? "" : "disabled"}>Study folder</button><label class="folder-color-control" title="Change folder color"><input type="color" value="${folder.color}" data-folder-color="${folder.id}" aria-label="Change ${escapeHtml(folder.name)} color"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.3a2.2 2.2 0 0 0 1.4-3.9 1.8 1.8 0 0 1 1.1-3.2H18a3 3 0 0 0 3-3C21 6.5 17 3 12 3Z"/><circle cx="7.5" cy="10" r="1"/><circle cx="10" cy="6.8" r="1"/><circle cx="14" cy="6.8" r="1"/><circle cx="17" cy="10" r="1"/></svg></label><button type="button" class="button secondary-button" data-rename-folder="${folder.id}">Rename</button><button type="button" class="button danger-text-button" data-delete-folder="${folder.id}">Delete</button></div></div><div class="study-folder-contents" ${folder.expanded ? "" : "hidden"}><div class="custom-deck-list flashcards-deck-grid">${records.length ? records.map(cardMarkup).join("") : '<div class="custom-deck-empty">Move study sets into this folder using the Folder menu on a set.</div>'}</div></div></section>`;
+    const starred = isStudyItemStarred(`folder:${folder.id}`);
+    return `<section class="study-folder ${folder.expanded ? "expanded" : ""} ${starred ? "starred-study-item" : ""}" data-drop-folder="${folder.id}" style="--folder-color:${folder.color}"><div class="study-folder-tab"><button type="button" class="study-folder-toggle" data-toggle-folder="${folder.id}" aria-expanded="${folder.expanded}"><span class="folder-shape-icon" aria-hidden="true"></span><span><span class="section-label">Folder</span><strong>${escapeHtml(folder.name)}</strong><small>${records.length} ${records.length === 1 ? "study set" : "study sets"} · drop sets here</small></span><span class="folder-chevron" aria-hidden="true">⌄</span></button><div class="study-folder-actions"><button type="button" class="study-item-star folder-star" data-toggle-study-star="folder:${folder.id}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${escapeHtml(folder.name)}">${starred ? "★" : "☆"}</button><button type="button" class="button primary-button" data-study-folder="${folder.id}" ${records.length ? "" : "disabled"}>Study folder</button><label class="folder-color-control" title="Change folder color"><input type="color" value="${folder.color}" data-folder-color="${folder.id}" aria-label="Change ${escapeHtml(folder.name)} color"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.3a2.2 2.2 0 0 0 1.4-3.9 1.8 1.8 0 0 1 1.1-3.2H18a3 3 0 0 0 3-3C21 6.5 17 3 12 3Z"/><circle cx="7.5" cy="10" r="1"/><circle cx="10" cy="6.8" r="1"/><circle cx="14" cy="6.8" r="1"/><circle cx="17" cy="10" r="1"/></svg></label><button type="button" class="button secondary-button" data-rename-folder="${folder.id}">Rename</button><button type="button" class="button danger-text-button" data-delete-folder="${folder.id}">Delete</button></div></div><div class="study-folder-contents" ${folder.expanded ? "" : "hidden"}><div class="custom-deck-list flashcards-deck-grid">${records.length ? records.map(cardMarkup).join("") : '<div class="custom-deck-empty">Drag study sets into this folder.</div>'}</div></div></section>`;
   }).join("");
-  const unfiledRecords = [...decks.filter((deck) => !filedIds.has(deck.id)).map((deck) => ({ type: "personal", value: deck })), ...addedCollections.filter((collection) => !filedIds.has(collection.id)).map((collection) => ({ type: "built-in", value: collection }))];
+  const unfiledRecords = [...decks.filter((deck) => !filedIds.has(deck.id)).map((deck) => ({ type: "personal", value: deck })), ...addedCollections.filter((collection) => !filedIds.has(collection.id)).map((collection) => ({ type: "built-in", value: collection }))].sort((a, b) => Number(isStudyItemStarred(`deck:${b.value.id}`)) - Number(isStudyItemStarred(`deck:${a.value.id}`)));
   $("#custom-deck-list").innerHTML = creatorMarkup;
   $("#study-folder-list").innerHTML = folderMarkup;
   $("#flashcards-deck-list").innerHTML = unfiledRecords.length ? unfiledRecords.map(cardMarkup).join("") : (folders.length ? '<div class="custom-deck-empty">All of your study sets are organized into folders.</div>' : '<div class="custom-deck-empty">Add flashcards from the library below, or create your own study set.</div>');
   $$('[data-study-custom]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(button.dataset.studyCustom)));
   $$('[data-edit-custom]').forEach((button) => button.addEventListener("click", () => { showAppView("create"); editCustomDeck(button.dataset.editCustom); }));
+  $$('[data-duplicate-study-set]').forEach((button) => button.addEventListener("click", () => duplicateStudySet(button.dataset.duplicateStudySet)));
   $$('[data-delete-custom]').forEach((button) => button.addEventListener("click", () => deleteCustomDeck(button.dataset.deleteCustom)));
   $$('[data-study-built-in-collection]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(button.dataset.studyBuiltInCollection)));
   $$('[data-edit-built-in-collection]').forEach((button) => button.addEventListener("click", () => { showAppView("create"); editBuiltInCollection(button.dataset.editBuiltInCollection); }));
   $$('[data-delete-built-in-collection]').forEach((button) => button.addEventListener("click", () => deleteBuiltInCollection(button.dataset.deleteBuiltInCollection)));
-  $$('[data-move-deck]').forEach((button) => button.addEventListener("click", () => openMoveDeckDialog(button.dataset.moveDeck)));
+  $$('[data-toggle-study-star]').forEach((button) => button.addEventListener("click", (event) => { event.stopPropagation(); toggleStudyItemStar(button.dataset.toggleStudyStar); }));
+  wireStudySetDragAndDrop();
   $$('[data-study-folder]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(`folder:${button.dataset.studyFolder}`)));
   $$('[data-toggle-folder]').forEach((button) => button.addEventListener("click", () => toggleStudyFolder(button.dataset.toggleFolder)));
   $$('[data-folder-color]').forEach((input) => input.addEventListener("change", () => setStudyFolderColor(input.dataset.folderColor, input.value)));
@@ -2875,8 +5327,13 @@ function removeFlashcardCollection(collectionId, event) {
 function collectionStudyDeck(collection) {
   const selectedIds = state.selectedBuiltInCollectionId === collection.id ? state.selectedBuiltInUnitIds : collection.units.map((unit) => unit.id);
   const selectedUnits = collection.units.filter((unit) => selectedIds.includes(unit.id));
-  const suffix = selectedUnits.length === 1 ? ` · ${selectedUnits[0].shortName}` : !selectedUnits.length || selectedUnits.length === collection.units.length ? "" : ` · ${selectedUnits.length} units`;
-  return { id: collection.id, name: `${collection.name}${suffix}`, builtIn: true, cards: selectedUnits.flatMap((unit) => unit.cards), questions: selectedUnits.flatMap((unit) => unit.questions || []), feynmanPrompts: selectedUnits.flatMap((unit) => unit.feynmanPrompts || []) };
+  const supportsLevelFilter = Boolean(collection.supportsAbFilter || collection.supportsLevelFilter);
+  const baseOnly = Boolean(supportsLevelFilter && state.calculusAbOnly);
+  const extensionLevel = collection.extensionLevel || "BC";
+  const baseLabel = collection.baseLevel || "AB";
+  const suffix = baseOnly ? ` · ${baseLabel}` : collection.supportsLevelFilter ? ` · ${extensionLevel}` : selectedUnits.length === 1 ? ` · ${selectedUnits[0].shortName}` : !selectedUnits.length || selectedUnits.length === collection.units.length ? "" : ` · ${selectedUnits.length} units`;
+  const allowed = (item) => !baseOnly || item.courseLevel !== extensionLevel;
+  return { id: collection.id, name: `${collection.name}${suffix}`, builtIn: true, cards: selectedUnits.flatMap((unit) => unit.cards.filter(allowed)), questions: selectedUnits.flatMap((unit) => (unit.questions || []).filter(allowed)), feynmanPrompts: selectedUnits.flatMap((unit) => (unit.feynmanPrompts || []).filter(allowed)) };
 }
 
 function findStudyDeck(deckId) {
@@ -2901,6 +5358,49 @@ function findStudyDeck(deckId) {
   return builtInFlashcardDecks.find((deck) => deck.id === deckId);
 }
 
+function duplicateStudySet(deckId) {
+  const personal = loadCustomDecks().find((deck) => deck.id === deckId);
+  const collection = personal ? null : getBuiltInCollection(deckId);
+  const source = personal || (collection ? {
+    name: collection.name,
+    cards: collection.units.flatMap((unit) => unit.cards || []),
+    questions: collection.units.flatMap((unit) => unit.questions || []),
+    feynmanPrompts: collection.units.flatMap((unit) => unit.feynmanPrompts || []),
+  } : null);
+  if (!source) return;
+  const decks = loadCustomDecks();
+  const duplicateId = makeLocalId("deck");
+  const duplicateItems = (items, prefix, transform = (item) => item) => (items || []).map((item) => transform({
+    ...JSON.parse(JSON.stringify(item)), id: makeLocalId(prefix),
+  }));
+  const duplicate = {
+    id: duplicateId,
+    name: copyLabel(source.name, new Set(decks.map((deck) => String(deck.name || "").toLowerCase()))),
+    cards: duplicateItems(source.cards, "card", (card) => {
+      delete card.importedSchedule;
+      delete card.importedReviews;
+      return card;
+    }),
+    questions: duplicateItems(source.questions, "question"),
+    feynmanPrompts: duplicateItems(source.feynmanPrompts, "feynman"),
+    sourceNotes: personal?.sourceNotes || "",
+    sourceNotesHtml: personal?.sourceNotesHtml || "",
+    sourceImport: null,
+    generatorVersion: personal?.generatorVersion || NOTES_GENERATOR_VERSION,
+    updatedAt: Date.now(),
+  };
+  decks.unshift(duplicate);
+  if (!storeCustomDecks(decks)) return;
+  const folders = loadStudyFolders();
+  const sourceFolder = folders.find((folder) => folder.deckIds.includes(deckId));
+  if (sourceFolder) {
+    sourceFolder.deckIds.splice(sourceFolder.deckIds.indexOf(deckId) + 1, 0, duplicateId);
+    storeStudyFolders(folders);
+  }
+  renderCustomDecks();
+  showToast(`${duplicate.name} created with fresh study progress.`);
+}
+
 function saveCustomDeck({ resetAfterSave = true, notify = true } = {}) {
   const name = $("#custom-deck-name").value.trim();
   const cards = state.customDraft.map((card) => ({ ...card, front: String(card.front || "").trim(), back: String(card.back || "").trim() })).filter((card) => (card.front || card.frontImage) && (card.back || card.backImage));
@@ -2910,7 +5410,10 @@ function saveCustomDeck({ resetAfterSave = true, notify = true } = {}) {
   if (!cards.length && !questions.length && !feynmanPrompts.length) { showToast("Add at least one card, question, or Feynman prompt."); return null; }
   const decks = loadCustomDecks();
   const existingIndex = decks.findIndex((deck) => deck.id === state.editingCustomDeckId);
-  const deck = { id: state.editingCustomDeckId || makeLocalId("deck"), name, cards, questions, feynmanPrompts, sourceNotes: notesPlainText(), sourceNotesHtml: notesRichHtml(), sourceImport: state.customImportSource, generatorVersion: NOTES_GENERATOR_VERSION, updatedAt: Date.now() };
+  const existingDeck = existingIndex >= 0 ? decks[existingIndex] : null;
+  const visibleSourceNotes = notesPlainText();
+  const visibleSourceNotesHtml = notesRichHtml();
+  const deck = { id: state.editingCustomDeckId || makeLocalId("deck"), name, cards, questions, feynmanPrompts, sourceNotes: state.notesHiddenAfterUpdate && !visibleSourceNotes ? existingDeck?.sourceNotes || "" : visibleSourceNotes, sourceNotesHtml: state.notesHiddenAfterUpdate && !visibleSourceNotesHtml ? existingDeck?.sourceNotesHtml || "" : visibleSourceNotesHtml, sourceImport: state.customImportSource, generatorVersion: NOTES_GENERATOR_VERSION, updatedAt: Date.now() };
   if (existingIndex >= 0) decks.splice(existingIndex, 1, deck); else decks.unshift(deck);
   if (!storeCustomDecks(decks)) return null;
   state.editingCustomDeckId = deck.id;
@@ -2968,6 +5471,18 @@ function saveGeneratedCustomDeckInPlace() {
   };
   if (existingIndex >= 0) decks.splice(existingIndex, 1, deck); else decks.unshift(deck);
   if (!storeCustomDecks(decks)) return null;
+  const schedules = ankiSchedules();
+  let reviewLogs = [];
+  try { reviewLogs = JSON.parse(localStorage.getItem(ANKI_REVIEW_LOG_KEY) || "[]"); } catch { reviewLogs = []; }
+  deck.cards.forEach((card) => {
+    if (!card.importedSchedule) return;
+    const key = customAnkiKey(deck.id, card.id);
+    const imported = card.importedSchedule;
+    schedules[key] = { ...imported, lastReviewed: card.importedReviews?.at(-1)?.review || null, lastRating: ({ 1: "again", 2: "hard", 3: "good", 4: "easy" })[card.importedReviews?.at(-1)?.rating] || null };
+    (card.importedReviews || []).forEach((log) => reviewLogs.push({ id: `${log.review}-${key}`, cardKey: key, rating: ({ 1: "again", 2: "hard", 3: "good", 4: "easy" })[log.rating] || "good", review: log.review, scheduledDays: log.interval, durationMs: log.durationMs, imported: true }));
+  });
+  localStorage.setItem("study-desk-anki-schedules", JSON.stringify(schedules));
+  localStorage.setItem(ANKI_REVIEW_LOG_KEY, JSON.stringify(reviewLogs.slice(-100000)));
   state.editingCustomDeckId = deck.id;
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Update set";
@@ -2980,6 +5495,8 @@ function editCustomDeck(deckId) {
   if (!deck) return;
   state.editingBuiltInCollectionId = null;
   state.editingCustomDeckId = deck.id;
+  state.appendNotesToExistingSet = false;
+  state.notesHiddenAfterUpdate = false;
   state.customDraft = deck.cards.map((card) => ({ ...card }));
   state.customQuestionDraft = (deck.questions || []).map((question) => ({ ...question }));
   state.customFeynmanDraft = (deck.feynmanPrompts || []).map((item) => ({ ...item }));
@@ -3001,6 +5518,7 @@ function editBuiltInCollection(collectionId) {
   if (!collection) return;
   state.editingCustomDeckId = null;
   state.editingBuiltInCollectionId = collectionId;
+  state.appendNotesToExistingSet = false;
   state.customDraft = collection.units.flatMap((unit) => unit.cards.map((card) => ({ ...card, builtInUnitId: unit.id })));
   state.customQuestionDraft = collection.units.flatMap((unit) => (unit.questions || []).map((question) => ({ ...question, builtInUnitId: unit.id })));
   state.customFeynmanDraft = collection.units.flatMap((unit) => (unit.feynmanPrompts || []).map((item) => ({ ...item, builtInUnitId: unit.id })));
@@ -3026,6 +5544,7 @@ function deleteCustomDeck(deckId) {
   state.pendingBuiltInDeleteId = null;
   state.pendingDeleteAllStudySets = false;
   state.pendingReturnAllBuiltIn = false;
+  state.pendingReturnAllTextbooks = false;
   $("#custom-delete-title").textContent = `Delete “${deck.name}”?`;
   $("#custom-delete-message").textContent = "Are you sure? This study set and its saved review progress will be permanently deleted.";
   $("#custom-delete-summary").textContent = `${deck.cards.length} cards · ${(deck.questions || []).length} questions · ${(deck.feynmanPrompts || []).length} Feynman prompts`;
@@ -3041,6 +5560,7 @@ function deleteBuiltInCollection(collectionId) {
   state.pendingBuiltInDeleteId = collectionId;
   state.pendingDeleteAllStudySets = false;
   state.pendingReturnAllBuiltIn = false;
+  state.pendingReturnAllTextbooks = false;
   $("#custom-delete-title").textContent = `Delete “${collection.name}”?`;
   $("#custom-delete-message").textContent = "Are you sure? This deck will be removed from My study sets. You can add the original built-in deck again from the Study library.";
   $("#custom-delete-summary").textContent = `${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman prompts`;
@@ -3058,6 +5578,7 @@ function deleteAllStudySets() {
   state.pendingBuiltInDeleteId = null;
   state.pendingDeleteAllStudySets = true;
   state.pendingReturnAllBuiltIn = false;
+  state.pendingReturnAllTextbooks = false;
   $("#custom-delete-title").textContent = "Delete all study sets?";
   $("#custom-delete-message").textContent = "Are you sure? Every personal set, added built-in deck, and their saved Anki progress will be permanently removed.";
   $("#custom-delete-summary").textContent = `${total} ${total === 1 ? "study set" : "study sets"}`;
@@ -3073,6 +5594,7 @@ function returnAllBuiltInDecks() {
   state.pendingBuiltInDeleteId = null;
   state.pendingDeleteAllStudySets = false;
   state.pendingReturnAllBuiltIn = true;
+  state.pendingReturnAllTextbooks = false;
   $("#custom-delete-title").textContent = "Return all built-in decks?";
   $("#custom-delete-message").textContent = "The decks will move out of My Study Sets and become available in the Study library again. Personal study sets and saved deck edits will remain unchanged.";
   $("#custom-delete-summary").textContent = `${addedCollections.length} ${addedCollections.length === 1 ? "built-in deck" : "built-in decks"}`;
@@ -3080,7 +5602,31 @@ function returnAllBuiltInDecks() {
   showAppView("custom-delete");
 }
 
+function returnAllTextbooks() {
+  const enrolled = enrolledCourseIds();
+  if (!enrolled.length) { showToast("All textbooks are already in the library."); return; }
+  state.customDeleteReturnView = "courses";
+  state.pendingCustomDeleteId = null;
+  state.pendingBuiltInDeleteId = null;
+  state.pendingDeleteAllStudySets = false;
+  state.pendingReturnAllBuiltIn = false;
+  state.pendingReturnAllTextbooks = true;
+  $("#custom-delete-title").textContent = "Return all textbooks?";
+  $("#custom-delete-message").textContent = "Every added textbook will move back to the textbook catalog. Your study sets, edits, and Anki progress will remain unchanged.";
+  $("#custom-delete-summary").textContent = `${enrolled.length} ${enrolled.length === 1 ? "textbook" : "textbooks"}`;
+  $("#confirm-custom-delete").textContent = "Return to library";
+  showAppView("custom-delete");
+}
+
 function confirmCustomDeckDeletion() {
+  if (state.pendingReturnAllTextbooks) {
+    localStorage.setItem("study-desk-enrolled-courses", "[]");
+    state.pendingReturnAllTextbooks = false;
+    showAppView("courses");
+    renderCourseShelf($("#catalog-courses-search").value);
+    showToast("All textbooks returned to the textbook library.");
+    return;
+  }
   if (state.pendingReturnAllBuiltIn) {
     removeDecksFromFolders(addedFlashcardCollectionIds());
     localStorage.setItem("study-desk-added-flashcard-collections", "[]");
@@ -3142,7 +5688,10 @@ function customAnkiKey(deckId, cardId) {
 
 function openCustomStudyOptions(deckId) {
   const collection = getBuiltInCollection(deckId);
-  if (collection && state.selectedBuiltInCollectionId !== collection.id) state.selectedBuiltInUnitIds = collection.units.map((unit) => unit.id);
+  if (collection && state.selectedBuiltInCollectionId !== collection.id) {
+    state.selectedBuiltInUnitIds = collection.units.map((unit) => unit.id);
+    state.calculusAbOnly = false;
+  }
   state.selectedBuiltInCollectionId = collection?.id || null;
   const deck = findStudyDeck(deckId);
   if (!deck) return;
@@ -3162,10 +5711,19 @@ function renderBuiltInUnitPicker(collection) {
   const picker = $("#built-in-unit-picker");
   picker.hidden = !collection;
   if (!collection) return;
+  const abToggle = $("#toggle-calculus-ab");
+  const supportsLevelFilter = Boolean(collection.supportsAbFilter || collection.supportsLevelFilter);
+  const extensionLevel = collection.extensionLevel || "BC";
+  const baseLabel = collection.baseLevel || "AB";
+  abToggle.hidden = !supportsLevelFilter;
+  abToggle.classList.toggle("active", state.calculusAbOnly);
+  abToggle.textContent = collection.supportsLevelFilter ? `Level: ${state.calculusAbOnly ? baseLabel : extensionLevel}` : `AB only: ${state.calculusAbOnly ? "On" : "Off"}`;
   $("#built-in-unit-grid").innerHTML = collection.units.map((unit) => {
-    const feynmanCount = (unit.feynmanPrompts || []).length;
-    const summary = feynmanCount ? `${unit.cards.length} cards · ${feynmanCount} Feynman topics` : `${unit.cards.length} cards`;
-    return `<label class="built-in-unit-choice"><input type="checkbox" value="${unit.id}" ${state.selectedBuiltInUnitIds.includes(unit.id) ? "checked" : ""}><span><strong>${escapeHtml(unit.shortName)}</strong><small>${summary}</small></span></label>`;
+    const allowed = (item) => !state.calculusAbOnly || item.courseLevel !== extensionLevel;
+    const cardCount = unit.cards.filter(allowed).length;
+    const feynmanCount = (unit.feynmanPrompts || []).filter(allowed).length;
+    const summary = cardCount ? (feynmanCount ? `${cardCount} cards · ${feynmanCount} Feynman topics` : `${cardCount} cards`) : "BC only";
+    return `<label class="built-in-unit-choice"><input type="checkbox" value="${unit.id}" ${state.selectedBuiltInUnitIds.includes(unit.id) ? "checked" : ""} ${cardCount ? "" : "disabled"}><span><strong>${escapeHtml(unit.shortName)}</strong><small>${summary}</small></span></label>`;
   }).join("");
   $$('input[type="checkbox"]', $("#built-in-unit-grid")).forEach((input) => input.addEventListener("change", () => {
     state.selectedBuiltInUnitIds = $$('input[type="checkbox"]:checked', $("#built-in-unit-grid")).map((item) => item.value);
@@ -3173,8 +5731,16 @@ function renderBuiltInUnitPicker(collection) {
     refreshCustomStudyOptions();
   }));
   $("#toggle-all-built-in-units").onclick = () => {
-    const allSelected = state.selectedBuiltInUnitIds.length === collection.units.length;
-    state.selectedBuiltInUnitIds = allSelected ? [] : collection.units.map((unit) => unit.id);
+    const selectableUnits = collection.units.filter((unit) => !state.calculusAbOnly || unit.cards.some((card) => card.courseLevel !== extensionLevel));
+    const allSelected = selectableUnits.every((unit) => state.selectedBuiltInUnitIds.includes(unit.id));
+    state.selectedBuiltInUnitIds = allSelected ? [] : selectableUnits.map((unit) => unit.id);
+    renderBuiltInUnitPicker(collection);
+    refreshCustomStudyOptions();
+  };
+  abToggle.onclick = () => {
+    state.calculusAbOnly = !state.calculusAbOnly;
+    if (state.calculusAbOnly) state.selectedBuiltInUnitIds = collection.units.filter((unit) => unit.cards.some((card) => card.courseLevel !== extensionLevel)).map((unit) => unit.id);
+    else state.selectedBuiltInUnitIds = collection.units.map((unit) => unit.id);
     renderBuiltInUnitPicker(collection);
     refreshCustomStudyOptions();
   };
@@ -3182,14 +5748,17 @@ function renderBuiltInUnitPicker(collection) {
 }
 
 function updateBuiltInUnitToggle(collection) {
-  $("#toggle-all-built-in-units").textContent = state.selectedBuiltInUnitIds.length === collection.units.length ? "Clear all" : "Select all";
+  const extensionLevel = collection.extensionLevel || "BC";
+  const selectableUnits = collection.units.filter((unit) => !state.calculusAbOnly || unit.cards.some((card) => card.courseLevel !== extensionLevel));
+  $("#toggle-all-built-in-units").textContent = selectableUnits.length && selectableUnits.every((unit) => state.selectedBuiltInUnitIds.includes(unit.id)) ? "Clear all" : "Select all";
 }
 
 function refreshCustomStudyOptions() {
   const deck = findStudyDeck(state.selectedCustomDeckId);
   if (!deck) return;
   $("#custom-study-title").textContent = deck.name;
-  const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id)));
+  const removed = removedAnkiCardKeys();
+  const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
   const dailyPlan = dailyAnkiPlan(candidates, `deck:${deck.id}`);
   const dueCount = dailyPlan.queue.length;
   const reviewCount = dailyPlan.learningCards.length + dailyPlan.reviewCards.length;
@@ -3240,8 +5809,10 @@ function startCustomReview(mode) {
     state.customReviewCards = (deck.feynmanPrompts || []).map((item) => ({ id: item.id, front: cleanCustomFeynmanPrompt(item.prompt), back: "Review your explanation and add any important details you missed." }));
   } else if (mode === "anki") {
     const scope = `deck:${deck.id}`;
-    const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id)));
+    const removed = removedAnkiCardKeys();
+    const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
     const plan = dailyAnkiPlan(candidates, scope);
+    activateAnkiDeck(deck.id, "deck");
     state.customReviewCards = plan.queue;
     markDailyNewCardsStarted(scope, plan.newCards);
   } else {
@@ -3256,6 +5827,7 @@ function startCustomReview(mode) {
   state.customQuestionAnswered = false;
   state.customFeynmanStartedAt = null;
   state.customReviewStartedAt = Date.now();
+  state.customAnkiCardShownAt = mode === "anki" ? Date.now() : null;
   $("#custom-review-title").textContent = deck.name;
   $("#custom-study-options-view").hidden = true;
   $("#custom-review-view").hidden = false;
@@ -3293,8 +5865,9 @@ function renderCustomReviewCard() {
   const reviewImage = state.customReviewRevealed ? card.backImage : card.frontImage;
   const reviewContent = $("#custom-review-content");
   const reviewImageElement = $("#custom-review-image");
-  reviewContent.textContent = reviewText || "";
-  reviewContent.hidden = !reviewText;
+  const equation = state.customReviewRevealed && card.equation ? `<span class="anki-equation" aria-label="Equation">${textbookEquationHtml(card.equation)}</span>` : "";
+  reviewContent.innerHTML = equation + (reviewText ? studyTextHtml(reviewText) : "");
+  reviewContent.hidden = !reviewText && !equation;
   reviewImageElement.src = reviewImage || "";
   reviewImageElement.alt = reviewImage ? `${state.customReviewRevealed ? labels[1] : labels[0]} image` : "";
   reviewImageElement.hidden = !reviewImage;
@@ -3386,7 +5959,7 @@ function moveCustomFeynman(direction) {
   const nextPosition = state.customReviewPosition + direction;
   if (nextPosition < 0) return;
   window.clearInterval(customFeynmanTimerHandle);
-  if (nextPosition >= state.customReviewCards.length) { closeCustomReview(); return; }
+  if (nextPosition >= state.customReviewCards.length) { recordStudyActivity(); closeCustomReview(); return; }
   state.customReviewPosition = nextPosition;
   renderCustomReviewCard();
 }
@@ -3437,7 +6010,7 @@ function answerCustomQuestion(response) {
 function moveCustomQuestion(direction) {
   const nextPosition = state.customReviewPosition + direction;
   if (nextPosition < 0) return;
-  if (nextPosition >= state.customReviewCards.length) { closeCustomReview(); return; }
+  if (nextPosition >= state.customReviewCards.length) { recordStudyActivity(); closeCustomReview(); return; }
   state.customReviewPosition = nextPosition;
   state.customReviewRevealed = false;
   state.customQuestionAnswered = false;
@@ -3450,11 +6023,16 @@ function rateCustomAnkiCard(rating) {
   if (!state.customReviewWasRevealed) return;
   const card = state.customReviewCards.shift();
   if (!card?.scheduleKey) return;
-  const selectedIntervalDays = saveAnkiRating(card.scheduleKey, rating);
+  const selectedIntervalDays = saveAnkiRating(card.scheduleKey, rating, Date.now() - (state.customAnkiCardShownAt || Date.now()));
+  buryAnkiSiblings(card, state.customReviewCards);
+  const buried = buriedAnkiKeys();
+  state.customReviewCards = state.customReviewCards.filter((candidate) => !buried.has(candidate.scheduleKey));
   const graduated = applyAnkiSessionRating(card, rating, selectedIntervalDays);
   if (!graduated) state.customReviewCards.push(card);
   if (!state.customReviewCards.length) {
     const elapsed = formatElapsed(Date.now() - state.customReviewStartedAt);
+    recordStudyActivity();
+    markActiveAnkiComplete(state.selectedCustomDeckId, "deck");
     closeCustomReview();
     showToast(`Anki session complete in ${elapsed} — no New, Learning, or Review cards remain.`);
     return;
@@ -3462,7 +6040,31 @@ function rateCustomAnkiCard(rating) {
   state.customReviewPosition = 0;
   state.customReviewRevealed = false;
   state.customReviewWasRevealed = false;
+  state.customAnkiCardShownAt = Date.now();
   renderCustomReviewCard();
+}
+
+function removeCurrentCustomAnkiFromStudy() {
+  if (state.customReviewMode !== "anki") return;
+  const current = state.customReviewCards[0];
+  if (!current?.scheduleKey) return;
+  const card = state.customReviewCards.shift();
+  if (!card?.scheduleKey) return;
+  const removed = removedAnkiCardKeys();
+  removed.add(card.scheduleKey);
+  localStorage.setItem("study-desk-removed-anki-cards", JSON.stringify([...removed]));
+  if (!state.customReviewCards.length) {
+    closeCustomReview();
+    renderActiveAnkiDecks();
+    showToast("Card removed from future study. This Anki session is complete.");
+    return;
+  }
+  state.customReviewPosition = 0;
+  state.customReviewRevealed = false;
+  state.customReviewWasRevealed = false;
+  renderCustomReviewCard();
+  renderActiveAnkiDecks();
+  showToast("Card removed from future study.");
 }
 
 function deleteCurrentCustomAnkiCard() {
@@ -3501,23 +6103,103 @@ function deleteCurrentCustomAnkiCard() {
 
 const taskDialog = $("#task-dialog");
 const folderEditorDialog = $("#folder-editor-dialog");
-const moveDeckDialog = $("#move-deck-dialog");
 
-applyTheme();
-setDateGreeting();
-renderCourseShelf();
-renderCustomDraft();
-renderCustomQuestionDraft();
-renderCustomFeynmanDraft();
-renderCustomDecks();
-restoreTasks();
-renderActiveAnkiDecks();
-$$(".task-item input[type='checkbox']").forEach(wireTaskCheckbox);
+// Navigation is core infrastructure, so wire it before rendering or initializing
+// any individual workspace. One broken optional feature must not disable every tab.
+$$(".primary-nav .nav-item").forEach((item) => item.addEventListener("click", (event) => {
+  const target = item.getAttribute("href");
+  if (["#courses", "#dashboard", "#flashcards", "#create", "#notes", "#export", "#study-guide"].includes(target)) {
+    event.preventDefault();
+    showAppView(target.slice(1));
+  }
+}));
+$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#notes"], .mobile-nav a[href="#export"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => {
+  event.preventDefault();
+  showAppView(item.getAttribute("href").slice(1));
+}));
+function positionInlinePalette(palette, control) {
+  palette.classList.remove("opens-below");
+  window.requestAnimationFrame(() => {
+    const controlRect = control.getBoundingClientRect();
+    if (controlRect.top - palette.offsetHeight < 58) palette.classList.add("opens-below");
+  });
+}
+document.addEventListener("click", (event) => {
+  const createButton = event.target.closest("#new-word-note, #new-drawing-note, [data-new-note]");
+  if (!createButton) return;
+  event.preventDefault();
+  const type = createButton.dataset.newNote || (createButton.id === "new-drawing-note" ? "drawing" : "word");
+  createNotebookNote(type);
+});
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-color-palette-for]");
+  const moreColors = event.target.closest("[data-more-colors-for]");
+  const swatch = event.target.closest("[data-pick-color]");
+  if (moreColors) {
+    event.preventDefault();
+    event.stopPropagation();
+    const control = moreColors.closest(".inline-color-control");
+    control.querySelectorAll(".inline-color-palette").forEach((palette) => { palette.hidden = true; });
+    const fullPalette = control.querySelector(".full-color-palette");
+    if (fullPalette) {
+      fullPalette.hidden = false;
+      positionInlinePalette(fullPalette, control);
+    }
+    return;
+  }
+  if (trigger) {
+    event.preventDefault();
+    const palette = trigger.parentElement.querySelector(".quick-color-palette, .inline-color-palette");
+    const opening = palette.hidden;
+    $$(".inline-color-palette").forEach((item) => { item.hidden = true; });
+    palette.hidden = !opening;
+    if (opening) positionInlinePalette(palette, trigger.closest(".inline-color-control"));
+    return;
+  }
+  if (swatch) {
+    event.preventDefault();
+    const control = swatch.closest(".inline-color-control");
+    const input = control.querySelector('input[type="hidden"]');
+    const color = swatch.dataset.pickColor;
+    input.value = color;
+    control.querySelector(".inline-color-trigger").style.setProperty("--selected-color", color);
+    control.querySelectorAll(".inline-color-palette").forEach((palette) => { palette.hidden = true; });
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return;
+  }
+  if (!event.target.closest(".inline-color-control")) $$(".inline-color-palette").forEach((item) => { item.hidden = true; });
+});
+initializeNotesWorkspace();
 
-$("#open-library-button").addEventListener("click", () => showAppView("courses"));
+function runStartupStep(name, callback) {
+  try {
+    callback();
+  } catch (error) {
+    console.error(`${name} could not be initialized:`, error);
+  }
+}
+
+runStartupStep("Theme", applyTheme);
+runStartupStep("Date greeting", setDateGreeting);
+runStartupStep("Profile", initializeProfile);
+runStartupStep("Study streak", renderStudyStreak);
+runStartupStep("Textbook shelf", renderCourseShelf);
+runStartupStep("Flashcard draft", renderCustomDraft);
+runStartupStep("Question draft", renderCustomQuestionDraft);
+runStartupStep("Feynman draft", renderCustomFeynmanDraft);
+runStartupStep("Study sets", renderCustomDecks);
+runStartupStep("Study alarms", restoreTasks);
+runStartupStep("Active Anki decks", renderActiveAnkiDecks);
+runStartupStep("Alarm checkboxes", () => $$(".task-item input[type='checkbox']").forEach(wireTaskCheckbox));
+
 $("#view-all-courses").addEventListener("click", () => $("#course-shelf").scrollIntoView({ behavior: "smooth", block: "center" }));
 $("#close-library-button").addEventListener("click", showLibraryOverview);
-$("#continue-button").addEventListener("click", () => openCourse("biology", 1));
+$("#start-freestyle-feynman").addEventListener("click", () => startFreestyleFeynman());
+$("#restart-freestyle-feynman").addEventListener("click", () => startFreestyleFeynman({ clearResponse: false }));
+$("#new-freestyle-feynman").addEventListener("click", resetFreestyleFeynman);
+$("#freestyle-feynman-prompt-input").addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") startFreestyleFeynman();
+});
 $("#add-task-button").addEventListener("click", () => {
   const defaultTime = new Date(Date.now() + 3600000);
   $("#alarm-date").value = `${defaultTime.getFullYear()}-${String(defaultTime.getMonth() + 1).padStart(2, "0")}-${String(defaultTime.getDate()).padStart(2, "0")}`;
@@ -3529,14 +6211,6 @@ $("#cancel-task").addEventListener("click", () => taskDialog.close());
 $("#close-folder-editor").addEventListener("click", () => folderEditorDialog.close());
 $("#cancel-folder-editor").addEventListener("click", () => folderEditorDialog.close());
 $("#folder-editor-form").addEventListener("submit", (event) => { event.preventDefault(); saveStudyFolderEditor(); });
-$("#close-move-deck").addEventListener("click", () => { state.movingStudyDeckId = null; moveDeckDialog.close(); });
-$("#cancel-move-deck").addEventListener("click", () => { state.movingStudyDeckId = null; moveDeckDialog.close(); });
-$("#move-deck-form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (state.movingStudyDeckId) assignDeckToFolder(state.movingStudyDeckId, $("#move-deck-folder").value);
-  state.movingStudyDeckId = null;
-  moveDeckDialog.close();
-});
 $("#task-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const title = $("#task-name").value.trim();
@@ -3549,7 +6223,7 @@ $("#task-form").addEventListener("submit", (event) => {
   taskDialog.close();
   showToast("Study alarm scheduled. Allow notifications if your Mac asks.");
 });
-$(".search-field input").addEventListener("input", (event) => {
+$(".search-field input")?.addEventListener("input", (event) => {
   $("#my-courses-search").value = event.currentTarget.value;
   $("#catalog-courses-search").value = event.currentTarget.value;
   renderCourseShelf(event.currentTarget.value);
@@ -3559,7 +6233,48 @@ $("#my-courses-search").addEventListener("input", (event) => renderMyCourses(eve
 $("#catalog-courses-search").addEventListener("input", (event) => { state.textbookCatalogPage = 0; renderCourseShelf(event.currentTarget.value); });
 
 function importDeckName(fileName) {
-  return fileName.replace(/\.(apkg|txt|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported flashcards";
+  return fileName.replace(/\.(apkg|pdf|pptx|txt|md|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported study set";
+}
+
+function loadImportedDocument(payload) {
+  if (!payload?.text?.trim()) throw new Error("No readable text was found in this document.");
+  if (state.editingCustomDeckId || state.editingBuiltInCollectionId) {
+    const createNew = window.confirm("Create a new study set from the imported notes?\n\nChoose Cancel to add only new, nonduplicate material to the end of this set.");
+    if (!createNew) {
+      const input = $("#notes-input");
+      const spacer = document.createElement("div");
+      spacer.appendChild(document.createElement("br"));
+      const imported = document.createElement("div");
+      imported.textContent = payload.text;
+      input.append(spacer, imported);
+      state.appendNotesToExistingSet = true;
+      state.notesHiddenAfterUpdate = false;
+      state.customImportSource = { name: payload.name, type: payload.extension, importedAt: Date.now() };
+      $("#anki-import-status").textContent = `Added ${payload.name} to the current notes. Choose Update set to append new material.`;
+      $("#anki-notes-file").value = "";
+      $("#choose-anki-notes").disabled = false;
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
+      showToast("Imported notes added. Duplicates will be skipped when you update.");
+      return;
+    }
+    resetCustomDraft();
+  } else if ((state.customDraft.length || state.customQuestionDraft.length || state.customFeynmanDraft.length) && !window.confirm("Replace the current notes and draft with this document?")) return;
+  state.editingCustomDeckId = null;
+  state.editingBuiltInCollectionId = null;
+  state.customDraft = [];
+  state.customQuestionDraft = [];
+  state.customFeynmanDraft = [];
+  state.customImportSource = { name: payload.name, type: payload.extension, importedAt: Date.now() };
+  $("#custom-deck-name").value = importDeckName(payload.name);
+  setNotesContent(payload.text);
+  renderCustomDraft();
+  renderCustomQuestionDraft();
+  renderCustomFeynmanDraft();
+  $("#anki-import-status").textContent = `Extracted ${payload.name}. Review the notes below, then choose Generate and save study set.`;
+  $("#anki-notes-file").value = "";
+  $("#choose-anki-notes").disabled = false;
+  $("#notes-input").scrollIntoView({ behavior: "smooth", block: "center" });
+  showToast("Document text imported. Review it before generating your study set.");
 }
 
 function saveImportedFlashcards({ fileName, type, cards, skipped = 0 }) {
@@ -3593,7 +6308,7 @@ async function importAnkiNotesFile(file) {
   if (!["txt", "csv", "tsv"].includes(extension)) {
     if (extension === "apkg") status.textContent = "The desktop app is opening this APKG package locally…";
     else {
-      status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
+      status.textContent = ["pdf", "pptx"].includes(extension) ? "PDF and PowerPoint extraction is available in the Mac and Windows desktop apps." : "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
       showToast("That file type is not supported.");
     }
     return;
@@ -3624,12 +6339,64 @@ window.receiveAnkiPackageImportError = (message) => {
   $("#anki-import-status").textContent = message;
   showToast("This APKG package could not be imported.");
 };
+window.receiveDocumentImport = (payload) => {
+  try {
+    if (notebookDocumentImportPending) {
+      notebookDocumentImportPending = false;
+      createImportedNotebookNote(payload);
+      $("#notes-import-file").value = "";
+      $("#import-notes").disabled = false;
+      return;
+    }
+    loadImportedDocument(payload);
+  }
+  catch (error) { window.receiveDocumentImportError(error?.message || "This document could not be read."); }
+};
+window.receiveDocumentImportStatus = (message) => {
+  if (notebookDocumentImportPending) {
+    showToast(message);
+    $("#import-notes").disabled = true;
+    return;
+  }
+  $("#anki-import-status").textContent = message;
+  $("#choose-anki-notes").disabled = true;
+};
+window.receiveDocumentImportError = (message) => {
+  if (notebookDocumentImportPending) {
+    notebookDocumentImportPending = false;
+    $("#notes-import-file").value = "";
+    $("#import-notes").disabled = false;
+    showToast(message || "This document could not be imported.");
+    return;
+  }
+  $("#anki-import-status").textContent = message || "This PDF or PowerPoint could not be imported.";
+  $("#anki-notes-file").value = "";
+  $("#choose-anki-notes").disabled = false;
+  showToast("This document could not be imported.");
+};
+window.receiveNotebookDocumentImport = (payload) => {
+  try {
+    notebookDocumentImportPending = false;
+    createImportedNotebookNote(payload);
+    $("#notes-import-file").value = "";
+    $("#import-notes").disabled = false;
+  } catch (error) {
+    window.receiveNotebookDocumentImportError(error?.message || "This document could not be read.");
+  }
+};
+window.receiveNotebookDocumentImportStatus = (message) => {
+  $("#import-notes").disabled = true;
+  showToast(message);
+};
+window.receiveNotebookDocumentImportError = (message) => {
+  notebookDocumentImportPending = false;
+  $("#notes-import-file").value = "";
+  $("#import-notes").disabled = false;
+  showToast(message || "This document could not be imported.");
+};
 
-$("#choose-anki-notes").addEventListener("click", async () => {
-  if (!window.desktopApp?.chooseStudyFile) { $("#anki-notes-file").click(); return; }
+function handleStudyFileResult(result) {
   const status = $("#anki-import-status");
-  status.textContent = "Choose an APKG, TXT, CSV, or TSV file.";
-  const result = await window.desktopApp.chooseStudyFile();
   if (!result || result.canceled) return;
   if (result.error) { status.textContent = result.error; showToast("This file could not be imported."); return; }
   try {
@@ -3639,20 +6406,84 @@ $("#choose-anki-notes").addEventListener("click", async () => {
     } else if (result.kind === "text") {
       const parsed = parseAnkiNotes(result.name, result.text);
       saveImportedFlashcards({ fileName: result.name, type: result.extension, cards: parsed.cards });
-    }
+    } else if (result.kind === "document") loadImportedDocument(result);
   } catch (error) {
     status.textContent = error?.message || "This file could not be imported.";
-    showToast("I couldn’t find readable flashcards in that file.");
+    showToast("I couldn’t find readable study material in that file.");
   }
+}
+
+async function importDroppedStudyFile(file) {
+  const extension = String(file?.name || "").split(".").pop().toLowerCase();
+  if (!file || !["apkg", "pdf", "pptx", "txt", "csv", "tsv"].includes(extension)) { showToast("Drop an APKG, PDF, PPTX, TXT, CSV, or TSV file."); return; }
+  $("#anki-import-status").textContent = `Reading ${file.name}…`;
+  if (window.desktopApp?.readDroppedStudyFile) { handleStudyFileResult(await window.desktopApp.readDroppedStudyFile(file)); return; }
+  if (["txt", "csv", "tsv"].includes(extension)) { await importAnkiNotesFile(file); return; }
+  if (window.webkit?.messageHandlers?.studyDroppedFile) {
+    const reader = new FileReader();
+    reader.onerror = () => window.receiveDocumentImportError("The dropped file could not be read.");
+    reader.onload = () => window.webkit.messageHandlers.studyDroppedFile.postMessage({ name: file.name, data: String(reader.result || "") });
+    reader.readAsDataURL(file);
+    return;
+  }
+  showToast("Drop PDF, PowerPoint, and APKG files into the desktop app.");
+}
+
+$("#choose-anki-notes").addEventListener("click", async () => {
+  if (!window.desktopApp?.chooseStudyFile) { $("#anki-notes-file").click(); return; }
+  const status = $("#anki-import-status");
+  status.textContent = "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
+  const result = await window.desktopApp.chooseStudyFile();
+  handleStudyFileResult(result);
 });
+const studyFileDropZone = $("#study-file-drop-zone");
+["dragenter", "dragover"].forEach((type) => studyFileDropZone.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation(); studyFileDropZone.classList.add("drag-over"); }));
+["dragleave", "drop"].forEach((type) => studyFileDropZone.addEventListener(type, (event) => { event.preventDefault(); event.stopPropagation(); studyFileDropZone.classList.remove("drag-over"); }));
+studyFileDropZone.addEventListener("drop", (event) => { const file = event.dataTransfer?.files?.[0]; if (file) importDroppedStudyFile(file); });
+function normalizedStudyItem(value) {
+  return String(value || "").toLowerCase().replace(/<[^>]*>/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function appendUniqueStudyItems(existing, incoming, keyForItem) {
+  const keys = new Set(existing.map((item) => keyForItem(item)));
+  const additions = incoming.filter((item) => {
+    const key = keyForItem(item);
+    if (!key || keys.has(key)) return false;
+    keys.add(key);
+    return true;
+  });
+  return { items: [...existing, ...additions], added: additions.length };
+}
+
 $("#notes-input").addEventListener("paste", (event) => {
   const clipboard = event.clipboardData;
   if (!clipboard) return;
   const richHtml = clipboard.getData("text/html");
-  if (!richHtml) return;
+  const plainText = clipboard.getData("text/plain");
+  if (!richHtml && !plainText) return;
+  let startedNewSet = false;
+  if (state.editingCustomDeckId || state.editingBuiltInCollectionId) {
+    const createNew = window.confirm("Create a new study set from the pasted notes?\n\nChoose Cancel to add only new, nonduplicate material to the end of this set.");
+    if (createNew) {
+      resetCustomDraft();
+      startedNewSet = true;
+      showToast("Starting a new study set from the pasted notes.");
+    } else {
+      state.appendNotesToExistingSet = true;
+      showToast("New material will be added to the end; duplicates will be skipped.");
+    }
+  }
   event.preventDefault();
-  const safeHtml = sanitizeNotesHtml(richHtml);
-  document.execCommand("insertHTML", false, safeHtml);
+  if (startedNewSet) {
+    setNotesContent(plainText, richHtml ? sanitizeNotesHtml(richHtml) : "");
+    $("#custom-deck-name").focus();
+    return;
+  }
+  if (richHtml) document.execCommand("insertHTML", false, sanitizeNotesHtml(richHtml));
+  else document.execCommand("insertText", false, plainText);
+});
+$("#notes-input").addEventListener("input", () => {
+  if (notesPlainText()) state.notesHiddenAfterUpdate = false;
 });
 $("#anki-notes-file").addEventListener("change", (event) => {
   const file = event.currentTarget.files?.[0];
@@ -3661,16 +6492,33 @@ $("#anki-notes-file").addEventListener("change", (event) => {
 
 $("#generate-note-cards").addEventListener("click", () => {
   if (state.editingBuiltInCollectionId) {
+    const notes = notesPlainText();
+    if (state.appendNotesToExistingSet && notes) {
+      const generated = generateCardsFromNotes(notes);
+      const cardResult = appendUniqueStudyItems(state.customDraft, generated, (card) => normalizedStudyItem(card.front || card.frontImage));
+      const questionResult = appendUniqueStudyItems(state.customQuestionDraft, generateQuestionsFromCards(generated), (question) => normalizedStudyItem(question.prompt));
+      const promptResult = appendUniqueStudyItems(state.customFeynmanDraft, generateFeynmanPrompts(notes, generated), (item) => normalizedStudyItem(item.prompt));
+      state.customDraft = cardResult.items;
+      state.customQuestionDraft = questionResult.items;
+      state.customFeynmanDraft = promptResult.items;
+      state.appendNotesToExistingSet = false;
+      renderCustomDraft(); renderCustomQuestionDraft(); renderCustomFeynmanDraft();
+      saveBuiltInCollectionOverride({ notify: false });
+      setNotesContent();
+      showToast(`Added ${cardResult.added} new cards, ${questionResult.added} questions, and ${promptResult.added} Feynman prompts. Duplicates were skipped.`);
+      return;
+    }
     saveBuiltInCollectionOverride();
     return;
   }
   const name = $("#custom-deck-name").value.trim();
   const notes = notesPlainText();
   if (!name) { $("#custom-deck-name").focus(); showToast("Give this study set a name first."); return; }
-  const hasStudyContent = state.customDraft.length || state.customQuestionDraft.length || state.customFeynmanDraft.length;
+  const hasStudyContent = hasAnyStudyItem();
   if (!notes && hasStudyContent) {
     const deck = saveCustomDeck({ resetAfterSave: false, notify: false });
     if (!deck) return;
+    clearNotesAfterUpdate();
     showToast(`${deck.name} updated with ${deck.cards.length} cards, ${deck.questions.length} questions, and ${deck.feynmanPrompts.length} Feynman prompts.`);
     return;
   }
@@ -3681,12 +6529,23 @@ $("#generate-note-cards").addEventListener("click", () => {
     const generated = generateCardsFromNotes(notes);
     if (!generated.length) { showToast("I couldn’t find clear facts. Try term: definition or question — answer formatting."); return; }
     state.customImportSource = null;
-    const manualCards = state.customDraft.filter((card) => card.manual);
-    const manualQuestions = state.customQuestionDraft.filter((question) => question.source === "Manually created");
-    state.customDraft = [...generated, ...manualCards];
-    state.customQuestionDraft = [...generateQuestionsFromCards(generated), ...manualQuestions];
-    const manualFeynmanPrompts = state.customFeynmanDraft.filter((item) => item.manual);
-    state.customFeynmanDraft = [...generateFeynmanPrompts(notes, generated), ...manualFeynmanPrompts];
+    if (state.appendNotesToExistingSet && savedDeck) {
+      const cardResult = appendUniqueStudyItems(state.customDraft, generated, (card) => normalizedStudyItem(card.front || card.frontImage));
+      const questionResult = appendUniqueStudyItems(state.customQuestionDraft, generateQuestionsFromCards(generated), (question) => normalizedStudyItem(question.prompt));
+      const promptResult = appendUniqueStudyItems(state.customFeynmanDraft, generateFeynmanPrompts(notes, generated), (item) => normalizedStudyItem(item.prompt));
+      state.customDraft = cardResult.items;
+      state.customQuestionDraft = questionResult.items;
+      state.customFeynmanDraft = promptResult.items;
+      state.appendNotesToExistingSet = false;
+      state.lastAppendSummary = { cards: cardResult.added, questions: questionResult.added, prompts: promptResult.added };
+    } else {
+      const manualCards = state.customDraft.filter((card) => card.manual);
+      const manualQuestions = state.customQuestionDraft.filter((question) => question.source === "Manually created");
+      state.customDraft = [...generated, ...manualCards];
+      state.customQuestionDraft = [...generateQuestionsFromCards(generated), ...manualQuestions];
+      const manualFeynmanPrompts = state.customFeynmanDraft.filter((item) => item.manual);
+      state.customFeynmanDraft = [...generateFeynmanPrompts(notes, generated), ...manualFeynmanPrompts];
+    }
     renderCustomDraft();
     renderCustomQuestionDraft();
     renderCustomFeynmanDraft();
@@ -3697,7 +6556,10 @@ $("#generate-note-cards").addEventListener("click", () => {
   if (!deck) return;
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Update set";
-  showToast(`${deck.name} updated with ${deck.cards.length} cards, ${deck.questions.length} questions, and ${deck.feynmanPrompts.length} Feynman prompts.`);
+  clearNotesAfterUpdate();
+  const appended = state.lastAppendSummary;
+  state.lastAppendSummary = null;
+  showToast(appended ? `Added ${appended.cards} new cards, ${appended.questions} questions, and ${appended.prompts} Feynman prompts. Duplicates were skipped.` : `${deck.name} updated with ${deck.cards.length} cards, ${deck.questions.length} questions, and ${deck.feynmanPrompts.length} Feynman prompts.`);
 });
 $$("[data-create-tab]").forEach((button) => button.addEventListener("click", () => selectCreateContentTab(button.dataset.createTab)));
 $("#add-manual-card").addEventListener("click", () => {
@@ -3719,7 +6581,10 @@ $$('[data-choose-manual-image]').forEach((button) => button.addEventListener("cl
   state.pendingCardImageTarget = { kind: "manual", side: button.dataset.chooseManualImage };
   $("#flashcard-image-file").click();
 }));
-$$('[data-remove-manual-image]').forEach((button) => button.addEventListener("click", () => applyCardImage({ kind: "manual", side: button.dataset.removeManualImage }, "")));
+$$('[data-draw-manual]').forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "manual", side: button.dataset.drawManual })));
+$$('[data-math-manual]').forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "manual", side: button.dataset.mathManual })));
+$$('[data-code-manual]').forEach((button) => button.addEventListener("click", () => openCodeTool({ kind: "manual", side: button.dataset.codeManual })));
+$$('[data-remove-manual-image]').forEach((button) => button.addEventListener("click", () => confirmImageRemoval(button, () => applyCardImage({ kind: "manual", side: button.dataset.removeManualImage }, ""))));
 $("#manual-card-front").addEventListener("paste", (event) => handleCardPaste(event, { kind: "manual", side: "front" }));
 $("#manual-card-back").addEventListener("paste", (event) => handleCardPaste(event, { kind: "manual", side: "back" }));
 $("#flashcard-image-file").addEventListener("change", (event) => {
@@ -3728,6 +6593,56 @@ $("#flashcard-image-file").addEventListener("change", (event) => {
   event.currentTarget.value = "";
   state.pendingCardImageTarget = null;
 });
+
+const drawingCanvas = $("#flashcard-drawing-canvas");
+const drawingContext = drawingCanvas.getContext("2d");
+let drawingPointerActive = false;
+function drawingPoint(event) {
+  const rect = drawingCanvas.getBoundingClientRect();
+  return { x: (event.clientX - rect.left) * drawingCanvas.width / rect.width, y: (event.clientY - rect.top) * drawingCanvas.height / rect.height };
+}
+function restoreDrawingSnapshot(dataUrl) {
+  drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+  if (!dataUrl) return;
+  const image = new Image(); image.onload = () => drawingContext.drawImage(image, 0, 0, drawingCanvas.width, drawingCanvas.height); image.src = dataUrl;
+}
+drawingCanvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault(); drawingPointerActive = true; drawingCanvas.setPointerCapture(event.pointerId);
+  state.drawingHistory.push(drawingCanvas.toDataURL("image/png")); if (state.drawingHistory.length > 24) state.drawingHistory.shift();
+  const point = drawingPoint(event); drawingContext.beginPath(); drawingContext.moveTo(point.x, point.y);
+});
+drawingCanvas.addEventListener("pointermove", (event) => {
+  if (!drawingPointerActive) return; event.preventDefault(); const point = drawingPoint(event);
+  drawingContext.lineWidth = Number($("#drawing-size").value) || 6; drawingContext.lineCap = "round"; drawingContext.lineJoin = "round";
+  drawingContext.globalCompositeOperation = state.drawingTool === "eraser" ? "destination-out" : "source-over";
+  drawingContext.strokeStyle = $("#drawing-color").value; drawingContext.lineTo(point.x, point.y); drawingContext.stroke();
+});
+function finishDrawingPointer() { drawingPointerActive = false; drawingContext.closePath(); drawingContext.globalCompositeOperation = "source-over"; }
+drawingCanvas.addEventListener("pointerup", finishDrawingPointer);
+drawingCanvas.addEventListener("pointercancel", finishDrawingPointer);
+$$('[data-drawing-tool]').forEach((button) => button.addEventListener("click", () => { state.drawingTool = button.dataset.drawingTool; $$('[data-drawing-tool]').forEach((item) => item.classList.toggle("active", item === button)); }));
+$("#drawing-undo").addEventListener("click", () => restoreDrawingSnapshot(state.drawingHistory.pop()));
+$("#drawing-clear").addEventListener("click", () => { state.drawingHistory.push(drawingCanvas.toDataURL("image/png")); drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height); });
+$("#save-drawing").addEventListener("click", () => { if (!state.pendingDrawingTarget) return; applyCardImage(state.pendingDrawingTarget, drawingCanvas.toDataURL("image/png")); closeDrawingTool(); showToast("Drawing added to the card."); });
+$("#close-drawing-dialog").addEventListener("click", closeDrawingTool);
+$("#cancel-drawing").addEventListener("click", closeDrawingTool);
+$("#drawing-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeDrawingTool(); });
+
+$("#math-expression").addEventListener("input", updateMathPreview);
+$("#math-glossary-search").addEventListener("input", (event) => renderMathGlossary(event.currentTarget.value));
+$("#insert-math").addEventListener("click", insertMathIntoCard);
+$("#math-expression").addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") insertMathIntoCard(); });
+$("#close-math-dialog").addEventListener("click", closeMathTool);
+$("#cancel-math").addEventListener("click", closeMathTool);
+$("#math-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeMathTool(); });
+$("#code-expression").addEventListener("input", updateCodePreview);
+$("#code-language").addEventListener("change", updateCodePreview);
+$("#code-line-numbers").addEventListener("change", updateCodePreview);
+$("#insert-code").addEventListener("click", insertCodeIntoCard);
+$("#code-expression").addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") insertCodeIntoCard(); });
+$("#close-code-dialog").addEventListener("click", closeCodeTool);
+$("#cancel-code").addEventListener("click", closeCodeTool);
+$("#code-dialog").addEventListener("cancel", (event) => { event.preventDefault(); closeCodeTool(); });
 $("#clear-draft").addEventListener("click", () => {
   if (!state.customDraft.length) return;
   if (!window.confirm(`Clear all ${state.customDraft.length} flashcards from this draft? Questions and Feynman topics will be kept.`)) return;
@@ -3775,7 +6690,7 @@ function addManualFeynmanTopic() {
 $("#add-manual-feynman").addEventListener("click", addManualFeynmanTopic);
 $("#manual-feynman-topic").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); addManualFeynmanTopic(); } });
 $("#new-custom-study-set").addEventListener("click", () => {
-  const hasDraft = state.customDraft.length || state.customQuestionDraft.length || state.customFeynmanDraft.length || $("#custom-deck-name").value.trim() || notesPlainText();
+  const hasDraft = hasAnyStudyItem() || $("#custom-deck-name").value.trim() || notesPlainText();
   let updatedName = "";
   if (state.editingBuiltInCollectionId) {
     const updated = saveBuiltInCollectionOverride({ notify: false });
@@ -3807,9 +6722,10 @@ $("#close-custom-study").addEventListener("click", () => showAppView(state.custo
 $("#delete-all-study-sets").addEventListener("click", deleteAllStudySets);
 $("#create-study-folder").addEventListener("click", createStudyFolder);
 $("#return-all-built-in-decks").addEventListener("click", returnAllBuiltInDecks);
+$("#return-all-textbooks").addEventListener("click", returnAllTextbooks);
 $("#my-study-sets-search").addEventListener("input", renderCustomDecks);
 $("#built-in-study-search").addEventListener("input", () => { state.studyCatalogPage = 0; renderBuiltInDecks(); });
-$("#cancel-custom-delete").addEventListener("click", () => { state.pendingCustomDeleteId = null; state.pendingBuiltInDeleteId = null; state.pendingDeleteAllStudySets = false; state.pendingReturnAllBuiltIn = false; showAppView(state.customDeleteReturnView); });
+$("#cancel-custom-delete").addEventListener("click", () => { state.pendingCustomDeleteId = null; state.pendingBuiltInDeleteId = null; state.pendingDeleteAllStudySets = false; state.pendingReturnAllBuiltIn = false; state.pendingReturnAllTextbooks = false; showAppView(state.customDeleteReturnView); });
 $("#confirm-custom-delete").addEventListener("click", confirmCustomDeckDeletion);
 $$('[data-custom-study-mode]').forEach((button) => button.addEventListener("click", () => startCustomReview(button.dataset.customStudyMode)));
 $("#close-custom-review").addEventListener("click", closeCustomReview);
@@ -3821,16 +6737,35 @@ function revealCustomReviewCard() {
 }
 function toggleCustomReviewCard() {
   if (!["regular", "anki"].includes(state.customReviewMode)) return;
-  state.customReviewRevealed = !state.customReviewRevealed;
+  if (state.customReviewMode === "anki" && state.customReviewRevealed) return;
+  state.customReviewRevealed = state.customReviewMode === "anki" ? true : !state.customReviewRevealed;
   if (state.customReviewMode === "anki" && state.customReviewRevealed) state.customReviewWasRevealed = true;
   renderCustomReviewCard();
 }
+
+document.addEventListener("keydown", (event) => {
+  const target = event.target;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable || event.metaKey || event.ctrlKey || event.altKey) return;
+  const textbookReview = state.activeView === "anki" && state.ankiReviewActive ? $(".anki-review", $("#lesson-view")) : null;
+  const customReview = state.customReviewMode === "anki" && !$("#custom-review-view")?.hidden;
+  if (!textbookReview && !customReview) return;
+  if (event.code === "Space") {
+    event.preventDefault();
+    if (textbookReview && !textbookReview.classList.contains("revealed")) setTextbookAnkiReveal(textbookReview, true);
+    else if (customReview && !state.customReviewRevealed) toggleCustomReviewCard();
+    return;
+  }
+  const rating = { "1": "again", "2": "hard", "3": "good", "4": "easy" }[event.key];
+  if (!rating) return;
+  if (textbookReview?.classList.contains("ratings-ready")) { event.preventDefault(); rateAnkiCard(rating); }
+  else if (customReview && state.customReviewWasRevealed) { event.preventDefault(); rateCustomAnkiCard(rating); }
+});
 $("#custom-review-card").addEventListener("click", toggleCustomReviewCard);
 $("#custom-review-reveal").addEventListener("click", revealCustomReviewCard);
 $("#delete-custom-anki-card").addEventListener("click", deleteCurrentCustomAnkiCard);
 $("#custom-review-previous").addEventListener("click", () => { if (state.customReviewPosition > 0) { state.customReviewPosition -= 1; state.customReviewRevealed = false; state.customReviewWasRevealed = false; renderCustomReviewCard(); } });
 $("#custom-review-next").addEventListener("click", () => {
-  if (state.customReviewPosition >= state.customReviewCards.length - 1) { closeCustomReview(); return; }
+  if (state.customReviewPosition >= state.customReviewCards.length - 1) { recordStudyActivity(); closeCustomReview(); return; }
   state.customReviewPosition += 1;
   state.customReviewRevealed = false;
   state.customReviewWasRevealed = false;
@@ -3851,17 +6786,26 @@ $("#start-custom-feynman-timer").addEventListener("click", startCustomFeynmanTim
 $("#custom-feynman-previous").addEventListener("click", () => moveCustomFeynman(-1));
 $("#custom-feynman-next").addEventListener("click", () => moveCustomFeynman(1));
 $$('[data-custom-anki-rating]').forEach((button) => button.addEventListener("click", () => rateCustomAnkiCard(button.dataset.customAnkiRating)));
+$("#remove-custom-anki-study").addEventListener("dblclick", removeCurrentCustomAnkiFromStudy);
 
 $("#open-settings").addEventListener("click", () => showAppView("settings"));
 $$('[data-settings-tab]').forEach((button) => button.addEventListener("click", () => selectSettingsTab(button.dataset.settingsTab)));
 $("#settings-form").addEventListener("change", (event) => { if (event.target.name === "theme") applyTheme(event.target.value); });
 $("#settings-form").addEventListener("submit", (event) => {
   event.preventDefault();
+  const profileName = $("#settings-profile-name").value.trim();
+  const birthMonth = Number($("#settings-profile-birth-month").value);
+  const birthDay = Number($("#settings-profile-birth-day").value);
+  if (!profileName || !birthMonth || !birthDay) { showToast("Add your name, birth month, and birth day."); return; }
   const settings = settingsFromForm();
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  const profile = { name: profileName, birthday: `${String(birthMonth).padStart(2, "0")}-${String(birthDay).padStart(2, "0")}` };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   applyTheme(settings.theme);
+  applyProfile(profile);
+  celebrateBirthday(profile);
   populateSettingsForm();
-  showToast("Settings saved. New Anki sessions will use them.");
+  showToast("Profile and settings saved.");
 });
 $("#reset-settings").addEventListener("click", () => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(DEFAULT_SETTINGS));
@@ -3871,13 +6815,572 @@ $("#reset-settings").addEventListener("click", () => {
 });
 
 $$("[data-toast]").forEach((element) => element.addEventListener("click", () => showToast(element.dataset.toast)));
-$$(".primary-nav .nav-item").forEach((item) => item.addEventListener("click", (event) => {
-  const target = item.getAttribute("href");
-if (["#courses", "#dashboard", "#flashcards", "#create", "#export", "#study-guide"].includes(target)) { event.preventDefault(); showAppView(target.slice(1)); }
+
+function initializeNotesWorkspace() {
+try {
+const paletteLightnesses = [12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72, 78, 84, 89, 93, 97];
+const paletteFamilies = [
+  { name: "Gray", hue: 0, saturation: 0 },
+  { name: "Brown", hue: 28, saturation: 48 },
+  { name: "Red", hue: 0, saturation: 78 },
+  { name: "Orange", hue: 25, saturation: 88 },
+  { name: "Yellow", hue: 48, saturation: 88 },
+  { name: "Lime", hue: 85, saturation: 70 },
+  { name: "Green", hue: 130, saturation: 65 },
+  { name: "Teal", hue: 175, saturation: 65 },
+  { name: "Cyan", hue: 195, saturation: 75 },
+  { name: "Blue", hue: 215, saturation: 80 },
+  { name: "Purple", hue: 265, saturation: 72 },
+  { name: "Pink", hue: 330, saturation: 78 },
+];
+const expandedColors = paletteFamilies.flatMap((family) => paletteLightnesses.map((lightness) => ({
+  value: `hsl(${family.hue} ${family.saturation}% ${lightness}%)`,
+  label: `${family.name} ${lightness}`,
+})));
+["drawing-note-color", "canvas-text-color"].forEach((inputId) => {
+  const palette = document.querySelector(`[data-color-palette-for="${inputId}"]`)?.parentElement?.querySelector(".inline-color-palette");
+  if (!palette) return;
+  const control = palette.closest(".inline-color-control");
+  const quickColors = ["#171b2d", "#e05252", "#f59e0b", "#f2d34f", "#2fac7f", "#3b82f6", "#665ee8"];
+  palette.classList.add("quick-color-palette");
+  const quickSwatches = quickColors.map((color) => {
+    const swatch = document.createElement("button");
+    swatch.type = "button";
+    swatch.dataset.pickColor = color;
+    swatch.style.setProperty("--swatch", color);
+    swatch.setAttribute("aria-label", `Choose ${color}`);
+    return swatch;
+  });
+  const moreButton = document.createElement("button");
+  moreButton.type = "button";
+  moreButton.className = "more-colors-swatch";
+  moreButton.dataset.moreColorsFor = inputId;
+  moreButton.setAttribute("aria-label", "More colors");
+  moreButton.title = "More colors";
+  moreButton.textContent = "+";
+  palette.replaceChildren(...quickSwatches, moreButton);
+  let fullPalette = control.querySelector(".full-color-palette");
+  if (!fullPalette) {
+    fullPalette = document.createElement("div");
+    fullPalette.className = "inline-color-palette full-color-palette";
+    fullPalette.setAttribute("role", "menu");
+    fullPalette.hidden = true;
+    control.appendChild(fullPalette);
+  }
+  fullPalette.replaceChildren(...expandedColors.map((color) => {
+    const swatch = document.createElement("button");
+    swatch.type = "button";
+    swatch.dataset.pickColor = color.value;
+    swatch.style.setProperty("--swatch", color.value);
+    swatch.setAttribute("aria-label", `Choose ${color.label}`);
+    return swatch;
+  }));
+});
+$("#new-note-folder").addEventListener("click", createNoteFolder);
+$("#import-notes").addEventListener("click", async (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  $("#notes-import-file").click();
+});
+$("#notes-import-file").addEventListener("change", async (event) => {
+  const file = event.currentTarget.files?.[0];
+  if (!file) return;
+  const extension = file.name.split(".").pop().toLowerCase();
+  try {
+    if (extension === "pdf") {
+      await createImportedPdfNotebookNote(file);
+      event.currentTarget.value = "";
+      return;
+    }
+    if (["txt", "md"].includes(extension)) {
+      createImportedNotebookNote({ name: file.name, text: await file.text() });
+      event.currentTarget.value = "";
+      return;
+    }
+    if (extension === "pptx" && window.desktopApp?.readDroppedStudyFile) {
+      handleNotebookImportResult(await window.desktopApp.readDroppedStudyFile(file));
+      event.currentTarget.value = "";
+      return;
+    }
+    if (extension === "pptx" && window.webkit?.messageHandlers?.studyDroppedFile) {
+      notebookDocumentImportPending = true;
+      const reader = new FileReader();
+      reader.onerror = () => window.receiveDocumentImportError("The selected file could not be read.");
+      reader.onload = () => window.webkit.messageHandlers.studyDroppedFile.postMessage({ name: file.name, data: String(reader.result || ""), target: "notes" });
+      reader.readAsDataURL(file);
+      return;
+    }
+    throw new Error("PDF and PowerPoint note importing is available in the Mac and Windows desktop apps.");
+  } catch (error) {
+    event.currentTarget.value = "";
+    showToast(error?.message || "This note could not be imported.");
+  }
+});
+$("#close-note-folder-dialog").addEventListener("click", () => $("#note-folder-dialog").close());
+$("#cancel-note-folder").addEventListener("click", () => $("#note-folder-dialog").close());
+$("#note-folder-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (saveNoteFolderDialog()) $("#note-folder-dialog").close();
+});
+$("#notes-search").addEventListener("input", renderNotesList);
+$$('[data-delete-note]').forEach((button) => button.addEventListener("click", deleteActiveNotebookNote));
+$("#close-note-actions").addEventListener("click", closeNoteActions);
+$("#cancel-note-actions").addEventListener("click", closeNoteActions);
+$("#note-actions-form").addEventListener("submit", (event) => event.preventDefault());
+$("#note-actions-copy").addEventListener("click", () => {
+  if (!noteActionsNoteId) return;
+  if (activeNoteId !== noteActionsNoteId) openNotebookNote(noteActionsNoteId);
+  $("#note-actions-dialog").close();
+  duplicateActiveNotebookNote().catch(() => showToast("This note could not be copied."));
+  noteActionsNoteId = null;
+});
+$("#note-actions-create-cards").addEventListener("click", () => {
+  if (!noteActionsNoteId) return;
+  const noteId = noteActionsNoteId;
+  $("#note-actions-dialog").close();
+  noteActionsNoteId = null;
+  createFlashcardsFromNotebookNote(noteId);
+});
+$("#word-note-title").addEventListener("input", queueWordNoteSave);
+$("#word-note-content").addEventListener("input", queueWordNoteSave);
+$("#word-note-content").addEventListener("keyup", rememberNoteTextSelection);
+$("#word-note-content").addEventListener("pointerup", rememberNoteTextSelection);
+$$('[data-note-command], [data-note-block]').forEach((button) => button.addEventListener("pointerdown", (event) => {
+  // Keep the editor selection active while a formatting control is pressed.
+  event.preventDefault();
 }));
-$$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-nav a[href="#flashcards"], .mobile-nav a[href="#create"], .mobile-nav a[href="#study-guide"]').forEach((item) => item.addEventListener("click", (event) => { event.preventDefault(); showAppView(item.getAttribute("href").slice(1)); }));
+$("#drawing-note-title").addEventListener("input", () => {
+  updateNotebookNote({ title: $("#drawing-note-title").value.trim() || "Untitled drawing" });
+  $("#drawing-note-status").textContent = "Saved locally";
+});
+$("#pdf-note-title").addEventListener("input", () => {
+  updateNotebookNote({ title: $("#pdf-note-title").value.trim() || "Imported PDF" });
+});
+$("#document-page-add").addEventListener("click", () => {
+  saveDocumentEditor(activeDocumentEditor());
+  noteDocumentPages.push("");
+  notePageCount = noteDocumentPages.length;
+  activeDocumentPage = noteDocumentPages.length - 1;
+  configureNoteCanvas("page", notePageCount, "document");
+  renderDrawingNoteVectors();
+  renderDocumentPages(activeDocumentPage);
+  saveDrawingNote();
+});
+$("#document-page-remove").addEventListener("click", () => {
+  if (noteDocumentPages.length <= 1) return;
+  if (!window.confirm(`Remove document page ${activeDocumentPage + 1}?`)) return;
+  removeSharedNotePage(activeDocumentPage);
+  configureNoteCanvas("page", notePageCount, "document");
+  renderDrawingNoteVectors();
+  renderDocumentPages(activeDocumentPage);
+  saveDrawingNote();
+});
+$$("[data-document-command], [data-document-block], [data-document-table]").forEach((button) => button.addEventListener("pointerdown", (event) => event.preventDefault()));
+$$('.document-toolbar-menu').forEach((menu) => menu.addEventListener("toggle", () => {
+  if (!menu.open) return;
+  $$('.document-toolbar-menu').forEach((otherMenu) => {
+    if (otherMenu !== menu) otherMenu.open = false;
+  });
+}));
+$$("[data-document-command]").forEach((button) => button.addEventListener("click", () => {
+  const editor = activeDocumentEditor();
+  if (!editor) return;
+  editor.focus();
+  document.execCommand(button.dataset.documentCommand, false);
+  saveDocumentEditor(editor);
+}));
+$$("[data-document-line-spacing]").forEach((button) => button.addEventListener("click", () => {
+  noteDocumentLineSpacing = button.dataset.documentLineSpacing;
+  $$(".page-document-content").forEach((editor) => { editor.style.lineHeight = noteDocumentLineSpacing; });
+  saveDrawingNote();
+}));
+$("#document-show-page-numbers").addEventListener("change", (event) => {
+  noteShowPageNumbers = event.currentTarget.checked;
+  $$(".document-printed-page-number").forEach((number) => { number.hidden = !noteShowPageNumbers; });
+  saveDrawingNote();
+});
+$$("[data-document-block]").forEach((button) => button.addEventListener("click", () => {
+  const editor = activeDocumentEditor();
+  if (!editor) return;
+  editor.focus();
+  document.execCommand("formatBlock", false, button.dataset.documentBlock);
+  saveDocumentEditor(editor);
+}));
+$("#document-insert-table").addEventListener("click", () => {
+  const editor = activeDocumentEditor();
+  if (!editor) return;
+  const requestedRows = window.prompt("How many rows?", "3");
+  if (requestedRows === null) return;
+  const rows = Math.max(1, Math.min(20, Number(requestedRows) || 1));
+  const requestedColumns = window.prompt("How many columns?", "3");
+  if (requestedColumns === null) return;
+  const columns = Math.max(1, Math.min(12, Number(requestedColumns) || 1));
+  editor.focus();
+  const header = `<tr>${Array.from({ length: columns }, (_, index) => `<th>Column ${index + 1}</th>`).join("")}</tr>`;
+  const body = Array.from({ length: Math.max(0, rows - 1) }, () => `<tr>${"<td><br></td>".repeat(columns)}</tr>`).join("");
+  document.execCommand("insertHTML", false, `<table><thead>${header}</thead><tbody>${body}</tbody></table><p><br></p>`);
+  saveDocumentEditor(editor);
+});
+$("#document-text-font").addEventListener("change", (event) => {
+  const editor = activeDocumentEditor(); if (!editor) return;
+  editor.focus(); document.execCommand("fontName", false, event.currentTarget.value); saveDocumentEditor(editor);
+});
+const documentPointSizes = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72, 96];
+$("#document-text-size").replaceChildren(...documentPointSizes.map((pointSize) => {
+  const option = document.createElement("option");
+  option.value = String(pointSize);
+  option.textContent = String(pointSize);
+  option.selected = pointSize === 11;
+  return option;
+}));
+$("#document-text-size").addEventListener("change", (event) => {
+  const editor = activeDocumentEditor(); if (!editor) return;
+  editor.focus();
+  document.execCommand("fontSize", false, "7");
+  editor.querySelectorAll('font[size="7"]').forEach((font) => {
+    font.removeAttribute("size");
+    font.style.fontSize = `${event.currentTarget.value}pt`;
+  });
+  saveDocumentEditor(editor);
+});
+$("#document-text-color").addEventListener("change", (event) => {
+  const editor = activeDocumentEditor(); if (!editor) return;
+  editor.focus(); document.execCommand("foreColor", false, event.currentTarget.value); saveDocumentEditor(editor);
+});
+$$('[data-note-command]').forEach((button) => button.addEventListener("click", () => {
+  restoreNoteTextSelection();
+  document.execCommand(button.dataset.noteCommand, false);
+  rememberNoteTextSelection();
+  queueWordNoteSave();
+}));
+$$('[data-note-block]').forEach((button) => button.addEventListener("click", () => {
+  restoreNoteTextSelection();
+  document.execCommand("formatBlock", false, button.dataset.noteBlock);
+  rememberNoteTextSelection();
+  queueWordNoteSave();
+}));
+$("#word-note-font").addEventListener("change", (event) => {
+  restoreNoteTextSelection();
+  document.execCommand("fontName", false, event.currentTarget.value);
+  rememberNoteTextSelection();
+  queueWordNoteSave();
+});
+$("#word-note-font-size").addEventListener("change", (event) => {
+  restoreNoteTextSelection();
+  document.execCommand("fontSize", false, event.currentTarget.value);
+  rememberNoteTextSelection();
+  queueWordNoteSave();
+});
+$$('[data-note-tool]').forEach((button) => button.addEventListener("click", () => {
+  noteDrawingTool = button.dataset.noteTool;
+  $$('[data-note-tool]').forEach((item) => item.classList.toggle("active", item === button));
+  $("#canvas-text-options").hidden = noteDrawingTool !== "text";
+  drawingNoteCanvas().parentElement.classList.toggle("pan-active", noteDrawingTool === "pan");
+  drawingNoteCanvas().style.cursor = noteDrawingTool === "text" ? "text" : noteDrawingTool === "eraser" ? "cell" : noteDrawingTool === "pan" ? "grab" : "crosshair";
+}));
+$$('[data-canvas-text-style]').forEach((button) => button.addEventListener("click", () => {
+  noteCanvasTextStyle = button.dataset.canvasTextStyle;
+  const screenSizes = { body: 18, h1: 34, h2: 28, h3: 22 };
+  applyCanvasTextFormat({ screenSize: screenSizes[noteCanvasTextStyle] });
+  noteDrawingTool = "text";
+  $$('[data-canvas-text-style]').forEach((item) => item.classList.toggle("active", item === button));
+  $$('[data-note-tool]').forEach((item) => item.classList.toggle("active", item.dataset.noteTool === "text"));
+  $("#canvas-text-options").hidden = false;
+  drawingNoteCanvas().style.cursor = "text";
+}));
+$("#canvas-text-bold").addEventListener("click", () => {
+  applyCanvasTextFormat({ bold: !noteCanvasTextFormat.bold });
+  $("#canvas-text-bold").classList.toggle("active", noteCanvasTextFormat.bold);
+});
+$("#canvas-text-italic").addEventListener("click", () => {
+  applyCanvasTextFormat({ italic: !noteCanvasTextFormat.italic });
+  $("#canvas-text-italic").classList.toggle("active", noteCanvasTextFormat.italic);
+});
+$("#canvas-text-font").addEventListener("change", (event) => applyCanvasTextFormat({ fontFamily: event.currentTarget.value }));
+$("#canvas-text-size").addEventListener("change", (event) => applyCanvasTextFormat({ screenSize: Number(event.currentTarget.value) || 18 }));
+$("#canvas-text-color").addEventListener("change", (event) => applyCanvasTextFormat({ color: event.currentTarget.value }));
+
+const noteCanvas = drawingNoteCanvas();
+if (!noteCanvas) throw new Error("The drawing-note canvas is unavailable.");
+const noteCanvasViewport = noteCanvas.parentElement;
+noteCanvasViewport.addEventListener("pointerdown", (event) => {
+  if (noteDrawingTool !== "pan" || activeNotebookNote()?.type !== "drawing" || event.target.closest?.(".canvas-text-editor, .canvas-text-delete")) return;
+  if (noteCanvasMode === "page" && notePageLayout === "document") return;
+  event.preventDefault();
+  noteDrawingActive = true;
+  noteCanvasPanStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollLeft: noteCanvasViewport.scrollLeft, scrollTop: noteCanvasViewport.scrollTop };
+  noteCanvasViewport.setPointerCapture(event.pointerId);
+  noteCanvasViewport.style.cursor = "grabbing";
+});
+noteCanvasViewport.addEventListener("pointermove", (event) => {
+  if (!noteCanvasPanStart || event.pointerId !== noteCanvasPanStart.pointerId) return;
+  event.preventDefault();
+  noteCanvasViewport.scrollLeft = noteCanvasPanStart.scrollLeft - (event.clientX - noteCanvasPanStart.x);
+  noteCanvasViewport.scrollTop = noteCanvasPanStart.scrollTop - (event.clientY - noteCanvasPanStart.y);
+  renderOpenNoteTextLayer();
+});
+const finishCanvasPan = (event) => {
+  if (!noteCanvasPanStart || event.pointerId !== noteCanvasPanStart.pointerId) return;
+  noteCanvasPanStart = null;
+  noteDrawingActive = false;
+  noteCanvasViewport.style.cursor = "";
+  noteCanvas.style.cursor = noteDrawingTool === "pan" ? "grab" : "crosshair";
+};
+noteCanvasViewport.addEventListener("pointerup", finishCanvasPan);
+noteCanvasViewport.addEventListener("pointercancel", finishCanvasPan);
+const noteCanvasPoint = (event) => {
+  const matrix = noteCanvas.getScreenCTM?.();
+  if (matrix) {
+    const point = noteCanvas.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const local = point.matrixTransform(matrix.inverse());
+    return { x: local.x, y: local.y };
+  }
+  const rect = noteCanvas.getBoundingClientRect();
+  return { x: (event.clientX - rect.left) * drawingWorkspaceWidth() / rect.width, y: (event.clientY - rect.top) * drawingWorkspaceHeight() / rect.height };
+};
+noteCanvas.addEventListener("pointerdown", (event) => {
+  if (activeNotebookNote()?.type !== "drawing") return;
+  if (noteCanvasMode === "page" && notePageLayout === "document") return;
+  if (event.target.closest?.(".canvas-text-editor")) return;
+  event.preventDefault();
+  if (noteDrawingTool === "pan") return;
+  const point = noteCanvasPoint(event);
+  if (noteDrawingTool === "text") {
+    const preservedScrollLeft = noteCanvas.parentElement.scrollLeft;
+    const preservedScrollTop = noteCanvas.parentElement.scrollTop;
+    noteDrawingTexts = noteDrawingTexts.filter((item) => (item?.text || "").trim());
+    const canvasRect = noteCanvas.getBoundingClientRect();
+    const viewportRect = noteCanvas.parentElement.getBoundingClientRect();
+    const scale = drawingWorkspaceWidth() / canvasRect.width;
+    const boxWidth = Math.min(180, Math.max(100, viewportRect.width - 32));
+    const safeScreenX = Math.max(0, Math.min(event.clientX - canvasRect.left, viewportRect.right - canvasRect.left - boxWidth - 12));
+    const safeScreenY = Math.max(0, event.clientY - canvasRect.top);
+    point.x = safeScreenX * scale;
+    point.y = safeScreenY * drawingWorkspaceHeight() / canvasRect.height;
+    const textItem = {
+      id: makeLocalId("canvas-text"),
+      x: point.x,
+      y: point.y,
+      width: Math.min(drawingWorkspaceWidth() - point.x, 260 * scale),
+      height: 52 * scale,
+      screenWidth: boxWidth,
+      screenHeight: 36,
+      screenFontSize: Math.min(36, noteCanvasTextFormat.screenSize || 16),
+      style: noteCanvasTextStyle,
+      fontSize: noteCanvasTextFormat.screenSize * scale,
+      fontFamily: noteCanvasTextFormat.fontFamily,
+      color: noteCanvasTextFormat.color,
+      bold: noteCanvasTextFormat.bold,
+      italic: noteCanvasTextFormat.italic,
+      text: "",
+      createdAt: Date.now(),
+    };
+    noteDrawingTexts.push(textItem);
+    selectedCanvasTextId = textItem.id;
+    renderDrawingNoteVectors();
+    window.setTimeout(() => {
+      const editor = document.querySelector(`#open-note-text-layer [data-canvas-text-id="${textItem.id}"]`);
+      editor?.focus();
+      if (editor) {
+        const caretPosition = editor.value.length;
+        editor.setSelectionRange(caretPosition, caretPosition);
+      }
+      noteCanvas.parentElement.scrollLeft = preservedScrollLeft;
+      noteCanvas.parentElement.scrollTop = preservedScrollTop;
+      window.requestAnimationFrame(() => {
+        noteCanvas.parentElement.scrollLeft = preservedScrollLeft;
+        noteCanvas.parentElement.scrollTop = preservedScrollTop;
+      });
+    }, 0);
+    saveDrawingNote();
+    return;
+  }
+  noteDrawingActive = true;
+  noteCanvas.setPointerCapture(event.pointerId);
+  pushDrawingNoteHistory();
+  noteDrawingLastPoint = point;
+  if (noteDrawingTool === "eraser") {
+    const radius = Number($("#drawing-note-size").value) * drawingWorkspaceWidth() / noteCanvas.getBoundingClientRect().width * 4;
+    eraseDrawingAt(point, radius);
+    renderDrawingNoteVectors();
+  } else {
+    const multiplier = noteDrawingTool === "highlighter" ? 4 : noteDrawingTool === "marker" ? 2.2 : noteDrawingTool === "calligraphy" ? 1.65 : noteDrawingTool === "pencil" ? 0.7 : 1;
+    const width = Number($("#drawing-note-size").value) * drawingWorkspaceWidth() / noteCanvas.getBoundingClientRect().width * multiplier;
+    currentNoteStroke = { tool: noteDrawingTool, color: $("#drawing-note-color").value, width, points: [point] };
+    renderDrawingNoteVectors();
+  }
+});
+window.__noteCanvasControlsReady = true;
+noteCanvas.addEventListener("pointermove", (event) => {
+  if (noteCanvasMode === "page" && notePageLayout === "document") return;
+  if (!noteDrawingActive) return;
+  if (noteDrawingTool === "pan") return;
+  event.preventDefault();
+  const point = noteCanvasPoint(event);
+  noteDrawingLastPoint = point;
+  if (noteDrawingTool === "eraser") {
+    const radius = Number($("#drawing-note-size").value) * drawingWorkspaceWidth() / noteCanvas.getBoundingClientRect().width * 4;
+    eraseDrawingAt(point, radius);
+  } else if (currentNoteStroke) {
+    currentNoteStroke.points.push(point);
+  }
+  renderDrawingNoteVectors();
+});
+const finishNoteStroke = () => {
+  if (noteCanvasPanStart) return;
+  if (noteCanvasMode === "page" && notePageLayout === "document") {
+    noteDrawingActive = false;
+    currentNoteStroke = null;
+    return;
+  }
+  if (!noteDrawingActive) return;
+  noteDrawingActive = false;
+  if (currentNoteStroke?.points?.length) noteDrawingStrokes.push(currentNoteStroke);
+  currentNoteStroke = null;
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+};
+noteCanvas.addEventListener("pointerup", finishNoteStroke);
+noteCanvas.addEventListener("pointercancel", finishNoteStroke);
+function undoDrawingNote() {
+  const previous = noteDrawingHistory.pop();
+  if (!previous) return;
+  noteDrawingRedoHistory.push(drawingNoteSnapshot());
+  restoreDrawingNoteSnapshot(previous, saveDrawingNote);
+}
+function redoDrawingNote() {
+  const next = noteDrawingRedoHistory.pop();
+  if (!next) return;
+  noteDrawingHistory.push(drawingNoteSnapshot());
+  restoreDrawingNoteSnapshot(next, saveDrawingNote);
+}
+$("#undo-note-stroke").addEventListener("click", undoDrawingNote);
+$("#redo-note-stroke").addEventListener("click", redoDrawingNote);
+document.addEventListener("keydown", (event) => {
+  if (state.currentAppView !== "notes" || event.altKey || (!event.metaKey && !event.ctrlKey)) return;
+  const key = event.key.toLowerCase();
+  if (key !== "z" && key !== "y") return;
+  const redo = key === "y" || (key === "z" && event.shiftKey);
+  const editor = event.target?.closest?.(".page-document-content");
+  if (editor) {
+    event.preventDefault();
+    document.execCommand(redo ? "redo" : "undo");
+    saveDocumentEditor(editor);
+    return;
+  }
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target?.isContentEditable) return;
+  if (activeNotebookNote()?.type !== "drawing" || (noteCanvasMode === "page" && notePageLayout === "document")) return;
+  event.preventDefault();
+  if (redo) redoDrawingNote();
+  else undoDrawingNote();
+});
+$("#drawing-zoom-out").addEventListener("click", () => {
+  const nextZoom = noteDrawingZoom / 1.25;
+  setDrawingNoteZoom(noteDrawingZoom > 1 && nextZoom < 1 ? 1 : nextZoom);
+});
+$("#drawing-zoom-in").addEventListener("click", () => {
+  const nextZoom = noteDrawingZoom * 1.25;
+  setDrawingNoteZoom(noteDrawingZoom < 1 && nextZoom > 1 ? 1 : nextZoom);
+});
+$("#drawing-zoom-fit").addEventListener("click", () => {
+  const canvas = drawingNoteCanvas();
+  const viewport = canvas.parentElement;
+  setDrawingNoteZoom(drawingFitZoom(), true);
+  viewport.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+});
+$("#add-note-page").addEventListener("click", () => {
+  if (noteCanvasMode !== "page") return;
+  notePageCount += 1;
+  while (noteDocumentPages.length < notePageCount) noteDocumentPages.push("");
+  configureNoteCanvas("page", notePageCount, notePageLayout);
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+  const viewport = drawingNoteCanvas().parentElement;
+  window.requestAnimationFrame(() => viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" }));
+});
+$("#remove-note-page").addEventListener("click", () => {
+  if (noteCanvasMode !== "page" || notePageCount <= 1) return;
+  if (!window.confirm("Remove the last page and anything written or drawn on it?")) return;
+  removeSharedNotePage(notePageCount - 1);
+  configureNoteCanvas("page", notePageCount, notePageLayout);
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+});
+$("#toggle-page-layout").addEventListener("click", () => {
+  if (noteCanvasMode !== "page") return;
+  notePageLayout = notePageLayout === "document" ? "pages" : "document";
+  configureNoteCanvas("page", notePageCount, notePageLayout);
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+  if (notePageLayout === "document") window.requestAnimationFrame(() => activeDocumentEditor()?.focus());
+});
+$("#clear-note-canvas").addEventListener("click", () => {
+  if (!window.confirm("Clear this entire drawing?")) return;
+  pushDrawingNoteHistory();
+  clearDrawingCanvas();
+  saveDrawingNote();
+});
+} catch (error) {
+  console.error("Notes workspace could not be initialized:", error);
+}
+}
 $("#export-deck-select").addEventListener("change", updateExportSummary);
 $("#export-study-set").addEventListener("click", exportSelectedStudyDeck);
+$("#export-note-select").addEventListener("change", configureSelectedNoteExport);
+$("#export-note-button").addEventListener("click", () => exportSelectedNote().catch((error) => { console.error(error); $("#export-note-status").textContent = "The note could not be exported."; showToast("The note could not be exported."); }));
+["#export-note-crop-x", "#export-note-crop-y", "#export-note-crop-width", "#export-note-crop-height"].forEach((selector) => $(selector).addEventListener("change", updateNoteExportSelectionFromInputs));
+$("#export-note-fit-content").addEventListener("click", () => {
+  const note = selectedExportNote(); if (!note) return;
+  noteExportState.contentBounds = noteContentBounds(note);
+  noteExportState.selection = { ...noteExportState.contentBounds };
+  noteExportState.viewBounds = paddedNoteExportView(noteExportState.contentBounds, note);
+  syncNoteExportCropInputs(); drawNoteExportPreview();
+});
+$("#export-note-whole-canvas").addEventListener("click", () => {
+  const note = selectedExportNote(); if (!note) return;
+  const dimensions = noteExportDimensions(note);
+  noteExportState.selection = { x: 0, y: 0, ...dimensions };
+  noteExportState.viewBounds = { ...noteExportState.selection };
+  syncNoteExportCropInputs(); drawNoteExportPreview();
+});
+const noteExportPreview = $("#export-note-preview");
+const noteExportPoint = (event) => {
+  const rect = noteExportPreview.getBoundingClientRect(); const view = noteExportState.viewBounds;
+  if (!view) return null;
+  const scale = Math.min(noteExportPreview.width / view.width, noteExportPreview.height / view.height);
+  const offsetX = (noteExportPreview.width - view.width * scale) / 2; const offsetY = (noteExportPreview.height - view.height * scale) / 2;
+  const canvasX = (event.clientX - rect.left) * noteExportPreview.width / rect.width; const canvasY = (event.clientY - rect.top) * noteExportPreview.height / rect.height;
+  return { x: Math.max(view.x, Math.min(view.x + view.width, view.x + (canvasX - offsetX) / scale)), y: Math.max(view.y, Math.min(view.y + view.height, view.y + (canvasY - offsetY) / scale)) };
+};
+noteExportPreview.addEventListener("pointerdown", (event) => {
+  const note = selectedExportNote(); if (!note || note.type !== "drawing" || note.pageLayout === "document") return;
+  const point = noteExportPoint(event); if (!point) return;
+  noteExportState.dragging = true; noteExportState.dragStart = point; noteExportPreview.setPointerCapture(event.pointerId); event.preventDefault();
+});
+noteExportPreview.addEventListener("pointermove", (event) => {
+  if (!noteExportState.dragging || !noteExportState.dragStart) return;
+  const point = noteExportPoint(event); if (!point) return; const start = noteExportState.dragStart;
+  noteExportState.selection = { x: Math.min(start.x, point.x), y: Math.min(start.y, point.y), width: Math.max(1, Math.abs(point.x - start.x)), height: Math.max(1, Math.abs(point.y - start.y)) };
+  syncNoteExportCropInputs(); drawNoteExportPreview();
+});
+const finishNoteExportDrag = (event) => { if (!noteExportState.dragging) return; noteExportState.dragging = false; noteExportState.dragStart = null; try { noteExportPreview.releasePointerCapture(event.pointerId); } catch (_) {} syncNoteExportCropInputs(); drawNoteExportPreview(); };
+noteExportPreview.addEventListener("pointerup", finishNoteExportDrag);
+noteExportPreview.addEventListener("pointercancel", finishNoteExportDrag);
 $("#flashcards-create-set").addEventListener("click", () => { showAppView("create"); $("#new-custom-study-set").click(); });
 $(".brand").addEventListener("click", (event) => { event.preventDefault(); showAppView("dashboard"); });
-document.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); $(".search-field input").focus(); } });
+$("#welcome-profile-dialog").addEventListener("cancel", (event) => event.preventDefault());
+$("#welcome-profile-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = $("#welcome-profile-name").value.trim();
+  const month = Number($("#welcome-profile-birth-month").value);
+  const day = Number($("#welcome-profile-birth-day").value);
+  if (!name || !month || !day) return;
+  const birthday = `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const profile = { name, birthday };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  applyProfile(profile);
+  $("#welcome-profile-dialog").close();
+  celebrateBirthday(profile);
+});

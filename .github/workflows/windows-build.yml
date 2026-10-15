@@ -28,9 +28,20 @@ jobs:
       - name: Build Windows installer
         run: npm run make
 
+      - name: Prepare clearly named download
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path windows-download | Out-Null
+          $installer = Get-ChildItem -Path out/make -Recurse -Filter "*.exe" |
+            Where-Object { $_.Name -match "Setup" } |
+            Select-Object -First 1
+          if (-not $installer) { throw "The Windows installer was not created." }
+          Copy-Item $installer.FullName "windows-download/Your Study Buddy Setup.exe"
+          Set-Content -Path "windows-download/README.txt" -Value "Double-click 'Your Study Buddy Setup.exe' to install Your Study Buddy. The Squirrel name is the internal installer technology and is not the application name."
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: Your-Study-Buddy-Windows
-          path: out/make/**/*
+          path: windows-download/*
           if-no-files-found: error
