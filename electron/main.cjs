@@ -6,6 +6,39 @@ const AdmZip = require("adm-zip");
 const initSqlJs = require("sql.js");
 const { decompress } = require("fzstd");
 
+const RELEASES_API = "https://api.github.com/repos/vkai3333/Your-Study-Buddy-/releases?per_page=20";
+
+function versionParts(value) {
+  return String(value || "").replace(/^v/i, "").split("-")[0].split(".").map((part) => Number.parseInt(part, 10) || 0).slice(0, 3);
+}
+
+function compareVersions(left, right) {
+  const a = versionParts(left); const b = versionParts(right);
+  for (let index = 0; index < 3; index += 1) {
+    if ((a[index] || 0) !== (b[index] || 0)) return (a[index] || 0) - (b[index] || 0);
+  }
+  return 0;
+}
+
+async function checkForAppUpdate() {
+  const currentVersion = app.getVersion();
+  const response = await fetch(RELEASES_API, { headers: { Accept: "application/vnd.github+json", "User-Agent": `Your-Study-Buddy/${currentVersion}` } });
+  if (!response.ok) throw new Error(`GitHub returned ${response.status}.`);
+  const releases = (await response.json()).filter((release) => !release.draft && release.tag_name);
+  releases.sort((left, right) => compareVersions(right.tag_name, left.tag_name));
+  const latest = releases[0];
+  if (!latest) return { currentVersion, available: false, message: "No published releases were found." };
+  const latestVersion = String(latest.tag_name).replace(/^v/i, "");
+  return {
+    currentVersion,
+    latestVersion,
+    available: compareVersions(latestVersion, currentVersion) > 0,
+    releaseName: latest.name || `Version ${latestVersion}`,
+    releaseUrl: latest.html_url,
+    publishedAt: latest.published_at,
+  };
+}
+
 const alarmTimers = new Map();
 let sqlPromise;
 
@@ -383,6 +416,16 @@ ipcMain.handle("window:set-fullscreen", (event, active) => {
   if (!window) return false;
   window.setFullScreen(Boolean(active));
   return window.isFullScreen();
+});
+ipcMain.handle("app-update:check", async () => {
+  try { return await checkForAppUpdate(); }
+  catch (error) { return { currentVersion: app.getVersion(), available: false, error: error?.message || "Updates could not be checked." }; }
+});
+ipcMain.handle("app-update:open", async (_event, releaseUrl) => {
+  const url = String(releaseUrl || "");
+  if (!/^https:\/\/github\.com\/vkai3333\/Your-Study-Buddy-\/releases(?:\/|$)/i.test(url)) return false;
+  await shell.openExternal(url);
+  return true;
 });
 
 app.whenReady().then(() => {

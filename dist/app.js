@@ -3055,6 +3055,34 @@ function populateSettingsForm() {
   const profile = loadProfile();
   $("#settings-profile-name").value = profile?.name || "";
   populateBirthdaySelects($("#settings-profile-birth-month"), $("#settings-profile-birth-day"), profile?.birthday || "");
+  if (state.appUpdate?.currentVersion) renderAppUpdate(state.appUpdate);
+}
+
+function renderAppUpdate(result) {
+  if (!result) return;
+  state.appUpdate = result;
+  const version = $("#app-update-version"); const status = $("#app-update-status"); const download = $("#download-app-update");
+  if (!version || !status || !download) return;
+  version.textContent = `Current version ${result.currentVersion || "unknown"}`;
+  download.hidden = !result.available || !result.releaseUrl;
+  download.dataset.releaseUrl = result.releaseUrl || "";
+  if (result.error) status.textContent = "Could not check for updates. Check your internet connection and try again.";
+  else if (result.available) status.textContent = `${result.releaseName || `Version ${result.latestVersion}`} is available.`;
+  else status.textContent = result.message || "You have the newest published version.";
+}
+
+async function checkForAppUpdates(showFeedback = true) {
+  const button = $("#check-for-updates"); const status = $("#app-update-status");
+  if (!window.desktopApp?.checkForUpdates) {
+    if (status) status.textContent = "Update checking is available in the installed desktop app.";
+    return;
+  }
+  if (button) button.disabled = true;
+  if (status && showFeedback) status.textContent = "Checking GitHub for updates…";
+  const result = await window.desktopApp.checkForUpdates();
+  renderAppUpdate(result);
+  if (button) button.disabled = false;
+  if (showFeedback && result?.available) showToast(`${result.releaseName || `Version ${result.latestVersion}`} is ready to download.`);
 }
 
 function settingsFromForm() {
@@ -9298,6 +9326,11 @@ $("#restore-user-information-file").addEventListener("change", (event) => {
   if (file) restoreUserInformation(file);
   event.target.value = "";
 });
+$("#check-for-updates").addEventListener("click", () => checkForAppUpdates(true));
+$("#download-app-update").addEventListener("click", (event) => {
+  const releaseUrl = event.currentTarget.dataset.releaseUrl;
+  if (releaseUrl) window.desktopApp?.openUpdate?.(releaseUrl);
+});
 $("#export-note-select").addEventListener("change", configureSelectedNoteExport);
 $("#export-note-button").addEventListener("click", () => exportSelectedNote().catch((error) => { console.error(error); $("#export-note-status").textContent = "The note could not be exported."; showToast("The note could not be exported."); }));
 ["#export-note-crop-x", "#export-note-crop-y", "#export-note-crop-width", "#export-note-crop-height"].forEach((selector) => $(selector).addEventListener("change", updateNoteExportSelectionFromInputs));
@@ -9362,3 +9395,4 @@ $("#welcome-profile-form").addEventListener("submit", (event) => {
   $("#welcome-profile-dialog").close();
   celebrateBirthday(profile);
 });
+window.setTimeout(() => checkForAppUpdates(false), 2500);

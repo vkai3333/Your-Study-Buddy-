@@ -29,4 +29,10 @@ contextBridge.exposeInMainWorld("desktopApp", {
   setFullscreen(active) {
     return ipcRenderer.invoke("window:set-fullscreen", Boolean(active));
   },
+  checkForUpdates() {
+    return ipcRenderer.invoke("app-update:check");
+  },
+  openUpdate(releaseUrl) {
+    return ipcRenderer.invoke("app-update:open", releaseUrl);
+  },
 });
