@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld("desktopApp", {
   readDroppedStudyFile(file) {
     return ipcRenderer.invoke("study-file:read-dropped", webUtils.getPathForFile(file));
   },
+  readClipboardImage() {
+    return ipcRenderer.invoke("clipboard:image");
+  },
   exportStudyDeck(payload) {
     return ipcRenderer.invoke("study-deck:export", payload);
   },

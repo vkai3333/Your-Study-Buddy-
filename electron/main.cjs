@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, Notification, shell } = require("electron");
+const { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, Notification, shell } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -353,6 +353,22 @@ ipcMain.handle("note-file:choose", async (event) => {
 ipcMain.handle("study-file:read-dropped", async (_event, filePath) => {
   try { return await readStudyFile(filePath); }
   catch (error) { return { error: error?.message || "This dropped file could not be imported." }; }
+});
+ipcMain.handle("clipboard:image", () => {
+  const image = clipboard.readImage();
+  if (!image.isEmpty()) return image.toDataURL();
+  const uriList = clipboard.read("text/uri-list") || clipboard.readText();
+  const fileUrl = String(uriList || "").split(/\r?\n/).find((line) => line.startsWith("file://"));
+  if (fileUrl) {
+    try {
+      const filePath = decodeURIComponent(new URL(fileUrl).pathname).replace(/^\/(?:([A-Za-z]:))/i, "$1");
+      if (/\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(filePath) && fs.existsSync(filePath)) {
+        const fileImage = nativeImage.createFromPath(filePath);
+        if (!fileImage.isEmpty()) return fileImage.toDataURL();
+      }
+    } catch {}
+  }
+  return "";
 });
 ipcMain.handle("study-deck:export", async (event, payload) => {
   try { return await exportStudyDeck(BrowserWindow.fromWebContents(event.sender), payload); }

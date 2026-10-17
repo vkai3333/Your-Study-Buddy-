@@ -1,3 +1,17 @@
+function defaultCharacteristicFields(template = []) {
+  const source = template.length ? template : [
+    { name: "Name", front: true, back: false },
+    { name: "Column 2", front: false, back: true },
+  ];
+  return source.slice(0, 15).map((field, index) => ({
+    id: field.id || `characteristic-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+    name: String(field.name || `Column ${index + 1}`),
+    value: "",
+    front: Boolean(field.front),
+    back: Boolean(field.back),
+  }));
+}
+
 const state = {
   activeCourse: null,
   activeChapter: 0,
@@ -40,6 +54,10 @@ const state = {
   selectedBuiltInCollectionId: null,
   selectedBuiltInUnitIds: [],
   calculusAbOnly: false,
+  geographyFrontFields: ["country"],
+  geographyBackFields: ["capital"],
+  usStateFrontFields: ["state"],
+  usStateBackFields: ["capital"],
   pendingCustomDeleteId: null,
   pendingBuiltInDeleteId: null,
   pendingDeleteAllStudySets: false,
@@ -57,12 +75,18 @@ const state = {
   customReviewWasRevealed: false,
   customReviewStartedAt: null,
   customAnkiCardShownAt: null,
+  activeAnkiSelections: new Set(),
+  customAnkiActiveOwners: [],
+  customAnkiBatchSession: false,
   customQuestionAnswered: false,
   customFeynmanTimeAmount: 5,
   customFeynmanTimeUnit: "minutes",
   customFeynmanStartedAt: null,
   manualFrontImage: "",
   manualBackImage: "",
+  cardMakerMode: "basic",
+  extraColumnsOnly: false,
+  customCharacteristicFields: defaultCharacteristicFields(),
   pendingCardImageTarget: null,
   pendingDrawingTarget: null,
   pendingMathTarget: null,
@@ -307,10 +331,15 @@ const builtInIbEssDecks = window.IB_ESS_DECKS || [];
 const builtInIbMathAaDecks = window.IB_MATH_AA_DECKS || [];
 const builtInIbHistoryAmericasDecks = window.IB_HISTORY_AMERICAS_DECKS || [];
 const builtInMcatReviewDecks = window.MCAT_REVIEW_DECKS || [];
+const builtInUsmleDecks = window.USMLE_DECKS || [];
+const builtInDatDecks = window.DAT_DECKS || [];
 const builtInAfricanAmericanStudiesDecks = window.AP_AFRICAN_AMERICAN_STUDIES_DECKS || [];
 const builtInCybersecurityDecks = window.AP_CYBERSECURITY_DECKS || [];
 const builtInBusinessPersonalFinanceDecks = window.AP_BUSINESS_PERSONAL_FINANCE_DECKS || [];
-const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks, ...builtInCalculusDecks, ...builtInPrecalculusDecks, ...builtInComparativeGovernmentDecks, ...builtInMicroeconomicsDecks, ...builtInMacroeconomicsDecks, ...builtInMusicTheoryDecks, ...builtInLatinDecks, ...builtInIbBiologyDecks, ...builtInIbChemistryDecks, ...builtInIbPsychologyDecks, ...builtInIbEconomicsDecks, ...builtInIbGeographyDecks, ...builtInIbEssDecks, ...builtInIbMathAaDecks, ...builtInIbHistoryAmericasDecks, ...builtInMcatReviewDecks, ...builtInAfricanAmericanStudiesDecks, ...builtInCybersecurityDecks, ...builtInBusinessPersonalFinanceDecks];
+const geographyLocationCountries = window.GEOGRAPHY_LOCATION_COUNTRIES || [];
+const usStateBank = window.US_STATE_BANK || [];
+const builtInUsPresidentDecks = window.US_PRESIDENT_DECKS || [];
+const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks, ...builtInCalculusDecks, ...builtInPrecalculusDecks, ...builtInComparativeGovernmentDecks, ...builtInMicroeconomicsDecks, ...builtInMacroeconomicsDecks, ...builtInMusicTheoryDecks, ...builtInLatinDecks, ...builtInIbBiologyDecks, ...builtInIbChemistryDecks, ...builtInIbPsychologyDecks, ...builtInIbEconomicsDecks, ...builtInIbGeographyDecks, ...builtInIbEssDecks, ...builtInIbMathAaDecks, ...builtInIbHistoryAmericasDecks, ...builtInMcatReviewDecks, ...builtInUsmleDecks, ...builtInDatDecks, ...builtInAfricanAmericanStudiesDecks, ...builtInCybersecurityDecks, ...builtInBusinessPersonalFinanceDecks, ...builtInUsPresidentDecks];
 const builtInFlashcardCollections = [{
   id: "aphug",
   name: "AP Human Geography",
@@ -534,6 +563,17 @@ const builtInFlashcardCollections = [{
   catalogLabel: "Standardized exam",
   units: builtInMcatReviewDecks,
 }, {
+  id: "usmle",
+  name: "USMLE Step 1 / Step 2 CK",
+  description: "Integrated foundational and clinical medical review organized by organ system, with a Step 1-only toggle and Step 2 CK diagnosis and management extensions.",
+  unitLabel: "systems",
+  catalogLabel: "Medical licensing exam",
+  supportsLevelFilter: true,
+  baseLevel: "Step 1",
+  extensionLevel: "Step 2 CK",
+  extensionDisplayLabel: "Step 1 + Step 2 CK",
+  units: builtInUsmleDecks,
+}, {
   id: "apcyber",
   name: "AP Cybersecurity",
   description: "Security concepts, controls, attacks, network evidence, and incident response aligned to the five-unit framework effective fall 2026.",
@@ -548,6 +588,183 @@ const builtInFlashcardCollections = [{
   catalogLabel: "AP course",
   units: builtInBusinessPersonalFinanceDecks,
 }];
+
+const geographyRegionOrder = ["Africa", "Asia", "Europe", "North America & Caribbean", "South America", "Oceania"];
+const geographyExtraColumnTemplate = [
+  { name: "Country", front: true, back: false },
+  { name: "Capital", front: false, back: true },
+  { name: "Largest city", front: false, back: false },
+  { name: "Currency", front: false, back: false },
+  { name: "Region", front: false, back: false },
+  { name: "Continent", front: false, back: false },
+  { name: "Subregion", front: false, back: false },
+  { name: "Languages", front: false, back: false },
+  { name: "Population", front: false, back: false },
+  { name: "Area (km²)", front: false, back: false },
+  { name: "Country codes", front: false, back: false },
+  { name: "Calling code", front: false, back: false },
+  { name: "Borders", front: false, back: false },
+];
+
+function geographyExtraColumns(country) {
+  return {
+    Country: country.country,
+    Capital: country.capital,
+    "Largest city": country.largestCity,
+    Currency: (country.currencies || []).map((currency) => `${currency.name} (${currency.code})`).join(", "),
+    Region: country.region,
+    Continent: country.continent,
+    Subregion: country.subregion,
+    Languages: (country.languages || []).join(", "),
+    Population: country.population ? Number(country.population).toLocaleString("en-US") : "",
+    "Area (km²)": country.area ? Number(country.area).toLocaleString("en-US") : "",
+    "Country codes": country.countryCodes,
+    "Calling code": country.callingCode,
+    Borders: (country.borders || []).join(", "),
+  };
+}
+
+const geographyLocationUnits = geographyRegionOrder.map((region, index) => {
+  const countries = geographyLocationCountries.filter((country) => !country.territory && country.region === region);
+  return {
+    id: `world-locations-region-${index + 1}`,
+    name: `Countries of the World · ${region}`,
+    shortName: region,
+    countries,
+    cards: countries.map((country) => ({
+      id: `geo-${country.id}-country-capital`,
+      front: country.country,
+      back: country.capital,
+      frontImage: "",
+      backImage: "",
+      characteristicCard: true,
+      characteristics: geographyExtraColumns(country),
+    })),
+    questions: [],
+    feynmanPrompts: [],
+  };
+}).filter((unit) => unit.countries.length);
+
+const geographyTerritories = geographyLocationCountries.filter((country) => country.territory);
+if (geographyTerritories.length) geographyLocationUnits.push({
+  id: "world-locations-territories",
+  name: "Countries of the World · Territories and dependencies",
+  shortName: "Territories and dependencies",
+  countries: geographyTerritories,
+  defaultOff: true,
+  cards: geographyTerritories.map((country) => ({
+    id: `geo-${country.id}-country-capital`,
+    front: country.country,
+    back: country.capital,
+    frontImage: "",
+    backImage: "",
+    characteristicCard: true,
+    characteristics: geographyExtraColumns(country),
+  })),
+  questions: [],
+  feynmanPrompts: [],
+});
+
+builtInFlashcardCollections.push({
+  id: "world-locations",
+  name: "Countries of the World",
+  description: "A configurable location bank covering sovereign countries plus an optional territories-and-dependencies section, with capitals, largest cities, currencies, flags, and outlines.",
+  unitLabel: "regions",
+  catalogLabel: "Geography",
+  geographyBank: true,
+  characteristicTemplate: geographyExtraColumnTemplate,
+  units: geographyLocationUnits,
+});
+
+const usStateRegionOrder = ["Northeast", "Midwest", "South", "West"];
+const usStateUnits = usStateRegionOrder.map((region, index) => {
+  const states = usStateBank.filter((item) => item.region === region);
+  return {
+    id: `us-states-region-${index + 1}`,
+    name: `U.S. States · ${region}`,
+    shortName: region,
+    states,
+    cards: states.map((item) => ({ id: `us-state-${item.id}`, front: item.state, back: item.capital })),
+    questions: [],
+    feynmanPrompts: [],
+  };
+}).filter((unit) => unit.states.length);
+
+builtInFlashcardCollections.push({
+  id: "us-states",
+  name: "U.S. States",
+  description: "A configurable bank of all 50 states with capitals, largest cities, abbreviations, admission dates, Census regions, and 2025 population estimates.",
+  unitLabel: "regions",
+  catalogLabel: "Geography",
+  usStateBank: true,
+  units: usStateUnits,
+}, {
+  id: "us-presidents",
+  name: "U.S. Presidents",
+  description: "A chronological portrait deck covering every U.S. president, with term dates and concise historically significant actions and events.",
+  unitLabel: "set",
+  catalogLabel: "U.S. history",
+  units: builtInUsPresidentDecks,
+}, {
+  id: "dat",
+  name: "Dental Admission Test (DAT)",
+  description: "A large DAT review bank aligned to the 2026 ADA blueprint: Biology, General Chemistry, Organic Chemistry, Perceptual Ability, Reading Comprehension, and Quantitative Reasoning.",
+  unitLabel: "sections",
+  catalogLabel: "Admissions exam",
+  units: builtInDatDecks,
+});
+
+// Large standalone exam banks use lightweight catalog metadata at startup.
+// Their full card arrays are attached only when the bank is actually needed.
+const lazyBuiltInSources = {
+  "sat-vocabulary": { scripts: ["sat-vocabulary-data.js"], global: "SAT_VOCABULARY_DECKS", unitCount: 5, cardCount: 986, feynmanCount: 0 },
+  mcat: { scripts: ["mcat-review-data.js", "mcat-biochem-expansion.js"], global: "MCAT_REVIEW_DECKS", unitCount: 14, cardCount: 273, feynmanCount: 50 },
+  usmle: { scripts: ["usmle-data.js", "usmle-expansion.js"], global: "USMLE_DECKS", unitCount: 12, cardCount: 365, feynmanCount: 24 },
+  dat: { scripts: ["admissions-exam-data.js"], global: "DAT_DECKS", unitCount: 6, cardCount: 150, feynmanCount: 0 },
+};
+const lazyScriptPromises = new Map();
+const lazyCollectionPromises = new Map();
+
+function loadLazyScript(file) {
+  if (lazyScriptPromises.has(file)) return lazyScriptPromises.get(file);
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `./${file}`;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`${file} could not be loaded.`));
+    document.body.appendChild(script);
+  });
+  lazyScriptPromises.set(file, promise);
+  return promise;
+}
+
+async function ensureBuiltInCollectionLoaded(collectionId) {
+  const source = lazyBuiltInSources[collectionId];
+  const collection = builtInFlashcardCollections.find((item) => item.id === collectionId);
+  if (!source || !collection || collection.units.length) return collection;
+  if (lazyCollectionPromises.has(collectionId)) return lazyCollectionPromises.get(collectionId);
+  const promise = (async () => {
+    for (const file of source.scripts) await loadLazyScript(file);
+    collection.units = Array.isArray(window[source.global]) ? window[source.global] : [];
+    collection.catalogLoaded = true;
+    renderBuiltInDecks();
+    renderCustomDecks();
+    renderActiveAnkiDecks();
+    return collection;
+  })().catch((error) => {
+    lazyCollectionPromises.delete(collectionId);
+    showToast(`${collection.name} could not be loaded.`);
+    throw error;
+  });
+  lazyCollectionPromises.set(collectionId, promise);
+  return promise;
+}
+
+async function hydrateAddedCollections() {
+  const needed = new Set(addedFlashcardCollectionIds());
+  loadActiveAnkiDecks().filter((entry) => entry.target === "deck").forEach((entry) => needed.add(String(entry.id).replace(/^folder:/, "")));
+  await Promise.allSettled([...needed].filter((id) => lazyBuiltInSources[id]).map(ensureBuiltInCollectionLoaded));
+}
 
 const courses = [
   {
@@ -1189,12 +1406,13 @@ const NOTE_FOLDERS_STORAGE_KEY = "your-study-buddy-note-folders-v1";
 let activeNoteId = null;
 let noteActionsNoteId = null;
 let editingNoteFolderId = null;
-let noteDrawingTool = "pen";
+let noteDrawingTool = "cursor";
 let noteDrawingActive = false;
 let noteDrawingHistory = [];
 let noteDrawingRedoHistory = [];
 let noteDrawingStrokes = [];
 let noteDrawingTexts = [];
+let noteDrawingImages = [];
 let currentNoteStroke = null;
 let noteDrawingLegacyImage = "";
 const DRAWING_CANVAS_WIDTH = 4000;
@@ -1216,6 +1434,8 @@ let noteDocumentLineSpacing = "1.15";
 let noteShowPageNumbers = false;
 let noteCanvasTextStyle = "body";
 let selectedCanvasTextId = null;
+let selectedNoteImageId = null;
+let noteImageTransform = null;
 let noteCanvasTextFormat = { fontFamily: "Arial", screenSize: 18, color: "#171b2d", bold: false, italic: false };
 let noteTextSelection = null;
 let noteSaveHandle;
@@ -1228,6 +1448,20 @@ let freestyleFeynmanTimerHandle;
 let freestyleFeynmanStartedAt = null;
 let freestyleFeynmanDuration = 0;
 let activePdfObjectUrl = "";
+let pdfAnnotationLoader = null;
+
+function ensurePdfAnnotationLoaded() {
+  if (window.__studyBuddyPdfAnnotationLoaded) return Promise.resolve();
+  if (pdfAnnotationLoader) return pdfAnnotationLoader;
+  pdfAnnotationLoader = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "./pdf-annotation.bundle.js";
+    script.onload = () => { window.__studyBuddyPdfAnnotationLoaded = true; resolve(); };
+    script.onerror = () => reject(new Error("The PDF viewer could not be loaded."));
+    document.body.appendChild(script);
+  });
+  return pdfAnnotationLoader;
+}
 
 function openNotebookAssetDatabase() {
   return new Promise((resolve, reject) => {
@@ -1278,6 +1512,18 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character]);
 }
 
+function fixVisibleCountGrammar(root) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) node.nodeValue = node.nodeValue
+    .replace(/\b1 cards\b/g, "1 card")
+    .replace(/\b1 questions\b/g, "1 question")
+    .replace(/\b1 Feynman (?:prompts|topics)\b/g, "1 Feynman prompt")
+    .replace(/\b1 units\b/g, "1 unit")
+    .replace(/\b1 decks\b/g, "1 deck");
+}
+
 function showToast(message) {
   window.clearTimeout(toastHandle);
   toast.textContent = message;
@@ -1285,22 +1531,99 @@ function showToast(message) {
   toastHandle = window.setTimeout(() => toast.classList.remove("show"), 2400);
 }
 
-function loadNotebookNotes() {
+function debounce(callback, delay = 180) {
+  let handle;
+  return (...args) => {
+    window.clearTimeout(handle);
+    handle = window.setTimeout(() => callback(...args), delay);
+  };
+}
+
+function formatStorageBytes(bytes) {
+  const value = Math.max(0, Number(bytes) || 0);
+  if (value < 1024) return `${value} B`;
+  if (value < 1048576) return `${(value / 1024).toFixed(1)} KB`;
+  if (value < 1073741824) return `${(value / 1048576).toFixed(1)} MB`;
+  return `${(value / 1073741824).toFixed(1)} GB`;
+}
+
+async function renderStorageHealth() {
+  const label = $("#storage-health-label");
+  if (!label) return;
+  label.textContent = "Checking storage…";
+  let localBytes = 0;
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index) || "";
+    const value = localStorage.getItem(key) || "";
+    localBytes += (key.length + value.length) * 2;
+  }
+  let pdfBytes = 0;
+  for (const note of loadNotebookNotes().filter((item) => item.type === "pdf" && item.pdfAssetId)) {
+    try { pdfBytes += (await getNotebookAsset(note.pdfAssetId))?.size || 0; } catch (_) {}
+  }
+  let estimate = null;
+  try { estimate = navigator.storage?.estimate ? await navigator.storage.estimate() : null; } catch (_) { estimate = null; }
+  const total = estimate?.usage ?? localBytes + pdfBytes;
+  const quota = estimate?.quota || 0;
+  const percent = quota ? Math.min(100, total / quota * 100) : 0;
+  const localRisk = localBytes >= 4 * 1048576;
+  const level = percent >= 90 || localBytes >= 5 * 1048576 ? "danger" : percent >= 75 || localRisk ? "warning" : "healthy";
+  label.textContent = level === "danger" ? "Storage is nearly full" : level === "warning" ? "Back up your data soon" : "Storage looks healthy";
+  $("#storage-health-detail").textContent = quota ? `${formatStorageBytes(total)} used of ${formatStorageBytes(quota)} available to the app.` : `${formatStorageBytes(total)} stored locally.`;
+  const meter = $(".storage-meter");
+  meter.classList.toggle("warning", level === "warning");
+  meter.classList.toggle("danger", level === "danger");
+  meter.setAttribute("aria-valuenow", String(Math.round(percent)));
+  $("#storage-meter-fill").style.width = `${quota ? Math.max(1, percent) : 0}%`;
+  let recoveryCount = 0;
+  try { recoveryCount = JSON.parse(localStorage.getItem(CORRUPT_DATA_INDEX_KEY) || "[]").length || 0; } catch (_) {}
+  $("#storage-diagnostics").innerHTML = `<span>Personal sets: ${loadCustomDecks().length}</span><span>Notes: ${loadNotebookNotes().length}</span><span>Imported PDFs: ${formatStorageBytes(pdfBytes)}</span><span>Local records: ${formatStorageBytes(localBytes)}</span><span>Recovery copies: ${recoveryCount}</span>`;
+}
+
+const CORRUPT_DATA_INDEX_KEY = "your-study-buddy-recovered-data-v1";
+
+function preserveCorruptLocalData(key, rawValue) {
+  if (!rawValue) return;
   try {
-    const notes = JSON.parse(localStorage.getItem(NOTES_STORAGE_KEY) || "[]");
-    return Array.isArray(notes) ? notes : [];
-  } catch { return []; }
+    const recoveryKey = `${key}-recovery-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    localStorage.setItem(recoveryKey, rawValue);
+    const index = JSON.parse(localStorage.getItem(CORRUPT_DATA_INDEX_KEY) || "[]");
+    const entries = Array.isArray(index) ? index : [];
+    entries.push({ key: recoveryKey, originalKey: key, savedAt: Date.now() });
+    localStorage.setItem(CORRUPT_DATA_INDEX_KEY, JSON.stringify(entries.slice(-20)));
+    localStorage.removeItem(key);
+    window.setTimeout(() => showToast("Damaged local data was preserved in a recovery copy."), 0);
+  } catch (error) {
+    console.error("Could not preserve damaged local data:", error);
+  }
+}
+
+function loadLocalArray(key, validate = () => true) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return [];
+  try {
+    const value = JSON.parse(raw);
+    if (!Array.isArray(value)) throw new Error("Expected an array");
+    return value.filter(validate);
+  } catch (error) {
+    console.error(`Could not read ${key}:`, error);
+    preserveCorruptLocalData(key, raw);
+    return [];
+  }
+}
+
+function loadNotebookNotes() {
+  return loadLocalArray(NOTES_STORAGE_KEY, (note) => note && typeof note === "object");
 }
 
 function saveNotebookNotes(notes) {
-  localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+  const serialized = JSON.stringify(notes);
+  localStorage.setItem(NOTES_STORAGE_KEY, serialized);
+  warnIfLocalPayloadLarge(serialized);
 }
 
 function loadNoteFolders() {
-  try {
-    const folders = JSON.parse(localStorage.getItem(NOTE_FOLDERS_STORAGE_KEY) || "[]");
-    return Array.isArray(folders) ? folders : [];
-  } catch { return []; }
+  return loadLocalArray(NOTE_FOLDERS_STORAGE_KEY, (folder) => folder?.id && folder?.name);
 }
 
 function saveNoteFolders(folders) {
@@ -1436,7 +1759,7 @@ function updateNotebookNote(changes, renderList = true) {
 
 function createNotebookNote(type) {
   const canvasMode = type === "page" ? "page" : "open";
-  const note = { id: makeLocalId("note"), type: "drawing", canvasMode, pageCount: 1, pageLayout: "pages", pageDocumentContent: "", title: canvasMode === "page" ? "Untitled page" : "Untitled open note", html: "", drawing: "", drawingWidth: canvasMode === "page" ? PAGE_CANVAS_WIDTH : DRAWING_CANVAS_WIDTH, drawingHeight: canvasMode === "page" ? PAGE_CANVAS_HEIGHT : DRAWING_CANVAS_HEIGHT, drawingTexts: [], updatedAt: Date.now() };
+  const note = { id: makeLocalId("note"), type: "drawing", canvasMode, pageCount: 1, pageLayout: "pages", pageDocumentContent: "", title: canvasMode === "page" ? "Untitled page" : "Untitled open note", html: "", drawing: "", drawingWidth: canvasMode === "page" ? PAGE_CANVAS_WIDTH : DRAWING_CANVAS_WIDTH, drawingHeight: canvasMode === "page" ? PAGE_CANVAS_HEIGHT : DRAWING_CANVAS_HEIGHT, drawingTexts: [], drawingImages: [], updatedAt: Date.now() };
   const notes = loadNotebookNotes();
   notes.push(note);
   saveNotebookNotes(notes);
@@ -1480,6 +1803,7 @@ function createImportedNotebookNote(payload) {
     drawingWidth: PAGE_CANVAS_WIDTH,
     drawingHeight: PAGE_CANVAS_HEIGHT * documentPages.length + PAGE_CANVAS_GAP * Math.max(0, documentPages.length - 1),
     drawingTexts: [],
+    drawingImages: [],
     updatedAt: Date.now(),
   };
   const notes = loadNotebookNotes();
@@ -1525,7 +1849,9 @@ async function displayImportedPdf(note) {
   if (!blob || activeNoteId !== note.id) return;
   const request = { noteId: note.id, blob };
   window.__pendingStudyBuddyPdf = request;
-  window.dispatchEvent(new CustomEvent("studybuddy:open-pdf-note", { detail: request }));
+  await ensurePdfAnnotationLoaded();
+  if (activeNoteId !== note.id) return;
+  if (window.__pendingStudyBuddyPdf === request) window.dispatchEvent(new CustomEvent("studybuddy:open-pdf-note", { detail: request }));
 }
 
 function handleNotebookImportResult(result) {
@@ -1594,7 +1920,7 @@ function openNotebookNote(id) {
     noteShowPageNumbers = Boolean(note.showPageNumbers);
     $("#document-show-page-numbers").checked = noteShowPageNumbers;
     configureNoteCanvas(note.canvasMode || "open", Math.max(note.pageCount || 1, noteDocumentPages.length), note.pageLayout === "continuous" ? "document" : note.pageLayout || "pages");
-    loadDrawingNoteImage(note.drawing || "", note.drawingStrokes || [], note.drawingTexts || []);
+    loadDrawingNoteImage(note.drawing || "", note.drawingStrokes || [], note.drawingTexts || [], note.drawingImages || []);
   } else if (note.type === "pdf") {
     $("#pdf-note-title").value = note.title || "Imported PDF";
     displayImportedPdf(note).catch(() => showToast("This imported PDF could not be opened."));
@@ -1747,6 +2073,8 @@ function setDrawingNoteZoom(value, centerCanvas = false) {
 function clearDrawingCanvas() {
   noteDrawingStrokes = [];
   noteDrawingTexts = [];
+  noteDrawingImages = [];
+  selectedNoteImageId = null;
   currentNoteStroke = null;
   noteDrawingLegacyImage = "";
   renderDrawingNoteVectors();
@@ -1803,6 +2131,121 @@ function renderDrawingNoteVectors() {
     image.setAttribute("opacity", "0.7");
     svg.appendChild(image);
   }
+  noteDrawingImages.forEach((imageItem) => {
+    if (!imageItem?.src) return;
+    const centerX = imageItem.x + imageItem.width / 2;
+    const centerY = imageItem.y + imageItem.height / 2;
+    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    group.dataset.noteImageLayer = imageItem.layer === "back" ? "back" : "front";
+    group.setAttribute("transform", `rotate(${Number(imageItem.rotation) || 0} ${centerX} ${centerY})`);
+    const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    image.dataset.noteImageId = imageItem.id;
+    image.setAttribute("href", imageItem.src);
+    image.setAttribute("x", String(imageItem.x));
+    image.setAttribute("y", String(imageItem.y));
+    image.setAttribute("width", String(imageItem.width));
+    image.setAttribute("height", String(imageItem.height));
+    image.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    image.style.cursor = noteDrawingTool === "cursor" ? "move" : "crosshair";
+    const selectAndMoveImage = (event) => {
+      if (noteDrawingTool !== "cursor") return;
+      event.preventDefault(); event.stopPropagation();
+      selectedNoteImageId = imageItem.id;
+      selectedCanvasTextId = null;
+      pushDrawingNoteHistory();
+      const point = noteCanvasPoint(event);
+      noteImageTransform = { mode: "move", pointerId: event.pointerId, start: point, original: { ...imageItem } };
+      viewport.setPointerCapture(event.pointerId);
+      renderDrawingNoteVectors();
+    };
+    image.addEventListener("pointerdown", selectAndMoveImage);
+    group.appendChild(image);
+    const imageHitTarget = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    imageHitTarget.dataset.noteImageId = imageItem.id;
+    imageHitTarget.setAttribute("x", String(imageItem.x));
+    imageHitTarget.setAttribute("y", String(imageItem.y));
+    imageHitTarget.setAttribute("width", String(imageItem.width));
+    imageHitTarget.setAttribute("height", String(imageItem.height));
+    imageHitTarget.setAttribute("fill", "rgba(0,0,0,0.001)");
+    imageHitTarget.setAttribute("pointer-events", noteDrawingTool === "cursor" ? "all" : "none");
+    imageHitTarget.style.cursor = noteDrawingTool === "cursor" ? "move" : "crosshair";
+    imageHitTarget.addEventListener("pointerdown", selectAndMoveImage);
+    group.appendChild(imageHitTarget);
+    if (imageItem.caption) {
+      const captionScale = drawingWorkspaceWidth() / Math.max(1, svg.getBoundingClientRect().width);
+      const caption = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      caption.setAttribute("x", String(centerX));
+      caption.setAttribute("y", String(imageItem.y + imageItem.height + 18 * captionScale));
+      caption.setAttribute("text-anchor", "middle");
+      caption.setAttribute("font-size", String(12 * captionScale));
+      caption.setAttribute("font-family", "Arial, sans-serif");
+      caption.setAttribute("fill", "#34384a");
+      caption.setAttribute("stroke", "none");
+      caption.textContent = imageItem.caption;
+      group.appendChild(caption);
+    }
+    if (selectedNoteImageId === imageItem.id) {
+      const selectionScale = drawingWorkspaceWidth() / Math.max(1, svg.getBoundingClientRect().width);
+      const outline = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      outline.setAttribute("x", String(imageItem.x)); outline.setAttribute("y", String(imageItem.y));
+      outline.setAttribute("width", String(imageItem.width)); outline.setAttribute("height", String(imageItem.height));
+      outline.setAttribute("fill", "none"); outline.setAttribute("stroke", "#665ee8"); outline.setAttribute("stroke-width", String(2 * selectionScale)); outline.setAttribute("stroke-dasharray", `${6 * selectionScale} ${4 * selectionScale}`);
+      outline.setAttribute("pointer-events", "none"); group.appendChild(outline);
+      const addHandle = (kind, x, y, cursor, symbol) => {
+        const handleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        handleGroup.dataset.noteImageControl = kind;
+        handleGroup.style.cursor = cursor;
+        const handle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        handle.setAttribute("cx", String(x)); handle.setAttribute("cy", String(y)); handle.setAttribute("r", String(10 * selectionScale));
+        handle.setAttribute("fill", "#ffffff"); handle.setAttribute("stroke", kind === "delete" ? "#c6544b" : "#665ee8"); handle.setAttribute("stroke-width", String(2 * selectionScale));
+        const icon = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        icon.setAttribute("x", String(x)); icon.setAttribute("y", String(y + 3.6 * selectionScale));
+        icon.setAttribute("text-anchor", "middle"); icon.setAttribute("font-size", String(11 * selectionScale));
+        icon.setAttribute("font-family", "Arial, sans-serif"); icon.setAttribute("font-weight", "800");
+        icon.setAttribute("fill", kind === "delete" ? "#c6544b" : "#665ee8"); icon.setAttribute("stroke", "none"); icon.setAttribute("pointer-events", "none");
+        icon.textContent = symbol;
+        handleGroup.addEventListener("pointerdown", (event) => {
+          event.preventDefault(); event.stopPropagation();
+          if (kind === "delete") {
+            pushDrawingNoteHistory();
+            noteDrawingImages = noteDrawingImages.filter((candidate) => candidate.id !== imageItem.id);
+            selectedNoteImageId = null;
+            renderDrawingNoteVectors();
+            saveDrawingNote();
+            return;
+          }
+          const point = noteCanvasPoint(event);
+          pushDrawingNoteHistory();
+          noteImageTransform = { mode: kind, pointerId: event.pointerId, start: point, original: { ...imageItem } };
+          viewport.setPointerCapture(event.pointerId);
+        });
+        handleGroup.append(handle, icon);
+        group.appendChild(handleGroup);
+      };
+      addHandle("delete", imageItem.x, imageItem.y, "pointer", "×");
+      addHandle("resize", imageItem.x + imageItem.width, imageItem.y + imageItem.height, "nwse-resize", "↘");
+      const stem = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      stem.setAttribute("x1", String(centerX)); stem.setAttribute("y1", String(imageItem.y)); stem.setAttribute("x2", String(centerX)); stem.setAttribute("y2", String(imageItem.y - 27 * selectionScale));
+      stem.setAttribute("stroke", "#665ee8"); stem.setAttribute("stroke-width", String(2 * selectionScale)); stem.setAttribute("pointer-events", "none"); group.appendChild(stem);
+      addHandle("rotate", centerX, imageItem.y - 37 * selectionScale, "grab", "↻");
+    }
+    svg.appendChild(group);
+  });
+  const selectedImage = noteDrawingImages.find((item) => item.id === selectedNoteImageId);
+  const imageOptions = $("#note-image-options");
+  if (imageOptions) imageOptions.hidden = !selectedImage || noteDrawingTool !== "cursor";
+  const backgroundButton = $("#remove-note-image-background");
+  if (backgroundButton) backgroundButton.title = "Remove the selected image's background";
+  const pushFrontButton = $("#push-note-image-front");
+  if (pushFrontButton) {
+    pushFrontButton.disabled = Boolean(selectedImage) && selectedImage.layer !== "back";
+    pushFrontButton.title = selectedImage?.layer === "back" ? "Move this image in front of the canvas content" : "This image is already in front of the canvas content";
+  }
+  const pushBackButton = $("#push-note-image-back");
+  if (pushBackButton) {
+    pushBackButton.disabled = selectedImage?.layer === "back";
+    pushBackButton.title = selectedImage?.layer === "back" ? "This image is already behind the canvas content" : selectedImage ? "Move this image behind the other canvas content" : "Select an image to move it behind the other canvas content";
+  }
   [...noteDrawingStrokes, ...(currentNoteStroke ? [currentNoteStroke] : [])].forEach((stroke) => {
     if (!stroke.points?.length) return;
     if (stroke.tool === "calligraphy") {
@@ -1847,6 +2290,7 @@ function renderDrawingNoteVectors() {
     if (stroke.tool === "marker") path.setAttribute("opacity", "0.86");
     svg.appendChild(path);
   });
+  $$('g[data-note-image-layer="front"]', svg).forEach((group) => svg.appendChild(group));
   renderOpenNoteTextLayer();
   viewport.scrollLeft = preservedScrollLeft;
   viewport.scrollTop = preservedScrollTop;
@@ -1956,10 +2400,13 @@ function renderOpenNoteTextLayer() {
   viewport.scrollTop = preservedScrollTop;
 }
 
-function loadDrawingNoteImage(dataUrl, strokes, texts) {
+function loadDrawingNoteImage(dataUrl, strokes, texts, images = []) {
   noteDrawingLegacyImage = dataUrl || "";
   noteDrawingStrokes = Array.isArray(strokes) ? strokes : [];
   noteDrawingTexts = Array.isArray(texts) ? texts.filter((item) => (item?.text || "").trim()) : [];
+  noteDrawingImages = Array.isArray(images) ? images.filter((item) => item?.src) : [];
+  selectedNoteImageId = null;
+  noteImageTransform = null;
   currentNoteStroke = null;
   noteDrawingHistory = [];
   noteDrawingRedoHistory = [];
@@ -1967,7 +2414,7 @@ function loadDrawingNoteImage(dataUrl, strokes, texts) {
 }
 
 function drawingNoteSnapshot() {
-  return JSON.stringify({ strokes: noteDrawingStrokes, texts: noteDrawingTexts, legacy: noteDrawingLegacyImage });
+  return JSON.stringify({ strokes: noteDrawingStrokes, texts: noteDrawingTexts, images: noteDrawingImages, legacy: noteDrawingLegacyImage });
 }
 
 function pushDrawingNoteHistory() {
@@ -2023,10 +2470,12 @@ function restoreDrawingNoteSnapshot(snapshot, afterRestore) {
     const restored = JSON.parse(snapshot || "{}");
     noteDrawingStrokes = Array.isArray(restored.strokes) ? restored.strokes : [];
     noteDrawingTexts = Array.isArray(restored.texts) ? restored.texts : [];
+    noteDrawingImages = Array.isArray(restored.images) ? restored.images : [];
     noteDrawingLegacyImage = restored.legacy || "";
   } catch {
     noteDrawingStrokes = [];
     noteDrawingTexts = [];
+    noteDrawingImages = [];
   }
   currentNoteStroke = null;
   renderDrawingNoteVectors();
@@ -2034,9 +2483,160 @@ function restoreDrawingNoteSnapshot(snapshot, afterRestore) {
 }
 
 function saveDrawingNote() {
-  updateNotebookNote({ title: $("#drawing-note-title").value.trim() || "Untitled note", canvasMode: noteCanvasMode, pageCount: notePageCount, pageLayout: notePageLayout, pageDocumentContent: notePageDocumentContent, documentPages: noteDocumentPages, activeDocumentPage, documentLineSpacing: noteDocumentLineSpacing, showPageNumbers: noteShowPageNumbers, drawing: noteDrawingLegacyImage, drawingStrokes: noteDrawingStrokes, drawingTexts: noteDrawingTexts, drawingWidth: drawingWorkspaceWidth(), drawingHeight: drawingWorkspaceHeight() }, false);
+  updateNotebookNote({ title: $("#drawing-note-title").value.trim() || "Untitled note", canvasMode: noteCanvasMode, pageCount: notePageCount, pageLayout: notePageLayout, pageDocumentContent: notePageDocumentContent, documentPages: noteDocumentPages, activeDocumentPage, documentLineSpacing: noteDocumentLineSpacing, showPageNumbers: noteShowPageNumbers, drawing: noteDrawingLegacyImage, drawingStrokes: noteDrawingStrokes, drawingTexts: noteDrawingTexts, drawingImages: noteDrawingImages, drawingWidth: drawingWorkspaceWidth(), drawingHeight: drawingWorkspaceHeight() }, false);
   $("#drawing-note-status").textContent = "Saved locally";
 }
+
+async function clipboardImageDataUrl(file) {
+  const source = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("The copied image could not be read."));
+    reader.readAsDataURL(file);
+  });
+  const image = await loadExportImage(source);
+  if (!image) throw new Error("The copied image could not be opened.");
+  const maximumSide = 1800;
+  const scale = Math.min(1, maximumSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  return { src: canvas.toDataURL("image/webp", .88), width: canvas.width, height: canvas.height };
+}
+
+async function pasteImageIntoCanvas(file) {
+  const pasted = await clipboardImageDataUrl(file);
+  const canvasElement = drawingNoteCanvas();
+  const viewport = canvasElement.parentElement;
+  const viewportRect = viewport.getBoundingClientRect();
+  const canvasRect = canvasElement.getBoundingClientRect();
+  const point = {
+    x: (viewportRect.left + viewportRect.width / 2 - canvasRect.left) * drawingWorkspaceWidth() / Math.max(1, canvasRect.width),
+    y: (viewportRect.top + viewportRect.height / 2 - canvasRect.top) * drawingWorkspaceHeight() / Math.max(1, canvasRect.height),
+  };
+  const screenScale = Math.min(1, viewportRect.width * .46 / pasted.width, viewportRect.height * .46 / pasted.height);
+  const canvasUnitsPerScreenX = drawingWorkspaceWidth() / Math.max(1, canvasRect.width);
+  const canvasUnitsPerScreenY = drawingWorkspaceHeight() / Math.max(1, canvasRect.height);
+  const width = Math.max(24 * canvasUnitsPerScreenX, pasted.width * screenScale * canvasUnitsPerScreenX);
+  const height = Math.max(18 * canvasUnitsPerScreenY, pasted.height * screenScale * canvasUnitsPerScreenY);
+  const imageItem = { id: makeLocalId("note-image"), src: pasted.src, x: Math.max(0, point.x - width / 2), y: Math.max(0, point.y - height / 2), width, height, rotation: 0, caption: "", layer: "front" };
+  pushDrawingNoteHistory();
+  noteDrawingImages.push(imageItem);
+  selectedNoteImageId = imageItem.id;
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+  showToast("Image pasted. Drag it, use the corner to resize, the top handle to rotate, or double-click to add a caption.");
+}
+
+async function removeImageBackground(source) {
+  const image = await loadExportImage(source);
+  if (!image) throw new Error("The selected image could not be opened.");
+  const maximumSide = 1400;
+  const scale = Math.min(1, maximumSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+  const data = pixels.data;
+  const width = canvas.width;
+  const height = canvas.height;
+  const cornerIndexes = [0, width - 1, (height - 1) * width, height * width - 1];
+  const backgrounds = cornerIndexes.map((index) => [data[index * 4], data[index * 4 + 1], data[index * 4 + 2]]);
+  const colorDistance = (index) => {
+    const offset = index * 4;
+    let closest = Infinity;
+    backgrounds.forEach((color) => {
+      const red = data[offset] - color[0];
+      const green = data[offset + 1] - color[1];
+      const blue = data[offset + 2] - color[2];
+      closest = Math.min(closest, Math.sqrt(red * red + green * green + blue * blue));
+    });
+    return closest;
+  };
+  const visited = new Uint8Array(width * height);
+  const queue = new Int32Array(width * height);
+  let head = 0;
+  let tail = 0;
+  const enqueue = (index) => {
+    if (index < 0 || index >= visited.length || visited[index] || colorDistance(index) > 82) return;
+    visited[index] = 1;
+    queue[tail++] = index;
+  };
+  for (let x = 0; x < width; x += 1) { enqueue(x); enqueue((height - 1) * width + x); }
+  for (let y = 1; y < height - 1; y += 1) { enqueue(y * width); enqueue(y * width + width - 1); }
+  while (head < tail) {
+    const index = queue[head++];
+    const x = index % width;
+    if (x > 0) enqueue(index - 1);
+    if (x < width - 1) enqueue(index + 1);
+    if (index >= width) enqueue(index - width);
+    if (index < width * (height - 1)) enqueue(index + width);
+  }
+  for (let index = 0; index < visited.length; index += 1) {
+    if (!visited[index]) continue;
+    const distance = colorDistance(index);
+    data[index * 4 + 3] = Math.round(255 * Math.max(0, Math.min(1, (distance - 24) / 58)));
+  }
+  context.putImageData(pixels, 0, 0);
+  return canvas.toDataURL("image/png");
+}
+
+async function removeSelectedNoteImageBackground() {
+  const imageItem = noteDrawingImages.find((item) => item.id === selectedNoteImageId);
+  if (!imageItem) return;
+  const button = $("#remove-note-image-background");
+  button.disabled = true;
+  button.textContent = "Removing…";
+  try {
+    pushDrawingNoteHistory();
+    imageItem.src = await removeImageBackground(imageItem.src);
+    renderDrawingNoteVectors();
+    saveDrawingNote();
+    showToast("Image background removed. Undo is available if you want the original back.");
+  } catch (error) {
+    showToast(error?.message || "The image background could not be removed.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Remove background";
+  }
+}
+
+async function pasteImageIntoDocument(editor, file) {
+  const pasted = await clipboardImageDataUrl(file);
+  editor.focus();
+  const availableWidth = Math.max(160, editor.clientWidth - 164);
+  const availableHeight = Math.max(180, editor.clientHeight - 190);
+  const scale = Math.min(1, availableWidth / pasted.width, availableHeight / pasted.height);
+  const displayWidth = Math.max(80, Math.round(pasted.width * scale));
+  document.execCommand("insertHTML", false, `<figure class="document-pasted-image" contenteditable="false" data-rotation="0"><img src="${pasted.src}" alt="Pasted image" style="width:min(100%,${displayWidth}px);transform:rotate(0deg)"><figcaption>Double-click to add a caption</figcaption></figure><p><br></p>`);
+  saveDocumentEditor(editor);
+  showToast("Image pasted. Double-click it to change size, rotation, or caption.");
+}
+
+async function pasteImageIntoActiveNote(file) {
+  if (noteCanvasMode === "page" && notePageLayout === "document") {
+    const editor = activeDocumentEditor();
+    if (!editor) throw new Error("Choose a document page before pasting the image.");
+    await pasteImageIntoDocument(editor, file);
+    return;
+  }
+  await pasteImageIntoCanvas(file);
+}
+
+window.receiveNativeClipboardImage = async (source) => {
+  if (!source || state.currentAppView !== "notes" || activeNotebookNote()?.type !== "drawing") return false;
+  try {
+    const blob = await (await fetch(source)).blob();
+    await pasteImageIntoActiveNote(new File([blob], "Pasted image.png", { type: blob.type || "image/png" }));
+    return true;
+  } catch (error) {
+    showToast(error?.message || "The image could not be pasted.");
+    return false;
+  }
+};
 
 function activeDocumentEditor() {
   return $(`[data-document-page="${activeDocumentPage}"]`);
@@ -2127,6 +2727,30 @@ function wireDocumentEditor(editor) {
   editor.addEventListener("pointerdown", () => setActiveDocumentPage(editor.dataset.documentPage));
   editor.addEventListener("input", () => {
     if (!editor._positioningCaret) saveDocumentEditor(editor);
+  });
+  editor.addEventListener("paste", (event) => {
+    const imageItem = [...(event.clipboardData?.items || [])].find((item) => item.type.startsWith("image/"));
+    if (!imageItem) return;
+    event.preventDefault();
+    pasteImageIntoDocument(editor, imageItem.getAsFile()).catch((error) => showToast(error.message || "The image could not be pasted."));
+  });
+  editor.addEventListener("dblclick", (event) => {
+    const image = event.target.closest?.(".document-pasted-image img");
+    if (!image || !editor.contains(image)) return;
+    const figure = image.closest("figure");
+    const requestedWidth = window.prompt("Image width in pixels:", String(Math.round(image.getBoundingClientRect().width)));
+    if (requestedWidth === null) return;
+    const width = Math.max(80, Math.min(650, Number(requestedWidth) || 320));
+    const requestedRotation = window.prompt("Rotation in degrees:", String(Number(figure.dataset.rotation) || 0));
+    if (requestedRotation === null) return;
+    const rotation = Math.max(-180, Math.min(180, Number(requestedRotation) || 0));
+    const caption = window.prompt("Caption (leave blank for no caption):", figure.querySelector("figcaption")?.textContent === "Double-click to add a caption" ? "" : figure.querySelector("figcaption")?.textContent || "");
+    if (caption === null) return;
+    image.style.width = `min(100%, ${width}px)`;
+    image.style.transform = `rotate(${rotation}deg)`;
+    figure.dataset.rotation = String(rotation);
+    figure.querySelector("figcaption").textContent = caption.trim() || "Double-click to add a caption";
+    saveDocumentEditor(editor);
   });
   editor.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -2252,6 +2876,11 @@ function removeSharedNotePage(pageIndex) {
   });
   noteDrawingTexts = noteDrawingTexts.flatMap((item) => {
     if (item.y >= pageStart && item.y < pageEnd) return [];
+    return [{ ...item, y: item.y >= pageEnd ? item.y - pageSpan : item.y }];
+  });
+  noteDrawingImages = noteDrawingImages.flatMap((item) => {
+    const centerY = item.y + item.height / 2;
+    if (centerY >= pageStart && centerY < pageEnd) return [];
     return [{ ...item, y: item.y >= pageEnd ? item.y - pageSpan : item.y }];
   });
   noteDocumentPages.splice(pageIndex, 1);
@@ -2731,7 +3360,7 @@ function renderLesson() {
   const ankiCard = $(".anki-card", $("#lesson-view"));
   if (ankiCard) ankiCard.addEventListener("click", () => {
     const review = $(".anki-review", $("#lesson-view"));
-    if (!review.classList.contains("revealed")) setTextbookAnkiReveal(review, true);
+    setTextbookAnkiReveal(review, !review.classList.contains("revealed"));
   });
   const revealAnkiButton = $("[data-reveal-anki]", $("#lesson-view"));
   if (revealAnkiButton) revealAnkiButton.addEventListener("click", () => {
@@ -2829,7 +3458,7 @@ function renderAnkiView(chapter) {
   const cardBack = cleanAnkiStudyText(card[1]);
   const intervals = ankiRatingIntervals(ankiScheduleFor(queueItem.scheduleKey));
   const equation = card[2] ? `<span class="anki-equation" aria-label="Equation">${textbookEquationHtml(card[2])}</span>` : "";
-  return `<section class="practice-view anki-study"><button class="anki-back" type="button">← Change unit selection</button><div class="anki-session-heading"><p class="lesson-number">Anki review · ${state.ankiQueue.length} ${state.ankiQueue.length === 1 ? "card" : "cards"} remaining</p><span class="anki-time">◷ <strong id="anki-elapsed">00:00</strong></span></div><h3>${reviewChapter.title}</h3><div class="anki-card-meta"><p class="anki-card-source">Chapter ${reviewChapter.number}</p></div><div class="anki-review"><button class="anki-card" type="button" aria-pressed="false" aria-label="Show answer"><span>${card[2] ? "Equation" : "Question"}</span><strong>${escapeHtml(cardFront)}</strong><em>Click to show answer</em><div class="anki-answer">${equation}<p>${escapeHtml(cardBack)}</p></div></button>${ankiSessionCountsMarkup(state.ankiQueue, queueItem.sessionType)}<button class="button primary-button anki-reveal-button" type="button" data-reveal-anki>Reveal answer</button><div class="anki-ratings" aria-label="Schedule this card's next review"><button type="button" data-anki-rating="again"><span>${formatReviewInterval(intervals.again)}</span><strong>Again</strong></button><button type="button" data-anki-rating="hard"><span>${formatReviewInterval(intervals.hard)}</span><strong>Hard</strong></button><button type="button" data-anki-rating="good"><span>${formatReviewInterval(intervals.good)}</span><strong>Good</strong></button><button type="button" data-anki-rating="easy"><span>${formatReviewInterval(intervals.easy)}</span><strong>Easy</strong></button><button type="button" class="anki-remove-choice" data-remove-anki-card title="Double-click to remove this card" aria-label="Double-click to remove this card"><strong>Remove</strong></button></div></div></section>`;
+  return `<section class="practice-view anki-study"><button class="anki-back" type="button">← Change unit selection</button><div class="anki-session-heading"><p class="lesson-number">Anki review · ${state.ankiQueue.length} ${state.ankiQueue.length === 1 ? "card" : "cards"} remaining</p><span class="anki-time">◷ <strong id="anki-elapsed">00:00</strong></span></div><h3>${reviewChapter.title}</h3><div class="anki-card-meta"><p class="anki-card-source">Chapter ${reviewChapter.number}</p></div><div class="anki-review"><button class="anki-card" type="button" aria-pressed="false" aria-label="Show answer"><span>${card[2] ? "Equation" : "Question"}</span><strong>${escapeHtml(cardFront)}</strong><em>Click to show answer</em><div class="anki-answer">${equation}<p>${escapeHtml(cardBack)}</p></div></button>${ankiSessionCountsMarkup(state.ankiQueue, queueItem.sessionType)}<button class="button primary-button anki-reveal-button" type="button" data-reveal-anki>Reveal answer</button><div class="anki-ratings" aria-label="Schedule this card's next review"><button type="button" data-anki-rating="again"><span>${formatReviewInterval(intervals.again)}</span><strong>Again</strong></button><button type="button" data-anki-rating="hard"><span>${formatReviewInterval(intervals.hard)}</span><strong>Hard</strong></button><button type="button" data-anki-rating="good"><span>${formatReviewInterval(intervals.good)}</span><strong>Good</strong></button><button type="button" data-anki-rating="easy"><span>${formatReviewInterval(intervals.easy)}</span><strong>Easy</strong></button><button type="button" class="anki-remove-choice" data-remove-anki-card title="Double-click to remove this card" aria-label="Double-click to remove this card"><span class="anki-remove-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg></span><strong>Remove</strong></button></div></div></section>`;
 }
 
 function setTextbookAnkiReveal(review, revealed) {
@@ -3043,14 +3672,18 @@ function dashboardAnkiEntries() {
       const course = courses.find((item) => item.id === saved.id);
       if (!course || !isEnrolled(course.id)) return null;
       const cards = course.chapters.flatMap((unit, unitIndex) => unit.miniUnits.flatMap((chapter, miniIndex) => chapter.cards.map((card, cardIndex) => ({ card, key: `${course.id}-${unitIndex}-${miniIndex}-${cardIndex}` })).filter((item) => !removed.has(item.key))));
-      return { ...saved, name: course.title, kind: "Textbook", ...activeAnkiSummary(cards.map((item) => prepareAnkiSessionCard(item.card, item.key)), `course:${course.id}`) };
+      const scope = `course:${course.id}`;
+      const plan = dailyAnkiPlan(cards.map((item) => prepareAnkiSessionCard(item.card, item.key)), scope);
+      return { ...saved, name: course.title, kind: "Textbook", scope, plan, total: plan.queue.length, newCount: plan.newCards.length, learningCount: plan.learningCards.length, reviewCount: plan.reviewCards.length };
     }
     if (!saved.id.startsWith("folder:") && groupedDeckIds.has(saved.id)) return null;
     const deck = findStudyDeck(saved.id);
     if (!deck) return null;
     const folder = saved.id.startsWith("folder:") ? loadStudyFolders().find((item) => item.id === saved.id.slice(7)) : null;
     const cards = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
-    return { ...saved, name: deck.name, kind: folder ? `Folder · ${folder.deckIds.length} sets` : deck.builtIn ? "Built-in deck" : "Personal set", starred: isStudyItemStarred(folder ? saved.id : `deck:${saved.id}`), ...activeAnkiSummary(cards, `deck:${deck.id}`) };
+    const scope = `deck:${deck.id}`;
+    const plan = dailyAnkiPlan(cards, scope);
+    return { ...saved, name: deck.name, kind: folder ? `Folder · ${folder.deckIds.length} sets` : deck.builtIn ? "Built-in deck" : "Personal set", starred: isStudyItemStarred(folder ? saved.id : `deck:${saved.id}`), scope, plan, total: plan.queue.length, newCount: plan.newCards.length, learningCount: plan.learningCards.length, reviewCount: plan.reviewCards.length };
   }).filter(Boolean).map((entry) => ({ ...entry, completedToday: entry.completedDay === localAnkiDayKey() }));
   return entries.sort((a, b) => Number(Boolean(b.starred)) - Number(Boolean(a.starred)) || Number(a.completedToday) - Number(b.completedToday) || b.total - a.total || a.name.localeCompare(b.name));
 }
@@ -3059,11 +3692,80 @@ function renderActiveAnkiDecks() {
   const list = $("#active-anki-list");
   if (!list) return;
   const entries = dashboardAnkiEntries();
+  const dueKeys = new Set(entries.filter((entry) => entry.total > 0).map(activeAnkiEntryKey));
+  state.activeAnkiSelections = new Set([...state.activeAnkiSelections].filter((key) => dueKeys.has(key) || Object.keys(lazyBuiltInSources).some((id) => !builtInFlashcardCollections.find((item) => item.id === id)?.units.length && key.endsWith(`:${id}`))));
+  persistActiveAnkiSelections();
   const total = entries.reduce((sum, entry) => sum + entry.total, 0);
   $("#active-anki-total").textContent = `${total} due`;
-  list.innerHTML = entries.length ? entries.map((entry) => `<article class="active-anki-item ${entry.completedToday ? "completed" : ""}"><div class="active-anki-copy"><small>${entry.starred ? '<span class="active-anki-star" aria-label="Starred">★</span> ' : ""}${escapeHtml(entry.kind)}</small><strong>${escapeHtml(entry.name)}</strong>${entry.completedToday ? '<div class="active-anki-complete-label">✓ Completed today</div>' : `<div class="active-anki-counts"><span><b>${entry.newCount}</b> new</span><span><b>${entry.learningCount}</b> learning</span><span><b>${entry.reviewCount}</b> review</span></div>`}</div><div class="active-anki-actions"><button class="button primary-button active-anki-start" type="button" data-dashboard-anki="${escapeHtml(entry.id)}" data-dashboard-anki-target="${entry.target}" ${entry.total ? "" : "disabled"}>${entry.completedToday ? "Done" : entry.total ? "Study now" : "Nothing due"}</button><button class="active-anki-remove" type="button" data-remove-active-anki="${escapeHtml(entry.id)}" data-remove-active-target="${entry.target}" aria-label="Remove ${escapeHtml(entry.name)} from Active Anki">Remove</button></div></article>`).join("") : '<div class="active-anki-empty">No active Anki decks yet. Open Anki for a study set or textbook to add it here.</div>';
+  list.innerHTML = entries.length ? entries.map((entry) => {
+    const key = activeAnkiEntryKey(entry);
+    return `<article class="active-anki-item ${entry.completedToday ? "completed" : ""}"><label class="active-anki-select" title="Select ${escapeHtml(entry.name)}"><input type="checkbox" data-select-active-anki="${escapeHtml(key)}" ${state.activeAnkiSelections.has(key) ? "checked" : ""} ${entry.total ? "" : "disabled"}><span aria-hidden="true"></span></label><div class="active-anki-copy"><small>${entry.starred ? '<span class="active-anki-star" aria-label="Starred">★</span> ' : ""}${escapeHtml(entry.kind)}</small><strong>${escapeHtml(entry.name)}</strong>${entry.completedToday ? '<div class="active-anki-complete-label">✓ Completed today</div>' : `<div class="active-anki-counts"><span><b>${entry.newCount}</b> new</span><span><b>${entry.learningCount}</b> learning</span><span><b>${entry.reviewCount}</b> review</span></div>`}</div><div class="active-anki-actions"><button class="button primary-button active-anki-start" type="button" data-dashboard-anki="${escapeHtml(entry.id)}" data-dashboard-anki-target="${entry.target}" ${entry.total ? "" : "disabled"}>${entry.completedToday ? "Done" : entry.total ? "Study now" : "Nothing due"}</button><button class="active-anki-remove" type="button" data-remove-active-anki="${escapeHtml(entry.id)}" data-remove-active-target="${entry.target}" aria-label="Remove ${escapeHtml(entry.name)} from Active Anki">Remove</button></div></article>`;
+  }).join("") : '<div class="active-anki-empty">No active Anki decks yet. Open Anki for a study set or textbook to add it here.</div>';
+  const batch = $("#active-anki-batch");
+  batch.hidden = dueKeys.size < 2;
+  updateActiveAnkiBatchControls(entries);
+  $$('[data-select-active-anki]', list).forEach((input, index) => input.setAttribute("aria-label", `Select ${entries[index]?.name || "deck"} for combined study`));
+  $$('[data-select-active-anki]', list).forEach((input) => input.addEventListener("change", () => {
+    if (input.checked) state.activeAnkiSelections.add(input.dataset.selectActiveAnki);
+    else state.activeAnkiSelections.delete(input.dataset.selectActiveAnki);
+    persistActiveAnkiSelections();
+    updateActiveAnkiBatchControls(entries);
+  }));
   $$('[data-dashboard-anki]', list).forEach((button) => button.addEventListener("click", () => openDashboardAnki(button.dataset.dashboardAnki, button.dataset.dashboardAnkiTarget)));
   $$('[data-remove-active-anki]', list).forEach((button) => button.addEventListener("click", () => removeActiveAnkiDeck(button.dataset.removeActiveAnki, button.dataset.removeActiveTarget)));
+}
+
+function activeAnkiEntryKey(entry) {
+  return `${entry.target}:${entry.id}`;
+}
+
+function updateActiveAnkiBatchControls(entries = dashboardAnkiEntries()) {
+  const due = entries.filter((entry) => entry.total > 0);
+  const selected = due.filter((entry) => state.activeAnkiSelections.has(activeAnkiEntryKey(entry)));
+  const selectAll = $("#active-anki-select-all");
+  selectAll.checked = due.length > 0 && selected.length === due.length;
+  selectAll.indeterminate = selected.length > 0 && selected.length < due.length;
+  $("#active-anki-selection-summary").textContent = `${selected.length} ${selected.length === 1 ? "deck" : "decks"} · ${selected.reduce((sum, entry) => sum + entry.total, 0)} cards`;
+  $("#study-selected-active-anki").disabled = selected.length === 0;
+}
+
+function roundRobinAnkiQueues(entries) {
+  const queues = entries.map((entry) => entry.plan.queue.map((card) => ({
+    ...card,
+    activeAnkiOwnerKey: activeAnkiEntryKey(entry),
+    activeAnkiOwnerName: entry.name,
+  })));
+  const result = [];
+  while (queues.some((queue) => queue.length)) queues.forEach((queue) => { if (queue.length) result.push(queue.shift()); });
+  return result;
+}
+
+function startSelectedActiveAnki() {
+  const entries = dashboardAnkiEntries().filter((entry) => state.activeAnkiSelections.has(activeAnkiEntryKey(entry)) && entry.total > 0);
+  if (!entries.length) { showToast("Select at least one due deck."); return; }
+  entries.forEach((entry) => markDailyNewCardsStarted(entry.scope, entry.plan.newCards));
+  state.customReviewMode = "anki";
+  state.customReviewCards = roundRobinAnkiQueues(entries);
+  state.customReviewPosition = 0;
+  state.customAnkiSessionTotal = state.customReviewCards.length;
+  state.customReviewRevealed = false;
+  state.customReviewWasRevealed = false;
+  state.customReviewStartedAt = Date.now();
+  state.customAnkiCardShownAt = Date.now();
+  state.customAnkiActiveOwners = entries.map(({ id, target, name, total }) => ({ id, target, name, total, key: `${target}:${id}` }));
+  state.customAnkiBatchSession = true;
+  state.selectedCustomDeckId = null;
+  state.selectedCustomDeckBuiltIn = true;
+  state.customStudyReturnView = "dashboard";
+  $("#close-custom-review").textContent = "← Back to dashboard";
+  $("#custom-review-title").textContent = entries.length === 1 ? entries[0].name : `${entries.length} selected decks`;
+  $("#custom-study-options-view").hidden = true;
+  $("#custom-review-view").hidden = false;
+  showAppView("custom-study");
+  renderCustomReviewCard();
+  window.clearInterval(customReviewTimerHandle);
+  $("#custom-review-time").textContent = "00:00";
+  customReviewTimerHandle = window.setInterval(() => { $("#custom-review-time").textContent = formatElapsed(Date.now() - state.customReviewStartedAt); }, 1000);
 }
 
 function openDashboardAnki(id, target) {
@@ -3545,6 +4247,15 @@ const CUSTOM_DECKS_KEY = "your-study-buddy-custom-decks";
 const STUDY_FOLDERS_KEY = "your-study-buddy-study-folders";
 const STARRED_STUDY_ITEMS_KEY = "your-study-buddy-starred-study-items-v1";
 const ACTIVE_ANKI_DECKS_KEY = "your-study-buddy-active-anki-decks-v1";
+const ACTIVE_ANKI_SELECTIONS_KEY = "your-study-buddy-active-anki-selections-v1";
+
+function restoreActiveAnkiSelections() {
+  state.activeAnkiSelections = new Set(window.AnkiSelectionStorage.load(localStorage, ACTIVE_ANKI_SELECTIONS_KEY, localAnkiDayKey()));
+}
+
+function persistActiveAnkiSelections() {
+  window.AnkiSelectionStorage.save(localStorage, ACTIVE_ANKI_SELECTIONS_KEY, localAnkiDayKey(), state.activeAnkiSelections);
+}
 
 function starredStudyItems() {
   try { return new Set(JSON.parse(localStorage.getItem(STARRED_STUDY_ITEMS_KEY) || "[]")); }
@@ -3594,6 +4305,8 @@ function markActiveAnkiComplete(id, target) {
 
 function removeActiveAnkiDeck(id, target) {
   storeActiveAnkiDecks(loadActiveAnkiDecks().filter((entry) => entry.id !== id || entry.target !== target));
+  state.activeAnkiSelections.delete(`${target}:${id}`);
+  persistActiveAnkiSelections();
   renderActiveAnkiDecks();
 }
 
@@ -3602,18 +4315,14 @@ function makeLocalId(prefix) {
 }
 
 function loadCustomDecks() {
-  try {
-    const decks = JSON.parse(localStorage.getItem(CUSTOM_DECKS_KEY) || "[]");
-    return Array.isArray(decks) ? decks.filter((deck) => deck && Array.isArray(deck.cards)) : [];
-  } catch {
-    localStorage.removeItem(CUSTOM_DECKS_KEY);
-    return [];
-  }
+  return loadLocalArray(CUSTOM_DECKS_KEY, (deck) => deck && Array.isArray(deck.cards));
 }
 
 function storeCustomDecks(decks) {
   try {
-    localStorage.setItem(CUSTOM_DECKS_KEY, JSON.stringify(decks));
+    const serialized = JSON.stringify(decks);
+    localStorage.setItem(CUSTOM_DECKS_KEY, serialized);
+    warnIfLocalPayloadLarge(serialized);
     return true;
   } catch (error) {
     showToast("This image is too large to save locally. Try a smaller image.");
@@ -3621,18 +4330,18 @@ function storeCustomDecks(decks) {
   }
 }
 
+function warnIfLocalPayloadLarge(serialized) {
+  if (String(serialized || "").length * 2 < 4 * 1048576 || sessionStorage.getItem("study-buddy-storage-warning-shown")) return;
+  sessionStorage.setItem("study-buddy-storage-warning-shown", "true");
+  showToast("Your local study data is getting large. Export a backup from Settings.");
+}
+
 function loadStudyFolders() {
-  try {
-    const folders = JSON.parse(localStorage.getItem(STUDY_FOLDERS_KEY) || "[]");
-    return Array.isArray(folders) ? folders.filter((folder) => folder?.id && folder?.name && Array.isArray(folder.deckIds)).map((folder) => ({
+  return loadLocalArray(STUDY_FOLDERS_KEY, (folder) => folder?.id && folder?.name && Array.isArray(folder.deckIds)).map((folder) => ({
       ...folder,
       color: /^#[0-9a-f]{6}$/i.test(folder.color || "") ? folder.color : "#d9b66f",
       expanded: Boolean(folder.expanded),
-    })) : [];
-  } catch {
-    localStorage.removeItem(STUDY_FOLDERS_KEY);
-    return [];
-  }
+    }));
 }
 
 function storeStudyFolders(folders) {
@@ -3768,14 +4477,14 @@ function deleteStudyFolder(folderId) {
 }
 
 function exportableStudyDecks() {
-  const personal = loadCustomDecks().map((deck) => ({ id: deck.id, name: deck.name, cards: deck.cards, group: "Personal sets" }));
+  const personal = loadCustomDecks().map((deck) => ({ id: deck.id, name: deck.name, cards: deck.cards, questions: deck.questions || [], feynmanPrompts: deck.feynmanPrompts || [], group: "Personal sets" }));
   const builtIn = builtInFlashcardCollections.filter((collection) => isFlashcardCollectionAdded(collection.id)).map((collection) => {
     const effective = effectiveBuiltInCollection(collection);
-    return { id: effective.id, name: effective.name, cards: effective.units.flatMap((unit) => unit.cards), group: "Built-in sets" };
+    return { id: effective.id, name: effective.name, cards: effective.units.flatMap((unit) => unit.cards), questions: effective.units.flatMap((unit) => unit.questions || []), feynmanPrompts: effective.units.flatMap((unit) => unit.feynmanPrompts || []), group: "Built-in sets" };
   });
   const folders = loadStudyFolders().map((folder) => {
     const deck = findStudyDeck(`folder:${folder.id}`);
-    return deck ? { id: deck.id, name: folder.name, cards: deck.cards, group: "Folders" } : null;
+    return deck ? { id: deck.id, name: folder.name, cards: deck.cards, questions: deck.questions || [], feynmanPrompts: deck.feynmanPrompts || [], group: "Folders" } : null;
   }).filter((deck) => deck?.cards?.length);
   return [...folders, ...personal, ...builtIn].filter((deck) => deck.cards.length);
 }
@@ -3826,13 +4535,64 @@ function safeExportName(name) {
 }
 
 function browserDownload(name, format, text) {
-  const blob = new Blob([text], { type: format === "csv" ? "text/csv;charset=utf-8" : "text/plain;charset=utf-8" });
+  const blob = new Blob([text], { type: format === "csv" ? "text/csv;charset=utf-8" : format === "json" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = `${safeExportName(name)}.${format}`;
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function portableUserData() {
+  const storage = {};
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key && /^(?:your-study-buddy|study-desk)-/.test(key)) storage[key] = localStorage.getItem(key);
+  }
+  const assets = [];
+  for (const note of loadNotebookNotes().filter((item) => item.type === "pdf" && item.pdfAssetId)) {
+    const blob = await getNotebookAsset(note.pdfAssetId);
+    if (!blob) continue;
+    const data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("A PDF could not be included in the backup."));
+      reader.readAsDataURL(blob);
+    });
+    assets.push({ id: note.pdfAssetId, data });
+  }
+  return { application: "Your Study Buddy", version: 1, exportedAt: new Date().toISOString(), storage, assets };
+}
+
+async function exportUserInformation() {
+  $("#settings-export-status").textContent = "Preparing your backup…";
+  const backup = await portableUserData();
+  browserDownload(`Your Study Buddy backup ${localStudyDate()}`, "json", JSON.stringify(backup, null, 2));
+  $("#settings-export-status").textContent = "Backup exported. Keep the JSON file somewhere safe.";
+  showToast("Your information was exported.");
+}
+
+async function restoreUserInformation(file) {
+  const status = $("#settings-export-status");
+  try {
+    const payload = JSON.parse(await file.text());
+    if (payload?.application !== "Your Study Buddy" || payload?.version !== 1 || !payload.storage || typeof payload.storage !== "object") throw new Error("This is not a valid Your Study Buddy backup.");
+    const keys = Object.keys(payload.storage).filter((key) => /^(?:your-study-buddy|study-desk)-/.test(key));
+    if (!keys.length) throw new Error("This backup does not contain any study data.");
+    if (!window.confirm(`Restore ${keys.length} saved data groups? This will replace matching information currently in the app.`)) { status.textContent = "Restore canceled."; return; }
+    keys.forEach((key) => { if (typeof payload.storage[key] === "string") localStorage.setItem(key, payload.storage[key]); });
+    for (const asset of Array.isArray(payload.assets) ? payload.assets : []) {
+      if (!asset?.id || !/^data:application\/pdf;base64,/i.test(asset.data || "")) continue;
+      const response = await fetch(asset.data);
+      await setNotebookAsset(asset.id, await response.blob());
+    }
+    status.textContent = "Backup restored. Reloading your study data…";
+    window.setTimeout(() => window.location.reload(), 250);
+  } catch (error) {
+    status.textContent = error.message || "The backup could not be restored.";
+    showToast("The backup could not be restored.");
+  }
 }
 
 function downloadExportBlob(name, extension, blob) {
@@ -3905,6 +4665,10 @@ function noteContentBounds(note) {
     const width = Math.max(24, Number(item.screenWidth) || 180);
     const height = Math.max(fontSize * 1.35, Number(item.screenHeight) || 36);
     include(item.x, item.y); include(Number(item.x) + width, Number(item.y) + height);
+  });
+  (note?.drawingImages || []).forEach((item) => {
+    const padding = item.caption ? 32 : 0;
+    include(item.x, item.y); include(Number(item.x) + Number(item.width || 0), Number(item.y) + Number(item.height || 0) + padding);
   });
   if (!Number.isFinite(minX)) return { x: 0, y: 0, width: Math.min(800, dimensions.width), height: Math.min(600, dimensions.height) };
   const padding = Math.max(20, Math.min(80, Math.max(maxX - minX, maxY - minY) * 0.04));
@@ -4010,6 +4774,15 @@ async function paintNoteExport(ctx, note, sourceBounds, targetWidth, targetHeigh
   ctx.translate(offsetX, offsetY); ctx.scale(scale, scale); ctx.translate(-sourceBounds.x, -sourceBounds.y);
   if (note.type === "drawing" && note.pageLayout !== "document") {
     if (note.drawing) { const image = await loadExportImage(note.drawing); if (image) { ctx.save(); ctx.globalAlpha = .7; ctx.drawImage(image, 0, 0, noteExportDimensions(note).width, noteExportDimensions(note).height); ctx.restore(); } }
+    for (const item of (note.drawingImages || [])) {
+      const image = await loadExportImage(item.src);
+      if (!image) continue;
+      const width = Math.max(1, Number(item.width) || image.naturalWidth || 1); const height = Math.max(1, Number(item.height) || image.naturalHeight || 1);
+      const centerX = Number(item.x) + width / 2; const centerY = Number(item.y) + height / 2;
+      ctx.save(); ctx.translate(centerX, centerY); ctx.rotate((Number(item.rotation) || 0) * Math.PI / 180); ctx.drawImage(image, -width / 2, -height / 2, width, height);
+      if (item.caption) { ctx.fillStyle = "#34384a"; ctx.font = "20px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(item.caption, 0, height / 2 + 8, Math.max(120, width)); }
+      ctx.restore();
+    }
     (note.drawingStrokes || []).forEach((stroke) => {
       const points = stroke.points || []; if (!points.length) return;
       ctx.save(); ctx.strokeStyle = stroke.color || "#171b2d"; ctx.fillStyle = stroke.color || "#171b2d"; ctx.lineCap = stroke.tool === "calligraphy" ? "square" : "round"; ctx.lineJoin = "round";
@@ -4071,6 +4844,13 @@ async function exportSelectedStudyDeck() {
   const deck = selectedExportDeck();
   if (!deck) { showToast("Choose a flashcard set to export."); return; }
   const format = $('input[name="exportFormat"]:checked')?.value || "apkg";
+  if (format === "json") {
+    const completeSet = { application: "Your Study Buddy", version: 1, type: "study-set", exportedAt: new Date().toISOString(), name: deck.name, cards: deck.cards || [], questions: deck.questions || [], feynmanPrompts: deck.feynmanPrompts || [] };
+    browserDownload(deck.name, "json", JSON.stringify(completeSet, null, 2));
+    $("#export-status").textContent = `${completeSet.cards.length} cards, ${completeSet.questions.length} questions, and ${completeSet.feynmanPrompts.length} Feynman prompts exported.`;
+    showToast(`${deck.name} exported.`);
+    return;
+  }
   async function portableImageData(source) {
     if (!source) return "";
     if (String(source).startsWith("data:")) return String(source);
@@ -4767,31 +5547,199 @@ function cardsFromAnkiPackageNotes(notes) {
   return { cards: [...cardsByFront.values()], skipped };
 }
 
-const NOTES_GENERATOR_VERSION = 8;
+const NOTES_GENERATOR_VERSION = 17;
 
 function generateCardsFromNotes(notes) {
   const cards = [];
   const seen = new Set();
-  const addCard = (front, back) => {
-    const cleanFront = front.replace(/^(?:the\s+)?(?:use|introduction)\s+of\s+/i, "").replace(/\s+/g, " ").trim();
-    const cleanBack = back.replace(/\s+/g, " ").trim();
-    if (cleanFront.length < 4 || cleanBack.length < 3 || cleanFront.toLowerCase() === cleanBack.toLowerCase()) return;
+  const collapseRepeatedExtraction = (value) => {
+    let text = String(value || "")
+      .replace(/[\uF000-\uF8FF]/g, "")
+      .replace(/(?:style\.(?:visibility|fontWeight|textDecorationUnderline)|ppt_[xy]|rrrr)+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    text = text.replace(/(.{8,70})\1/gi, "$1").replace(/([“”'\"])([^“”'\"]{2,40})\1\2\1/g, "$1$2$1");
+    for (let pass = 0; pass < 2; pass += 1) {
+      const midpoint = Math.floor(text.length / 2);
+      if (text.length >= 8 && text.length % 2 === 0 && text.slice(0, midpoint).toLowerCase() === text.slice(midpoint).toLowerCase()) text = text.slice(0, midpoint).trim();
+    }
+    return text.replace(/^([•▪◦◆◇❖]+)\s*/, "").trim();
+  };
+  const sourceLines = String(notes || "").replace(/\r/g, "").split("\n").map(collapseRepeatedExtraction);
+  const isStructuralLine = (line) => !line || /^\s*(?:#{1,6}\s+|[-*•]\s+|\d+[.)]\s+)/.test(line) || lessonHeadingInfo(line);
+  const reflowedLines = [];
+  sourceLines.forEach((line) => {
+    if (!line) { reflowedLines.push(""); return; }
+    const previousIndex = reflowedLines.length - 1;
+    const previous = reflowedLines[previousIndex] || "";
+    const shouldJoin = previous && !isStructuralLine(line)
+      && !/[.!?:;]$/.test(previous) && /^[a-z(\[]/.test(line)
+      && previous.length < 140;
+    if (shouldJoin) reflowedLines[previousIndex] = `${previous} ${line}`;
+    else reflowedLines.push(line);
+  });
+  const normalizedNotes = reflowedLines.join("\n");
+  const functionalGroupNotes = /organic chemistry\s*[—–-]\s*functional groups|functional groups study notes/i.test(normalizedNotes);
+  const molecularGeneticsNotes = /genetics:\s*dna replication, transcription\s*&\s*translation|biology notes\s*[—–-]\s*molecular genetics/i.test(normalizedNotes);
+  const ecologyNotes = /ecology\s*[—–-]\s*population dynamics\s*&\s*ecosystems|biology\s*\|\s*unit:\s*ecology|population ecology/i.test(normalizedNotes);
+  const calculusNotes = /\b(?:the limit of a function|one-sided limits?|limit laws?|differentiation|definite integral|derivative as a function)\b/i.test(normalizedNotes);
+  const psychologyLearningNotes = /\bclassical conditioning\b[\s\S]{0,2500}\boperant conditioning\b[\s\S]{0,2500}\bobservational learning\b/i.test(normalizedNotes);
+  const hypothesisTestingNotes = /probability distribution needed for hypothesis testing|hypothesis test for the mean[\s\S]{0,1200}hypothesis test for proportions/i.test(normalizedNotes);
+  const electrochemistryNotes = /nernst equation|faradaic reactions? in equilibrium|electrochemical potential/i.test(normalizedNotes);
+  const instructionalLessonPlan = /\b5E Lesson\b[\s\S]{0,1500}\bTeacher's Note\b|\bAt a glance\b[\s\S]{0,1200}\bMaterials\b[\s\S]{0,1200}\bThe 5E lesson\b/i.test(normalizedNotes);
+  const historyNotes = /french revolution\s*\(1789\s*[–—-]\s*1799\)|causes and early stages of the revolution/i.test(normalizedNotes);
+  const inferredDomain = /\b(?:cell|gene|dna|rna|protein|organism|species|ecosystem|chemical|reaction|molecule|energy|force|velocity|disease|anatomy|physiology|population|functional group)\b/i.test(normalizedNotes) ? "science"
+    : /\b(?:function|equation|derivative|integral|probability|theorem|proof|graph|matrix|angle|limit)\b/i.test(normalizedNotes) ? "math"
+      : /\b(?:novel|poem|character|theme|author|narrator|symbol|literature)\b/i.test(normalizedNotes) ? "literature"
+        : /\b(?:market|business|finance|revenue|cost|economy|supply|demand)\b/i.test(normalizedNotes) ? "business"
+          : /\b(?:revolution|war|government|empire|king|president|century|political|historical)\b/i.test(normalizedNotes) ? "history" : "general";
+  const addCard = (front, back, metadata = {}) => {
+    if (molecularGeneticsNotes && !metadata.sourceKind) metadata.sourceKind = "molecular-genetics";
+    if (ecologyNotes && !metadata.sourceKind) metadata.sourceKind = "ecology";
+    if (calculusNotes && !metadata.sourceKind) metadata.sourceKind = "calculus";
+    if (psychologyLearningNotes && !metadata.sourceKind) metadata.sourceKind = "psychology-learning";
+    if (hypothesisTestingNotes && !metadata.sourceKind) metadata.sourceKind = "hypothesis-testing";
+    if (electrochemistryNotes && !metadata.sourceKind) metadata.sourceKind = "electrochemistry";
+    if (historyNotes && !metadata.sourceKind) metadata.sourceKind = "history";
+    if (!metadata.sourceKind && inferredDomain !== "general") metadata.sourceKind = inferredDomain;
+    let cleanFront = collapseRepeatedExtraction(front).replace(/^(?:the\s+)?(?:use|introduction)\s+of\s+/i, "").replace(/\s+/g, " ").trim();
+    cleanFront = cleanFront.replace(/:+$/, "").trim();
+    let cleanBack = collapseRepeatedExtraction(back).replace(/\s+/g, " ").trim()
+      .replace(/\\\[\s*;\s*/g, "\\(")
+      .replace(/;\s*\\\]/g, "\\)");
+    if (molecularGeneticsNotes && /^(?:remember|important|example|purpose)$/i.test(cleanFront)) return;
+    if (molecularGeneticsNotes && /^(?:common mistakes|generally|helps|both|proteins that|RNA synthesis does not|RNA polymerase does not|transcription|translation)$/i.test(cleanFront)) return;
+    if (molecularGeneticsNotes && /^key distinction$/i.test(cleanFront)) cleanFront = "DNA vs. RNA";
+    if (molecularGeneticsNotes && /^DNA polymerases$/i.test(cleanFront)) cleanFront = "DNA polymerase";
+    if (molecularGeneticsNotes && /^Telomerase can$/i.test(cleanFront)) cleanFront = "Telomerase";
+    if (molecularGeneticsNotes && /^DNA → RNA → Protein$/i.test(cleanFront)) cleanFront = "Central dogma of molecular biology";
+    if (molecularGeneticsNotes && /^Double-stranded helix, strands run antiparallel$/i.test(cleanFront)) cleanFront = "DNA strand directionality";
+    if (molecularGeneticsNotes && /^Bases$/i.test(cleanFront)) cleanFront = "DNA bases";
+    if (molecularGeneticsNotes && /^Base pairing$/i.test(cleanFront)) cleanFront = "DNA base pairing";
+    if (molecularGeneticsNotes && /^RNA nucleotides pair with the DNA template$/i.test(cleanFront)) cleanFront = "Transcription base-pairing rules";
+    if (molecularGeneticsNotes && /^The ribosome has three major tRNA-binding sites$/i.test(cleanFront)) cleanFront = "Ribosomal A, P, and E sites";
+    if (molecularGeneticsNotes && /^Larger DNA alterations may involve$/i.test(cleanFront)) cleanFront = "Chromosomal mutations";
+    if (molecularGeneticsNotes && /^Without lactose$/i.test(cleanFront)) cleanFront = "Lac operon without lactose";
+    if (molecularGeneticsNotes && /^With lactose$/i.test(cleanFront)) cleanFront = "Lac operon with lactose";
+    if (molecularGeneticsNotes && /^Gene regulation$/i.test(cleanFront)) return;
+    if (calculusNotes && /^(?:limits$|we then|and say|[a-z]\)|from the graph)/i.test(cleanFront)) return;
+    if (psychologyLearningNotes && /^learned behaviors involve change and experience$/i.test(cleanFront)) return;
+    if (instructionalLessonPlan) return;
+    if (electrochemistryNotes && (/^(?:lecture|example|comment on notation|solution|sizi|_?s kT|\d+\s|[−+_=()\d\s]+)$/i.test(cleanFront) || !/[A-Za-z]{3}/.test(cleanFront))) return;
+    if (ecologyNotes && /^(?:clumps?|originally markedN)$/i.test(cleanFront)) return;
+    if (ecologyNotes && /^Examples?$/i.test(cleanFront)) {
+      if (/\bkJ\b/i.test(cleanBack)) cleanFront = "10% rule example";
+      else if (/hurricanes?|droughts?|floods?/i.test(cleanBack)) cleanFront = "Density-independent examples";
+      else if (/competition|disease|parasitism|predation/i.test(cleanBack)) cleanFront = "Density-dependent examples";
+    }
+    if (ecologyNotes && /^Important distinction$/i.test(cleanFront)) cleanFront = "Density dependence: drought vs. disease";
+    if (ecologyNotes && /^Main connection$/i.test(cleanFront)) cleanFront = "Connections among ecological processes";
+    if (molecularGeneticsNotes && metadata.sourceSection && /^(?:initiation|elongation|termination|completion)$/i.test(cleanFront)) {
+      const process = metadata.sourceSection.replace(/\s+[—–-]\s+.+$/, "").trim();
+      cleanFront = `${process}: ${cleanFront}`;
+    }
+    if (metadata.sourceSection && /^(?:significance|consequences|limitation):?$/i.test(cleanFront)) {
+      cleanFront = `${cleanFront.replace(/:$/, "")} of ${metadata.sourceSection}`;
+    }
+    const extractionNoise = /^(?:question|answer|step\s*\d+|fall\s+\d{4}|the next three lectures|learning objectives?|by the end of this section, you will be able to|chapter\s+\d+|\d{1,3}|\d[.\d]*[A-Z]?\s*\/\s*\d[.\dA-Z]*.+)$/i;
+    if (extractionNoise.test(cleanFront) || /(?:https?:\/\/|terms of use|open.?courseware|style\.visibility)/i.test(`${cleanFront} ${cleanBack}`)) return;
+    if (/\b(?:and|or|of|to|when|because|including|include|includes|is|are|was|were)\s*$/i.test(cleanFront) || /^(?:and|or|but|because|which|that)\b/i.test(cleanBack)) return;
+    if ((cleanFront.match(/[A-Za-z]+/g) || []).length > 18 && !/[?]$/.test(cleanFront)) return;
+    if (cleanFront.length < (molecularGeneticsNotes ? 3 : 4) || cleanBack.length < 3 || cleanBack.length > 900 || cleanFront.toLowerCase() === cleanBack.toLowerCase()) return;
     const key = cleanFront.toLowerCase().replace(/^the\s+/, "").replace(/\s*\(\d{4}\)$/, "").trim();
     if (seen.has(key)) {
       const existing = cards.find((card) => card.front.toLowerCase().replace(/^the\s+/, "").replace(/\s*\(\d{4}\)$/, "").trim() === key);
-      if (existing && cleanBack.length > existing.back.length) existing.back = cleanBack;
+      if (existing && molecularGeneticsNotes && !existing.back.toLowerCase().includes(cleanBack.toLowerCase())) existing.back = `${existing.back}; ${cleanBack}`;
+      else if (existing && cleanBack.length > existing.back.length) existing.back = cleanBack;
+      if (existing && metadata.sourceSection && !existing.sourceSection) existing.sourceSection = metadata.sourceSection;
       return;
     }
     if (cards.length >= 300) return;
     seen.add(key);
-    cards.push({ id: makeLocalId("card"), front: cleanFront, back: cleanBack });
+    cards.push({ id: makeLocalId("card"), front: cleanFront, back: cleanBack, ...metadata });
   };
   const embeddedSubject = (value) => value.replace(/^(A|An|The)\b/, (article) => article.toLowerCase());
+  const questionVerb = (value) => value.toLowerCase().replace(/s$/i, "");
+  const relationshipSubject = (value) => embeddedSubject(value).replace(/\s+(?:slows?|changes?|increases?|decreases?|varies?).*\s+and$/i, "").replace(/\s+and$/i, "");
 
-  const rawLines = notes.replace(/\r/g, "").split("\n").filter((line) => {
+  const rawLines = normalizedNotes.split("\n").filter((line) => {
     if (lessonHeadingInfo(line)) return false;
-    return !/^Page\s+\d+\s*:/i.test(cleanNoteLine(line));
+    const cleaned = cleanNoteLine(line);
+    return !/^Page\s+\d+\s*:/i.test(cleaned)
+      && !/^\d{1,3}$/.test(cleaned)
+      && !/^(?:style\.|ppt_[xy]|rrrr)/i.test(cleaned)
+      && !/^(?:MIT OpenCourseWare|For information about citing|Fall\s+\d{4})/i.test(cleaned);
   });
+
+  // Tables are common in textbook summaries and lecture slides. Preserve the
+  // row relationship instead of flattening each cell into unrelated text.
+  const tableCellLines = rawLines.map((line, index) => ({ index, cells: line.split(/\s*\|\s*|\t+/).map(cleanNoteLine).filter(Boolean) })).filter((row) => row.cells.length >= 2);
+  for (let position = 0; position < tableCellLines.length;) {
+    const group = [tableCellLines[position]];
+    let cursor = position + 1;
+    while (cursor < tableCellLines.length && tableCellLines[cursor].index === group[group.length - 1].index + 1) group.push(tableCellLines[cursor++]);
+    position = cursor;
+    if (group.length < 2) continue;
+    const separatorIndex = group.findIndex((row) => row.cells.every((cell) => /^:?-{2,}:?$/.test(cell)));
+    const headerRow = group[0].cells;
+    const dataRows = group.slice(separatorIndex === 1 ? 2 : 1);
+    const usefulHeaders = headerRow.every((cell) => cell.length <= 45 && !/[.!?]$/.test(cell));
+    if (!usefulHeaders || !dataRows.length) continue;
+    dataRows.forEach(({ cells }) => {
+      if (cells.length < 2 || cells[0].length > 90 || /^\d+$/.test(cells[0])) return;
+      const details = cells.slice(1).map((cell, index) => `${headerRow[index + 1] || `Field ${index + 2}`}: ${cell}`).join("; ");
+      addCard(cells[0], details, { sourceSection: headerRow[0], sourceKind: inferredDomain === "general" ? undefined : inferredDomain, sourceFormat: "table" });
+    });
+  }
+
+  if (ecologyNotes && /mark and recapture/i.test(normalizedNotes)) {
+    addCard("Mark-recapture method", "Capture and mark M individuals, release them, then capture a second sample of S individuals and count the R marked individuals recaptured. Estimate population size with N = (S × M) / R.", { sourceSection: "Measuring population size", sourceKind: "ecology" });
+  }
+  if (ecologyNotes && /quadrats?/i.test(normalizedNotes)) {
+    addCard("Quadrat sampling", "Estimate population size or density by counting organisms within sampled plots. Larger or more numerous quadrats are needed when organisms have a clumped distribution.", { sourceSection: "Measuring population size", sourceKind: "ecology" });
+  }
+  if (calculusNotes) {
+    addCard("Limit of a function", "The limit of f(x) as x approaches a is L when the values of f(x) get arbitrarily close to L as x approaches a from both sides.", { sourceSection: "Limits", sourceKind: "calculus" });
+    if (/does not matter how the function behaves at/i.test(normalizedNotes)) addCard("Limit versus function value", "A limit depends on the values of the function near a point, not necessarily on the function's value at that point.", { sourceSection: "Limits", sourceKind: "calculus" });
+    if (/two-sided vs\.? one-sided limits?/i.test(normalizedNotes)) addCard("Existence of a two-sided limit", "A two-sided limit exists only when the left-hand and right-hand limits both exist and are equal.", { sourceSection: "One-sided limits", sourceKind: "calculus" });
+  }
+  if (psychologyLearningNotes) {
+    const conceptCards = [
+      ["Learning", /learning is a\s+(relatively permanent change in behavior or knowledge that results from\s+experience)/i],
+      ["Reflex", /Reflexes are\s+(a motor or neural reaction to a specific stimulus in the environment)/i],
+      ["Instinct", /instincts are\s+(innate behaviors that are triggered by a broader range of events[^.]*\.)/i],
+      ["Associative learning", /Associative learning occurs when\s+(an organism makes connections between stimuli or events that occur together in the environment)/i],
+      ["Classical conditioning", /In classical conditioning[\s\S]{0,90}?organisms learn to associate\s+(events[^.]*\.)/i],
+      ["Operant conditioning", /In operant conditioning,\s+(organisms learn[^.]*consequence[^.]*\.)/i],
+      ["Observational learning", /observational learning is\s+(the process of watching others and then imitating what they\s+do)/i],
+    ];
+    conceptCards.forEach(([front, pattern]) => {
+      const match = normalizedNotes.match(pattern);
+      if (match) addCard(front, match[1].replace(/\s+/g, " ").replace(/[.]?$/, "."), { sourceSection: "Learning", sourceKind: "psychology-learning" });
+    });
+  }
+  if (hypothesisTestingNotes) {
+    const metadata = { sourceSection: "Choosing a hypothesis test", sourceKind: "hypothesis-testing" };
+    addCard("One-sample z-test for a mean", "Use a normal distribution when testing a population mean and the population standard deviation σ is known. Use a simple random sample; the population should be normal or the sample sufficiently large.", metadata);
+    addCard("One-sample t-test for a mean", "Use Student's t-distribution when testing a population mean and σ is unknown, so the sample standard deviation s estimates it. Use a simple random sample from an approximately normal population, unless the sample is sufficiently large.", metadata);
+    addCard("One-sample z-test for a proportion", "Use the normal approximation for a population proportion p when observations are independent and the success-failure counts are large enough.", metadata);
+    addCard("Normal-approximation condition for a proportion", "The source uses np > 5 and nq > 5, where q = 1 - p, so the binomial sampling distribution is sufficiently close to normal.", metadata);
+    addCard("Parameter and point estimate: population mean", "The population parameter is μ and its point estimate is the sample mean x̄.", metadata);
+    addCard("Parameter and point estimate: population proportion", "The population parameter is p and its point estimate is the sample proportion p̂.", metadata);
+  }
+  if (electrochemistryNotes) {
+    const metadata = { sourceSection: "Electrochemical equilibrium", sourceKind: "electrochemistry" };
+    addCard("Electrochemical potential", "For species i on a molar basis, μᵢ = μᵢ° + RT ln(aᵢ) + zᵢFΦ. The terms represent standard chemical potential, chemical activity, and electrostatic energy.", metadata);
+    addCard("Chemical activity", "Activity is a dimensionless effective concentration. Nonideal interactions are included through an activity coefficient, commonly written aᵢ = γᵢ(cᵢ/c°).", metadata);
+    addCard("Faradaic reaction", "A Faradaic reaction transfers electrons across an electrode-electrolyte interface. Oxidation produces electrons, while reduction consumes electrons.", metadata);
+    addCard("Nernst equation", "For a reaction written as a reduction, E = E° - (RT/nF) ln Q. It relates equilibrium electrode potential to temperature, electrons transferred, and reactant/product activities.", metadata);
+    addCard("Reaction quotient in the Nernst equation", "Q is formed from product activities divided by reactant activities, each raised to its stoichiometric coefficient. Changing Q shifts the equilibrium electrode potential.", metadata);
+    addCard("Standard cell potential", "The standard cell potential is E°cell = E°cathode - E°anode. Only potential differences between two electrodes are measurable.", metadata);
+    addCard("Anode and cathode in a galvanic cell", "Oxidation occurs at the anode and produces electrons. Reduction occurs at the cathode and consumes electrons; electrons flow through the external circuit from anode to cathode.", metadata);
+    addCard("Equilibrium constant and standard potential", "Standard potential and the equilibrium constant are related by ΔG° = -nFE° = -RT ln K, so E° = (RT/nF) ln K for the cell reaction as written.", metadata);
+  }
+  if (hypothesisTestingNotes || electrochemistryNotes) return cards;
+  if (instructionalLessonPlan) return cards;
 
   // Slides often identify vocabulary with italics or bold inside an
   // explanatory paragraph instead of using a "term: definition" line.
@@ -4814,13 +5762,31 @@ function generateCardsFromNotes(notes) {
     const expanded = raw.replace(/\t/g, "  ");
     const headingMatch = expanded.match(/^\s*(?:#{1,6}\s+)?\*\*(.+?)\*\*\s*$/)
       || expanded.match(/^\s*#{1,6}\s+(.+?)\s*$/)
-      || expanded.match(/^\s*\d+(?:\.\d+)+\.?\s+(.+?)\s*$/);
+      || expanded.match(/^\s*\d+(?:\.\d+)+\.?\s+(.+?)\s*$/)
+      || expanded.match(/^\s*\d+[.)]\s+([^.!?]{2,80})\s*$/)
+      || expanded.match(/^\s*[IVXLCDM]+[.)]\s+(.+?)\s*$/i)
+      || expanded.match(/^\s*((?:[A-Z][A-Za-z&/-]*|&)(?:\s+(?:[A-Z][A-Za-z&/-]*|&|and|of|in)){1,8})\s*$/);
+    const stageMatch = expanded.match(/^\s*\d+\s*[→➝]\s*(.+?)\s*$/);
     const bulletMatch = expanded.match(/^(\s*)(?:[-*•]|\d+[.)])\s+(.+?)\s*$/);
     if (headingMatch) return { sourceIndex, kind: "heading", depth: -1, text: cleanNoteLine(headingMatch[1]).replace(/^\d+(?:\.\d+)*\.?\s*/, ""), children: [] };
+    if (stageMatch) return { sourceIndex, kind: "stage", depth: -0.5, text: cleanNoteLine(stageMatch[1]), children: [] };
     if (bulletMatch) return { sourceIndex, kind: "bullet", depth: Math.floor(bulletMatch[1].length / 2), text: cleanNoteLine(bulletMatch[2]), children: [] };
     const plainText = cleanNoteLine(expanded);
     return plainText ? { sourceIndex, kind: "plain", depth: 0, text: plainText, children: [] } : null;
   }).filter((line) => line?.text);
+
+  // A short unbulleted label followed by bullets is usually a nested topic,
+  // such as a character name or theme title, rather than a prose sentence.
+  outlineLines.forEach((line, index) => {
+    const next = outlineLines[index + 1];
+    const nearbyBullet = outlineLines.slice(index + 1, index + 4).some((candidate) => candidate?.kind === "bullet");
+    const namedProcessStage = /^(?:initiation|elongation|termination|completion)$/i.test(line.text);
+    const ecologyInlineTopic = ecologyNotes && /\s[—–]\s/.test(line.text);
+    if (line.kind === "plain" && line.text.length <= 130 && (namedProcessStage || ecologyInlineTopic || (["bullet", "stage"].includes(next?.kind) || nearbyBullet) && !/[.!;,]$/.test(line.text))) {
+      line.kind = "subheading";
+      line.depth = -0.5;
+    }
+  });
 
   // Markdown outlines are treated as a hierarchy. A bullet with children becomes
   // a term card; its immediate details become the back instead of one giant card.
@@ -4850,58 +5816,136 @@ function generateCardsFromNotes(notes) {
       if (namedProcess) return [namedProcess[1].trim().replace(/[.]$/, ""), ""];
       const colon = value.match(/^([^:]{2,70}):\s+(.{3,})$/);
       if (colon) return [colon[1].trim(), colon[2].trim()];
+      const equals = ecologyNotes ? value.match(/^([A-Za-z][A-Za-z ]{1,40})\s*=\s*(.{3,})$/) : null;
+      if (equals) return [equals[1].trim(), equals[2].trim()];
+      const dash = ecologyNotes ? value.match(/^([^—–]{2,65})\s+[—–]\s+(.{3,})$/) : null;
+      if (dash) return [dash[1].trim(), dash[2].trim()];
       const paren = value.match(/^([^()]{2,65})\s*\(([^()]{4,})\)$/);
       if (paren && !/^(?:more info|[A-Z0-9-]{1,6}|[A-Z][A-Za-z .'-]+,\s*\d{4})$/i.test(paren[2])) return [paren[1].trim(), paren[2].trim()];
       return [value.trim(), ""];
     };
+    const cleanDetail = (value) => String(value || "").trim().replace(/[.;]+$/, "");
     const readableDetail = (node) => {
       const [term, detail] = splitTermDetail(node.text);
-      if (detail) return `${term}: ${detail}`;
-      if (node.children.length) return `${term}: ${node.children.map((child) => splitTermDetail(child.text)[0]).join(", ")}`;
-      return term;
+      if (detail) return cleanDetail(`${term}: ${detail}`);
+      if (node.children.length) return cleanDetail(`${term}: ${node.children.map((child) => cleanDetail(splitTermDetail(child.text)[0])).join(", ")}`);
+      return cleanDetail(term);
     };
-    const looksLikeFact = (value) => /\b(?:is|are|was|were|has|have|known as|contains?|containing|comes?|carry|carries|forms?|supports?|assists?|lines?|secretes?|translates?|modif(?:y|ies)|synthesizes?|produces?|production|breaks?|controls?|maintains?|occurs?|affects?|found|pumped|released|acquired|transferred|tolerates?|switch(?:es)?|starts?)\b|\bvia\b|→/i.test(value);
+    const completeDetail = (node) => {
+      const [term, detail] = splitTermDetail(node.text);
+      const own = cleanDetail(detail ? `${term}: ${detail}` : term);
+      const descendants = node.children.map(completeDetail).filter(Boolean);
+      return [own, ...descendants].filter(Boolean).join("; ");
+    };
+    const looksLikeFact = (value) => /\b(?:is|are|was|were|has|have|includes?|known as|contains?|containing|comes?|carry|carries|converts?|obtains?|flows?|forms?|supports?|assists?|lines?|secretes?|translates?|modif(?:y|ies)|synthesizes?|produces?|production|breaks?|controls?|maintains?|occurs?|affects?|found|pumped|released|acquired|transferred|tolerates?|switch(?:es)?|starts?)\b|\bbreak down\b|\bvia\b|→/i.test(value);
     const looksLikeTerm = (node) => {
       const [term, detail] = splitTermDetail(node.text);
       const words = term.match(/[A-Za-z0-9+'-]+/g) || [];
       return Boolean(detail) || (words.length > 0 && words.length <= 7 && term.length <= 65 && !/^\(?\d{4}\s*[-–—]\s*\d{4}\)?$/.test(term) && !/[,;.!?]$/.test(term) && !looksLikeFact(term));
     };
     const addOutlineNode = (node) => {
-      const [term, inlineDetail] = splitTermDetail(node.text);
+      let [term, inlineDetail] = splitTermDetail(node.text);
+      const causalQuestion = term.match(/^Why did (.+?) occur\?$/i);
+      if (causalQuestion) term = `Causes of ${causalQuestion[1]}`;
       const childDetails = node.children.map(readableDetail);
-      const back = [inlineDetail, ...childDetails].filter(Boolean).join("; ");
-      if (node.children.length && term.length <= 75 && back) addCard(term, back);
-      else if (inlineDetail) addCard(term, inlineDetail);
+      const back = [cleanDetail(inlineDetail), ...childDetails].filter(Boolean).join("; ");
+      const metadata = node.section ? { sourceSection: node.section } : {};
+      if (node.children.length && term.length <= 75 && back && !/^(?:major leaders and institutions|important events and policies)$/i.test(term)) addCard(term, back, metadata);
+      else if (inlineDetail) addCard(term, inlineDetail, metadata);
       else if (node.parent?.kind === "bullet") {
         const fact = term.match(/^(.{2,55}?)\s+(is|are|has|have|synthesizes?|translates?|produces?|breaks?|controls?|maintains?|supports?|assists?|forms?|lines?|secretes?|carries?|contains?)\s+(.{3,})$/i);
-        if (fact && !/^(?:a|an|the|if|certain|some|these|those|this)\b/i.test(fact[1]) && !/\b(?:and|or)$/i.test(fact[1])) addCard(fact[1], `${fact[2].charAt(0).toUpperCase()}${fact[2].slice(1)} ${fact[3]}`);
+        if (fact && !/^(?:a|an|the|if|certain|some|these|those|this)\b/i.test(fact[1]) && !/\b(?:and|or)$/i.test(fact[1])) addCard(fact[1], `${fact[2].charAt(0).toUpperCase()}${fact[2].slice(1)} ${fact[3]}`, metadata);
+      }
+      if (molecularGeneticsNotes && node.children.length) {
+        node.children.forEach((child) => {
+          child.text.split(/(?<=[.!?])\s+(?=[A-Z])/).forEach((sentence) => {
+            if (/^Linear chromosomes have .*\btelomeres\b/i.test(sentence)) addCard("Telomeres", sentence, metadata);
+            const fact = sentence.match(/^((?:DNA|RNA)?\s*[A-Z][A-Za-z-]*(?:\s+[a-z][A-Za-z-]*){0,3})\s+(?:can\s+)?(unwinds?|stabilizes?|relieves?|synthesizes?|adds?|reads?|binds?|seals?|proofreads?|recognizes?|transports?|carries?|removes?|protects?|promotes?|inhibits?|controls?|catalyzes?|extends?|requires?)\s+(.+)$/);
+            if (fact && !/^(?:Generally|Helps|Both|Proteins that|RNA synthesis does not|RNA polymerase does not|Transcription|Translation)$/i.test(fact[1])) addCard(fact[1], `${fact[2].charAt(0).toUpperCase()}${fact[2].slice(1)} ${fact[3]}`, metadata);
+          });
+        });
       }
       node.children.forEach(addOutlineNode);
     };
     roots.forEach((root) => {
       if (root.kind === "heading") {
+        if (ecologyNotes && /^(?:Limiting Factors|Energy Flow in Ecosystems|Ecological Succession|Biodiversity & Ecosystem Stability)$/i.test(root.text)) {
+          const overview = root.children.map(completeDetail).filter(Boolean).join("; ");
+          if (overview) addCard(root.text, overview, { sourceSection: root.text, sourceKind: "ecology" });
+          root.children.forEach(addOutlineNode);
+          return;
+        }
+        if (functionalGroupNotes) {
+          if (/^common mistakes$/i.test(root.text)) {
+            root.children.forEach((child) => {
+              const [term, detail] = splitTermDetail(child.text);
+              if (detail) addCard(term, detail, { sourceSection: root.text, sourceKind: "functional-groups" });
+            });
+            return;
+          }
+          const back = root.children.filter((child) => !/^important chemistry concepts$/i.test(child.text)).map(completeDetail).filter(Boolean).join("; ")
+            .replace(/\\\[\s*;\s*/g, "\\(")
+            .replace(/;\s*\\\]/g, "\\)");
+          if (back) addCard(root.text, back, { sourceSection: root.text, sourceKind: "functional-groups" });
+          return;
+        }
+        if (/^key interpretations?$/i.test(root.text)) {
+          root.children.forEach((child) => {
+            const sentences = child.text.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).filter(Boolean);
+            const claim = cleanDetail(sentences[0]);
+            if (claim) addCard(claim, child.text, { sourceSection: root.text });
+          });
+          return;
+        }
+        if (/^plot summary$/i.test(root.text)) {
+          const plotItems = root.children.map((child) => cleanDetail(child.text)).filter(Boolean);
+          plotItems.forEach((event, index) => {
+            let prompt = "";
+            const embeddedLabel = (value) => String(value || "").replace(/^(A|An|The)\b/, (article) => article.toLowerCase());
+            const condition = event.match(/^(.+?)\s+gives?\s+(.+?)\s+on the condition that\s+(.+)$/i);
+            const advances = event.match(/^(.+?)\s+makes? advances (?:toward|to)\s+(.+?),\s*but\s+(.+?)\s+rejects?/i);
+            const breaks = event.match(/^(.+?)\s+breaks?\s+(.+?)\s+by\s+(.+)$/i);
+            const accuses = event.match(/^(.+?)\s+accuses?\s+(.+?)\s+of\s+(.+?)(?:,|\.|$)/i);
+            const feels = event.match(/^(.+?)\s+feels?\s+(.+)$/i);
+            const meets = event.match(/^(.+?)\s+meets?\s+(.+)$/i);
+            const anger = event.match(/^(.+?)\s+becomes? angry,?\s+and\s+(.+)$/i);
+            if (index === 0) prompt = "How does the story begin?";
+            else if (index === plotItems.length - 1) prompt = "How does the story end?";
+            else if (condition) prompt = `What condition accompanies the gift from ${embeddedLabel(condition[1])}?`;
+            else if (advances) prompt = `How does ${advances[2]} respond to ${advances[1]}'s advances?`;
+            else if (breaks) prompt = `How does ${breaks[1]} break ${breaks[2]}?`;
+            else if (accuses) prompt = `What does ${accuses[1]} accuse ${accuses[2]} of?`;
+            else if (feels) prompt = `How does ${feels[1]} feel, and why?`;
+            else if (meets) prompt = `Whom does ${/^(?:he|she|they)$/i.test(meets[1]) ? "the protagonist" : meets[1]} meet?`;
+            else if (anger) prompt = `Why does ${embeddedLabel(anger[1])} become angry, and what happens next?`;
+            else if (/\btrial\b/i.test(event)) prompt = "What accusation leads to the trial?";
+            else if (/\barrives?\b/i.test(event)) prompt = "What changes when the mysterious lady arrives?";
+            if (prompt) addCard(prompt, event, { sourceSection: root.text });
+          });
+          return;
+        }
         const flatOutline = root.children.length && root.children.every((child) => !child.children.length);
         const firstTermIndex = flatOutline ? root.children.findIndex(looksLikeTerm) : -1;
         if (firstTermIndex >= 0) {
-          const openingFacts = root.children.slice(0, firstTermIndex).map((child) => child.text).filter(looksLikeFact);
-          if (openingFacts.length && !/[?]$/.test(root.text) && !/^(?:overview|background|introduction|ambition|conclusion|summary)$/i.test(root.text)) addCard(root.text, openingFacts.join("; "));
+          const openingFacts = root.children.slice(0, firstTermIndex).map((child) => cleanDetail(child.text)).filter(looksLikeFact);
+          if (openingFacts.length && !/[?]$/.test(root.text) && !/^(?:overview|background|introduction|ambition|conclusion|summary)$/i.test(root.text)) addCard(root.text, openingFacts.join("; "), { sourceSection: root.text });
           for (let index = firstTermIndex; index < root.children.length;) {
             const node = root.children[index];
             if (!looksLikeTerm(node)) { index += 1; continue; }
             const [term, inlineDetail] = splitTermDetail(node.text);
             let end = index + 1;
             while (end < root.children.length && !looksLikeTerm(root.children[end])) end += 1;
-            const details = root.children.slice(index + 1, end).map((child) => child.text);
-            const back = [inlineDetail, ...details].filter(Boolean).join("; ");
-            if (back) addCard(term, back);
+            const details = root.children.slice(index + 1, end).map((child) => cleanDetail(child.text));
+            const back = [cleanDetail(inlineDetail), ...details].filter(Boolean).join("; ");
+            if (back) addCard(term, back, { sourceSection: root.text });
             index = end;
           }
           return;
         }
-        const directFacts = root.children.filter((child) => !child.children.length && looksLikeFact(child.text)).map((child) => child.text);
-        if (directFacts.length && !/[?]$/.test(root.text) && !/^(?:overview|background|introduction|ambition|conclusion|summary)$/i.test(root.text)) addCard(root.text, directFacts.join("; "));
+        const directFacts = root.children.filter((child) => !child.children.length && looksLikeFact(child.text)).map((child) => cleanDetail(child.text));
+        if (directFacts.length && !/[?]$/.test(root.text) && !/^(?:overview|background|introduction|ambition|conclusion|summary|plot summary|possible discussion questions)$/i.test(root.text)) addCard(root.text, directFacts.join("; "), { sourceSection: root.text });
         root.children.forEach(addOutlineNode);
-      } else addOutlineNode(root);
+      } else if (!(headingCount && !root.section)) addOutlineNode(root);
     });
     if (cards.length) return cards;
   }
@@ -4935,7 +5979,24 @@ function generateCardsFromNotes(notes) {
     const sentences = line.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).filter((sentence) => sentence.length >= 18);
     sentences.forEach((sentence) => {
       const normalized = sentence.replace(/[.]+$/, "").trim();
-      let match = normalized.match(/^(.{2,70}?)\s+(is|are|means|refers to|describes)\s+(.{6,})$/i);
+      let match = normalized.match(/^(?:In\s+)?((?:1[5-9]|20)\d{2}),\s+(.{8,})$/i);
+      if (match) { addCard(`What happened in ${match[1]}?`, match[2], { sourceKind: "history" }); return; }
+      match = normalized.match(/^(.{2,60}?)\s+differs? from\s+(.{2,60}?)\s+because\s+(.{6,})$/i);
+      if (match) { addCard(`How do ${match[1]} and ${match[2]} differ?`, `${match[1]} differs from ${match[2]} because ${match[3]}.`); return; }
+      match = normalized.match(/^Unlike\s+(.{2,55}?),\s+(.{2,55}?)\s+(.{6,})$/i);
+      if (match) { addCard(`How does ${match[2]} differ from ${match[1]}?`, `Unlike ${match[1]}, ${match[2]} ${match[3]}.`); return; }
+      match = normalized.match(/^(.{2,70}?)\s+(causes?|produces?|creates?|converts?)\s+(.{2,})$/i);
+      if (match) {
+        addCard(`What does ${relationshipSubject(match[1])} ${questionVerb(match[2])}?`, match[3]);
+        return;
+      }
+      match = normalized.match(/^(.{2,70}?)\s+(contains?|consists? of|includes?|requires?)\s+(.{2,})$/i);
+      if (match) {
+        const verb = /consists? of/i.test(match[2]) ? "consist of" : questionVerb(match[2]);
+        addCard(`What does ${relationshipSubject(match[1])} ${verb}?`, match[3]);
+        return;
+      }
+      match = normalized.match(/^(.{2,70}?)\s+(is|are|means|refers to|describes)\s+(.{6,})$/i);
       if (match) {
         addCard(match[1].replace(/^(?:A|An|The)\s+/i, ""), `${match[1]} ${match[2]} ${match[3]}.`);
         return;
@@ -4945,18 +6006,10 @@ function generateCardsFromNotes(notes) {
         addCard(`What is the function of ${embeddedSubject(match[1])}?`, `${match[1]} functions to ${match[2]}.`);
         return;
       }
-      match = normalized.match(/^(.{2,70}?)\s+(causes?|produces?|creates?|converts?)\s+(.{2,})$/i);
-      if (match) {
-        addCard(`Describe what ${embeddedSubject(match[1])} ${match[2].toLowerCase()}.`, match[3]);
-        return;
-      }
-      match = normalized.match(/^(.{2,70}?)\s+(contains?|consists? of|includes?|requires?)\s+(.{2,})$/i);
-      if (match) {
-        addCard(`Describe what ${embeddedSubject(match[1])} ${match[2].toLowerCase()}.`, match[3]);
-        return;
-      }
       match = normalized.match(/^(.{2,70}?)\s+occurs? when\s+(.{6,})$/i);
-      if (match) addCard(`When does ${embeddedSubject(match[1])} occur?`, match[2]);
+      if (match) { addCard(`When does ${embeddedSubject(match[1])} occur?`, match[2]); return; }
+      match = normalized.match(/^(?:In\s+)?([A-Za-z][A-Za-z -]{2,55})(?:,\s+also known as [^,]+)?,\s+(.{12,})$/i);
+      if (match && /\b(?:learn|associate|involves?|occurs?|refers?|extends?|allows?)\b/i.test(match[2])) addCard(match[1], `${match[1]} ${match[2]}.`);
     });
   }
   return cards;
@@ -4967,6 +6020,7 @@ function cardTopic(card) {
     /^Explain\s+(.+?)\.$/i,
     /^What is the function of\s+(.+?)\?$/i,
     /^Describe what\s+(.+?)\s+(?:causes?|produces?|creates?|converts?|contains?|consists? of|includes?|requires?)\.$/i,
+    /^What does\s+(.+?)\s+(?:cause|causes|produce|produces|create|creates|convert|converts|contain|contains|consist of|consists of|include|includes|require|requires)\?$/i,
     /^What is\s+(?:an?\s+|the\s+)?(.+?)\?$/i,
     /^When does\s+(.+?)\s+occur\?$/i,
   ];
@@ -4983,13 +6037,222 @@ function generateQuestionsFromCards(cards) {
   const topics = [...new Set(questionCards.map(cardTopic).filter(Boolean))];
   return questionCards.map((card, index) => {
     const topic = cardTopic(card);
+    const embeddedTopic = String(topic || "").replace(/^(A|An|The)\b/, (article) => article.toLowerCase());
     const base = { id: makeLocalId("question"), source: card.back, confidence: 0.75 };
+    const section = String(card.sourceSection || "").toLowerCase();
+    if (topic && /main characters?|characters?/.test(section)) {
+      return { ...base, type: "short_answer", prompt: `How do the traits, choices, and position of ${embeddedTopic} shape the story?`, answer: card.back, difficulty: "Medium", confidence: 0.9, rule: "character analysis" };
+    }
+    if (topic && /major themes?|themes?/.test(section)) {
+      return { ...base, type: "short_answer", prompt: `How is the theme of ${topic} developed in the work?`, answer: card.back, difficulty: "Medium", confidence: 0.9, rule: "theme analysis" };
+    }
+    if (topic && /symbols?|motifs?/.test(section)) {
+      const symbolTopic = embeddedTopic.replace(/^(Wealth|Beauty|Secrecy)\b/, (word) => word.toLowerCase());
+      return { ...base, type: "short_answer", prompt: `How does ${symbolTopic} function in the story, and why is it significant?`, answer: card.back, difficulty: "Medium", confidence: 0.9, rule: "symbol analysis" };
+    }
+    if (topic && /conflicts?/.test(section)) {
+      const opposingSides = topic.match(/^(.+?)\s+vs\.?\s+(.+)$/i);
+      const prompt = opposingSides
+        ? `What causes the conflict between ${opposingSides[1]} and ${opposingSides[2]}, and what is at stake?`
+        : `What tension involves ${topic}, and what is at stake?`;
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.85, rule: "conflict analysis" };
+    }
+    if (topic && /key interpretations?|interpretations?/.test(section)) {
+      const interpretation = embeddedTopic.replace(/^Leaving\b/, "leaving");
+      return { ...base, type: "short_answer", prompt: `What evidence supports the interpretation that ${interpretation}?`, answer: card.back, difficulty: "Hard", confidence: 0.82, rule: "evidence-based interpretation" };
+    }
+    if (topic && /quick review/.test(section)) {
+      const reviewPrompts = {
+        author: "Who wrote the work?",
+        genre: "What genre is the work?",
+        setting: "Where and when is the work set?",
+        "main character": "Who is the main character?",
+        "central conflict": "What is the central conflict?",
+        climax: "What is the climax?",
+        resolution: "How is the central conflict resolved?",
+        "central idea": "What is the work's central idea?",
+      };
+      return { ...base, type: "wh", prompt: reviewPrompts[topic.toLowerCase()] || `What is important about ${topic}?`, answer: card.back, difficulty: "Easy", confidence: 0.9, rule: "review fact" };
+    }
+    if (topic && card.sourceKind === "functional-groups") {
+      let prompt = `What are the defining structure, properties, and common reactions of ${topic}?`;
+      if (/acidity and basicity/i.test(section)) prompt = "How do structure and pKa determine the acidity or basicity of organic functional groups?";
+      else if (/polarity and solubility/i.test(section)) prompt = "How do polarity, hydrogen bonding, charge, and carbon-chain length affect solubility and boiling point?";
+      else if (/oxidation and reduction/i.test(section)) prompt = "How can oxidation and reduction of common organic functional groups be recognized?";
+      else if (/functional groups in biology/i.test(section)) prompt = "Which functional groups occur in major biological molecules, and what roles do they play?";
+      else if (/common mistakes/i.test(section)) {
+        const comparison = topic.replace(/\s*≠\s*/, " be distinguished from ").replace(/^[A-Z][a-z]+/, (word) => word.toLowerCase());
+        prompt = `How can ${comparison}?`;
+      }
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.92, rule: "functional-group reasoning" };
+    }
+    if (topic && card.sourceKind === "molecular-genetics") {
+      let prompt = `What is ${topic}, and what role does it play in molecular genetics?`;
+      if (/^(?:DNA Replication|Transcription|Translation): (?:Initiation|Elongation|Termination|Completion)$/i.test(topic)) prompt = `What happens during ${topic}?`;
+      else if (/\bvs\.?\b|\s≠\s/i.test(topic)) prompt = `How do ${topic.replace(/\s+(?:vs\.?|≠)\s+/i, " and ").replace(/^[A-Z]/, (letter) => letter.toLowerCase())} differ?`;
+      else if (/^(?:Helicase|Single-strand binding proteins|Topoisomerase|Primase|DNA polymerase|RNA polymerase|DNA ligase|Telomerase|Transcription factors|Release factors|Lac repressor|Allolactose)$/i.test(topic)) prompt = `What is the role of ${topic}?`;
+      else if (/^(?:mRNA|tRNA|rRNA)$/i.test(topic)) prompt = `What is the role of ${topic} in gene expression?`;
+      else if (/^(?:A|P|E) site\b/i.test(topic)) prompt = `What occurs at the ${topic} of the ribosome?`;
+      else if (/^Gene Mutations$/i.test(topic)) prompt = "What are gene mutations, and how can they affect gene products?";
+      else if (/^Insertions and deletions$/i.test(topic)) prompt = "How can insertions and deletions alter a coding sequence?";
+      else if (/^Chromosomal mutations$/i.test(topic)) prompt = "What are the major types of chromosomal mutation?";
+      else if (/mutation/i.test(topic)) prompt = `What is a ${embeddedTopic.replace(/^[A-Z]/, (letter) => letter.toLowerCase())}, and how can it affect a gene product?`;
+      else if (/central dogma/i.test(topic)) prompt = "How does genetic information flow according to the central dogma?";
+      else if (/^DNA Replication —/i.test(topic)) prompt = "When does DNA replication occur, and what does semiconservative replication mean?";
+      else if (/^Transcription —/i.test(topic)) prompt = "Where does transcription occur, and what does it produce?";
+      else if (/^Translation —/i.test(topic)) prompt = "Where does translation occur, and what does it produce?";
+      else if (/leading strand/i.test(topic)) prompt = "How is the leading strand synthesized during DNA replication?";
+      else if (/lagging strand/i.test(topic)) prompt = "How is the lagging strand synthesized, and why are Okazaki fragments required?";
+      else if (/^Regulation of Gene Expression$/i.test(topic)) prompt = "Why is gene expression regulated, and at what levels can regulation occur?";
+      else if (/^Lac operon (?:with|without) lactose$/i.test(topic)) prompt = `How is the ${topic} regulated?`;
+      else if (/^Lac operon — inducible system$/i.test(topic)) prompt = "Why is the lac operon considered an inducible system?";
+      else if (/^Trp operon — repressible system$/i.test(topic)) prompt = "How does tryptophan regulate the repressible trp operon?";
+      else if (/^DNA bases$/i.test(topic)) prompt = "Which nitrogenous bases occur in DNA?";
+      else if (/^DNA base pairing$/i.test(topic)) prompt = "What are the DNA base-pairing rules, including hydrogen-bond numbers?";
+      else if (/^DNA strand directionality$/i.test(topic)) prompt = "What does it mean for DNA strands to be antiparallel?";
+      else if (/^Telomeres$/i.test(topic)) prompt = "What are telomeres, and why do chromosome ends require them?";
+      else if (/^Semiconservative replication$/i.test(topic)) prompt = "What does semiconservative DNA replication produce?";
+      else if (/^Transcription base-pairing rules$/i.test(topic)) prompt = "What base-pairing rules does RNA polymerase follow during transcription?";
+      else if (/^Eukaryotic mRNA processing$/i.test(topic)) prompt = "What three major modifications convert pre-mRNA into mature eukaryotic mRNA?";
+      else if (/^5′ cap$/i.test(topic)) prompt = "What is the function of the 5′ cap on eukaryotic mRNA?";
+      else if (/^Poly-A tail$/i.test(topic)) prompt = "What is the function of the poly-A tail?";
+      else if (/^RNA splicing$/i.test(topic)) prompt = "How does RNA splicing process pre-mRNA, and what does alternative splicing accomplish?";
+      else if (/^DNA coding strand$/i.test(topic)) prompt = "How is the DNA coding strand related to the mRNA sequence?";
+      else if (/^DNA template strand$/i.test(topic)) prompt = "How is the DNA template strand read during transcription?";
+      else if (/^Important codons$/i.test(topic)) prompt = "Which codons initiate and terminate translation?";
+      else if (/^Genetic code is degenerate$/i.test(topic)) prompt = "What does it mean that the genetic code is degenerate?";
+      else if (/^Ribosomal A, P, and E sites$/i.test(topic)) prompt = "What are the functions of the ribosome's A, P, and E sites?";
+      else if (/^The ribosome$/i.test(topic)) prompt = "What does the ribosome do during translation?";
+      else if (/^Initiator tRNA$/i.test(topic)) prompt = "What does initiator tRNA do during translation initiation?";
+      else if (/^Enhancers and silencers$/i.test(topic)) prompt = "How do enhancers and silencers regulate transcription?";
+      else if (/^Noncoding RNAs$/i.test(topic)) prompt = "How can noncoding RNAs regulate gene expression?";
+      else if (/^DNA methylation$/i.test(topic)) prompt = "How does promoter-associated DNA methylation affect transcription?";
+      else if (/^Histone modification$/i.test(topic)) prompt = "How can histone acetylation and methylation alter gene expression?";
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.92, rule: "molecular-genetics reasoning" };
+    }
+    if (topic && card.sourceKind === "ecology") {
+      let prompt = `What is ${embeddedTopic}, and why is it ecologically important?`;
+      if (/^Population$/i.test(topic)) prompt = "What is a population?";
+      else if (/^Population Growth$/i.test(topic)) prompt = "Which four processes change population size?";
+      else if (/^Population size changes based on 4 factors$/i.test(topic)) prompt = "How do births, deaths, immigration, and emigration change population size?";
+      else if (/^Exponential growth$/i.test(topic)) prompt = "Under what conditions does exponential population growth occur, and what does its equation describe?";
+      else if (/^Logistic growth$/i.test(topic)) prompt = "How does logistic growth change as population size approaches carrying capacity?";
+      else if (/^Equation$/i.test(topic) && /dN\/dt=rN/i.test(card.back)) prompt = "What does each variable represent in the exponential-growth equation dN/dt = rN?";
+      else if (/^Density-dependent$/i.test(topic)) prompt = "How do density-dependent limiting factors change as population density increases?";
+      else if (/^Density-dependent examples$/i.test(topic)) prompt = "What are common density-dependent limiting factors?";
+      else if (/^Density-independent$/i.test(topic)) prompt = "Why can density-independent factors affect crowded and sparse populations alike?";
+      else if (/^Density-independent examples$/i.test(topic)) prompt = "What are common density-independent limiting factors?";
+      else if (/^Density dependence: drought vs\. disease$/i.test(topic)) prompt = "Why is drought generally density-independent while disease transmission is often density-dependent?";
+      else if (/^Competition/i.test(topic)) prompt = "Why is competition represented as −/−, and how do intraspecific and interspecific competition differ?";
+      else if (/^Predation/i.test(topic)) prompt = "Why is predation represented as +/−, and how can predator and prey populations influence one another?";
+      else if (/^Mutualism/i.test(topic)) prompt = "Why is mutualism represented as +/+?";
+      else if (/^Commensalism/i.test(topic)) prompt = "Why is commensalism represented as +/0?";
+      else if (/^Parasitism/i.test(topic)) prompt = "Why is parasitism represented as +/−, and why may a parasite avoid immediately killing its host?";
+      else if (/^Energy Flow in Ecosystems$/i.test(topic)) prompt = "How do energy and matter move differently through an ecosystem?";
+      else if (/^10% rule$/i.test(topic)) prompt = "How can the 10% rule be used to estimate energy available at successive trophic levels?";
+      else if (/^10% rule example$/i.test(topic)) prompt = "If producers contain 10,000 kJ, how much energy would the 10% rule predict for primary and secondary consumers?";
+      else if (/^Why energy decreases$/i.test(topic)) prompt = "Why does available energy decrease between trophic levels?";
+      else if (/^Primary succession$/i.test(topic)) prompt = "Where does primary succession begin, and why is it relatively slow?";
+      else if (/^Secondary succession$/i.test(topic)) prompt = "Where does secondary succession begin, and why is it usually faster than primary succession?";
+      else if (/^Ecological Succession$/i.test(topic)) prompt = "What is ecological succession, and why does it not always produce one permanent climax community?";
+      else if (/^Biodiversity/i.test(topic)) prompt = "How can biodiversity influence ecosystem functioning and resilience?";
+      else if (/^Competitive exclusion principle$/i.test(topic)) prompt = "What does the competitive exclusion principle predict when two species occupy the same niche?";
+      else if (/^Intraspecific$/i.test(topic)) prompt = "What is intraspecific competition?";
+      else if (/^Interspecific$/i.test(topic)) prompt = "What is interspecific competition?";
+      else if (/^Limiting Factors$/i.test(topic)) prompt = "How do density-dependent and density-independent limiting factors differ?";
+      else if (/^Succession$/i.test(topic)) prompt = "What is ecological succession?";
+      else if (/^Connections among ecological processes$/i.test(topic)) prompt = "How are resources, species interactions, population growth, and energy availability connected?";
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.92, rule: "ecological reasoning" };
+    }
+    if (topic && card.sourceKind === "calculus") {
+      let prompt = `What does ${embeddedTopic} mean?`;
+      if (/left-hand limit/i.test(topic)) prompt = "What does a left-hand limit describe, and how is it written?";
+      else if (/right-hand limit/i.test(topic)) prompt = "What does a right-hand limit describe, and how is it written?";
+      else if (/limit of a constant/i.test(topic)) prompt = "What is the limit of a constant function?";
+      else if (/limit of .?x/i.test(topic)) prompt = "What is the limit of the identity function as x approaches a value?";
+      else if (/line with a hole/i.test(card.back)) prompt = "How can a function have a limit at a point where the graph has a hole?";
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.9, rule: "mathematical concept" };
+    }
+    if (topic && card.sourceKind === "psychology-learning") {
+      let prompt = `What is ${embeddedTopic}?`;
+      if (/classical conditioning/i.test(topic)) prompt = "How does classical conditioning create an association between stimuli?";
+      else if (/operant conditioning/i.test(topic)) prompt = "How do consequences shape behavior in operant conditioning?";
+      else if (/observational learning/i.test(topic)) prompt = "How does observational learning differ from learning through direct experience?";
+      else if (/associative learning/i.test(topic)) prompt = "What is associative learning?";
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.9, rule: "psychology concept" };
+    }
+    if (topic && card.sourceKind === "hypothesis-testing") {
+      let prompt = `When would you use ${embeddedTopic}?`;
+      if (/normal-approximation condition/i.test(topic)) prompt = "What conditions allow a sample proportion to be modeled with a normal distribution?";
+      else if (/population mean/i.test(topic)) prompt = "Which parameter and statistic are used when estimating a population mean?";
+      else if (/population proportion/i.test(topic)) prompt = "Which parameter and statistic are used when estimating a population proportion?";
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.92, rule: "statistical test selection" };
+    }
+    if (topic && card.sourceKind === "electrochemistry") {
+      let prompt = `What is ${embeddedTopic}, and how is it used?`;
+      if (/Reaction quotient/i.test(topic)) prompt = "How does the reaction quotient affect the electrode potential in the Nernst equation?";
+      else if (/Nernst equation/i.test(topic)) prompt = "What does the Nernst equation calculate, and what does each term represent?";
+      else if (/Anode and cathode/i.test(topic)) prompt = "Where do oxidation and reduction occur in a galvanic cell, and which way do electrons flow?";
+      else if (/Equilibrium constant/i.test(topic)) prompt = "How are standard cell potential, Gibbs free energy, and the equilibrium constant related?";
+      else if (/Standard cell potential/i.test(topic)) prompt = "How is standard cell potential calculated from the two half-cell potentials?";
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.92, rule: "electrochemistry reasoning" };
+    }
+    if (topic && card.sourceKind === "science") {
+      const prompt = card.sourceFormat === "table"
+        ? `Which defining properties distinguish ${embeddedTopic} from the other entries in this comparison?`
+        : /[?]$/.test(card.front) ? card.front
+          : `What is ${embeddedTopic}, and how does it function or affect the system being studied?`;
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.86, rule: "scientific mechanism" };
+    }
+    if (topic && card.sourceKind === "math") {
+      const prompt = card.sourceFormat === "table"
+        ? `When is ${embeddedTopic} used, and what properties or conditions define it?`
+        : /[?]$/.test(card.front) ? card.front
+          : `What does ${embeddedTopic} mean, and how would you use it in a problem?`;
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.86, rule: "mathematical interpretation" };
+    }
+    if (topic && card.sourceKind === "literature") {
+      return { ...base, type: "short_answer", prompt: `How does ${embeddedTopic} contribute to the work's meaning? Use relevant evidence.`, answer: card.back, difficulty: "Medium", confidence: 0.84, rule: "literary evidence" };
+    }
+    if (topic && card.sourceKind === "business") {
+      return { ...base, type: "short_answer", prompt: `What is ${embeddedTopic}, which factors influence it, and why does it matter for a decision?`, answer: card.back, difficulty: "Medium", confidence: 0.84, rule: "business application" };
+    }
+    const historicalSection = card.sourceKind === "history" || /\b(?:revolution|regime|monarchy|assembly|bastille|great fear|feudal\w*|terror|directory|napoleon|historical|dates?|effects?|factions?|estates?|versailles|robespierre|execution|constitutional|political|causes?|connections?|theme|rights?|declaration|enlightenment)\b/i.test(section);
+    if (topic && historicalSection) {
+      const dateTopic = /^(?:(?:january|february|march|april|may|june|july|august|september|october|november|december)\b|\d{4}\b)/i.test(topic);
+      const effectTopic = /effects?$/i.test(topic);
+      const personTopic = /^(?:John Locke|Montesquieu|Jean-Jacques Rousseau|Voltaire|Maximilien Robespierre|Napoleon Bonaparte)$/i.test(topic);
+      const namedDate = topic.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+      let prompt = `What was ${/^(?:First|Second|Third) Estate/i.test(topic) ? "the " : ""}${embeddedTopic}, and why was it significant?`;
+      if (/^Significance of /i.test(topic)) prompt = `Why was ${topic.replace(/^Significance of /i, "").replace(/^The\b/, "the")} significant?`;
+      else if (/^Consequences of /i.test(topic)) prompt = `What were the consequences of ${topic.replace(/^Consequences of /i, "")}?`;
+      else if (/^Limitation of /i.test(topic) && /women were excluded/i.test(card.back)) prompt = "What important limitation remained in the Declaration of the Rights of Man and of the Citizen?";
+      else if (/^Limitation of /i.test(topic)) prompt = `What limitation remained after ${topic.replace(/^Limitation of /i, "")}?`;
+      else if (/^Principles of the Declaration$/i.test(topic)) prompt = "What principles did the Declaration of the Rights of Man and of the Citizen establish?";
+      else if (/^(?:Girondins|Jacobins and Montagnards|Sans-culottes)$/i.test(topic)) prompt = `Who were the ${topic}, and what did they support?`;
+      else if (/^Economic Crisis$/i.test(topic)) prompt = "What factors created France's economic crisis before the Revolution?";
+      else if (/^Social Inequality$/i.test(topic)) prompt = "How did social inequality contribute to the French Revolution?";
+      else if (/^Enlightenment Ideas$/i.test(topic)) prompt = "How did Enlightenment ideas contribute to the French Revolution?";
+      else if (/^Essential Historical Connections$/i.test(topic)) prompt = "What cause-and-effect chain connects the major stages of the French Revolution?";
+      else if (/^Central theme$/i.test(topic)) prompt = "What central tension defined the French Revolution?";
+      else if (/^Storming of the Bastille/i.test(topic)) prompt = "What happened during the Storming of the Bastille, and why was it significant?";
+      else if (/^Execution of King Louis XVI/i.test(topic)) prompt = "Why was Louis XVI tried and executed?";
+      else if (/^Fall of Robespierre/i.test(topic)) prompt = "How did Robespierre fall from power, and why was his fall significant?";
+      else if (/^Napoleon Bonaparte and the End/i.test(topic)) prompt = "How did Napoleon Bonaparte bring the French Revolution to an end?";
+      else if (namedDate && dateTopic) prompt = `What was the ${namedDate[2].replace(/^the\s+/i, "")}, and what happened during it?`;
+      else if (dateTopic) prompt = `What happened ${/^\d{4}(?:\s*[-–—]\s*\d{4})?$/.test(topic) ? "in" : "on"} ${topic}?`;
+      else if (effectTopic) prompt = `What were the ${topic.toLowerCase()} of the French Revolution?`;
+      else if (personTopic) prompt = /major causes/i.test(section) ? `What ideas did ${topic} contribute to revolutionary thought?` : `What role did ${topic} play during this period?`;
+      else if (/^Causes of /i.test(topic)) prompt = `What caused ${topic.replace(/^Causes of /i, "")}?`;
+      return { ...base, type: "short_answer", prompt, answer: card.back, difficulty: "Medium", confidence: 0.9, rule: "historical context" };
+    }
     const statement = topic && card.back.toLowerCase().startsWith(topic.toLowerCase())
       ? card.back
       : topic ? `${topic} is ${card.back.charAt(0).toLowerCase()}${card.back.slice(1)}` : card.back;
     if (index % 4 === 1 && topic) {
       const makeFalse = Math.floor(index / 4) % 2 === 1 && topics.length > 1;
-      const replacement = topics.find((item) => item !== topic);
+      const relatedTopics = questionCards.filter((item) => item !== card && ((card.sourceSection && item.sourceSection === card.sourceSection) || (card.sourceKind && item.sourceKind === card.sourceKind))).map(cardTopic).filter(Boolean);
+      const replacement = relatedTopics.find((item) => item !== topic) || topics.find((item) => item !== topic);
       const prompt = makeFalse && replacement
         ? statement.replace(new RegExp(topic.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), replacement)
         : statement;
@@ -4997,11 +6260,15 @@ function generateQuestionsFromCards(cards) {
     }
     if (index % 4 === 2 && topic) {
       const escapedTopic = topic.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const cloze = new RegExp(escapedTopic, "i").test(statement) ? statement.replace(new RegExp(escapedTopic, "i"), "_____") : `_____ is ${card.back.charAt(0).toLowerCase()}${card.back.slice(1)}`;
-      return { ...base, type: "cloze", prompt: cloze, answer: topic, difficulty: "Medium", confidence: 0.85, rule: "key-term deletion" };
+      if (new RegExp(escapedTopic, "i").test(statement)) {
+        const cloze = statement.replace(new RegExp(escapedTopic, "i"), "_____");
+        return { ...base, type: "cloze", prompt: cloze, answer: topic, difficulty: "Medium", confidence: 0.85, rule: "key-term deletion" };
+      }
+      return { ...base, type: "short_answer", prompt: /[?]$/.test(card.front) ? card.front : `What is ${embeddedTopic}?`, answer: card.back, difficulty: "Medium", confidence: 0.78, rule: "fact recall" };
     }
     if (index % 4 === 3 && topic && topics.length >= 4) {
-      const candidates = topics.filter((item) => item.toLowerCase() !== topic.toLowerCase());
+      const related = questionCards.filter((item) => item !== card && ((card.sourceSection && item.sourceSection === card.sourceSection) || (card.sourceKind && item.sourceKind === card.sourceKind))).map(cardTopic).filter(Boolean);
+      const candidates = [...new Set([...related, ...topics])].filter((item) => item.toLowerCase() !== topic.toLowerCase());
       const offset = index % candidates.length;
       const distractors = [...candidates.slice(offset), ...candidates.slice(0, offset)].slice(0, 3);
       const escapedTopic = topic.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -5009,19 +6276,97 @@ function generateQuestionsFromCards(cards) {
       const options = shuffleInPlace([topic, ...distractors]);
       if (options.length === 4) return { ...base, type: "mcq", prompt: `Complete the statement: ${cloze}`, answer: topic, options, difficulty: "Medium", confidence: 0.9, rule: "key-term deletion with noun distractors" };
     }
-    const prompt = topic && card.front.trim() === topic ? `What is the significance of ${topic}?` : card.front;
+    const prompt = topic && card.front.trim() === topic ? `What is ${embeddedTopic}?` : card.front;
     return { ...base, type: "wh", prompt, answer: card.back, difficulty: "Easy", confidence: 0.8, rule: "fact-to-question transformation" };
   });
 }
 
 function generateFeynmanPrompts(notes, cards) {
+  if (/\b5E Lesson\b[\s\S]{0,1500}\bTeacher's Note\b|\bAt a glance\b[\s\S]{0,1200}\bMaterials\b[\s\S]{0,1200}\bThe 5E lesson\b/i.test(notes)) return [];
+  if (/probability distribution needed for hypothesis testing|hypothesis test for the mean[\s\S]{0,1200}hypothesis test for proportions/i.test(notes)) {
+    return [
+      "Explain how to choose among a one-sample z-test for a mean, a one-sample t-test for a mean, and a one-sample z-test for a proportion.",
+      "Explain why knowing or not knowing the population standard deviation changes the test distribution for a population mean.",
+      "Check a proposed one-proportion hypothesis test and explain whether independence and success-failure conditions are satisfied.",
+      "Distinguish a population parameter from its sample statistic for both means and proportions.",
+      "Explain what would go wrong if a hypothesis-test distribution were chosen without checking its assumptions.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
+  if (/nernst equation|faradaic reactions? in equilibrium|electrochemical potential/i.test(notes)) {
+    return [
+      "Derive the meaning of each term in the electrochemical-potential equation and explain how concentration and voltage influence it.",
+      "Explain why chemical activity replaces concentration in a nonideal solution and how the activity coefficient captures nonideality.",
+      "Use the Nernst equation to predict how changing reactant or product activity changes an electrode potential.",
+      "Explain oxidation, reduction, anode, cathode, and electron flow for a complete galvanic cell.",
+      "Connect standard cell potential to Gibbs free energy and the equilibrium constant, including the sign of each quantity.",
+      "Build a complete electrochemical cell from two half-reactions and explain why only a potential difference can be measured.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
+  if (/\b(?:the limit of a function|one-sided limits?|limit laws?|differentiation|definite integral|derivative as a function)\b/i.test(notes)) {
+    return [
+      "Explain what a limit measures without relying only on notation, then connect the explanation to a graph and a table.",
+      "Explain why a function's limit can exist even when the function is undefined or has a different value at that point.",
+      "Compare left-hand, right-hand, and two-sided limits and explain how they determine whether a limit exists.",
+      "Work through a limit algebraically and explain why each simplification is valid.",
+      "Explain the constant, identity, sum, product, quotient, and composition limit laws with examples.",
+      "Diagnose a limit that does not exist because of a jump, unbounded behavior, or incompatible one-sided limits.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
+  if (/\bclassical conditioning\b[\s\S]{0,2500}\boperant conditioning\b[\s\S]{0,2500}\bobservational learning\b/i.test(notes)) {
+    return [
+      "Explain how learned behavior differs from instincts and reflexes, using one original example of each.",
+      "Explain associative learning and show how it connects classical and operant conditioning.",
+      "Trace a classical-conditioning example from the unconditioned stimulus and response to the conditioned stimulus and response.",
+      "Explain how reinforcement and punishment change future behavior in operant conditioning.",
+      "Compare classical, operant, and observational learning by what is learned and how experience produces the change.",
+      "Explain how attention, memory, and consequences can affect whether an observed behavior is imitated.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
+  if (/ecology\s*[—–-]\s*population dynamics\s*&\s*ecosystems|biology\s*\|\s*unit:\s*ecology|population ecology|(?:^|\n)\s*#{0,6}\s*ecology\s*(?:\n|$)/im.test(notes)) {
+    return [
+      "Compare exponential and logistic population growth, explaining each curve, equation, variable, and limiting assumption.",
+      "Predict how births, deaths, immigration, and emigration change population size in a given scenario.",
+      "Compare density-dependent and density-independent limiting factors and explain why their effects differ.",
+      "Explain the sign notation and biological consequences of competition, predation, mutualism, commensalism, and parasitism.",
+      "Trace energy through trophic levels and use the 10% rule to estimate how much energy reaches each level.",
+      "Explain why energy flows through ecosystems while matter cycles, including the roles of producers, consumers, and decomposers.",
+      "Compare primary and secondary succession and predict which will proceed faster after a given disturbance.",
+      "Explain how biodiversity, keystone species, invasive species, and habitat fragmentation affect ecosystem stability.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
+  if (/organic chemistry\s*[—–-]\s*functional groups|functional groups study notes/i.test(notes)) {
+    return [
+      "Explain how bond order and hybridization distinguish alkanes, alkenes, alkynes, and aromatic compounds and affect their reactions.",
+      "Compare alcohols, phenols, and ethers by structure, hydrogen bonding, acidity, boiling point, and water solubility.",
+      "Compare aldehydes and ketones, including their structures, relative reactivity, oxidation, and reduction products.",
+      "Explain how carboxylic acids, esters, acyl halides, acid anhydrides, and amides are structurally related and interconverted.",
+      "Compare amines, amides, nitriles, and nitro groups by bonding, basicity, polarity, and common reactions.",
+      "Explain how pKa and pH predict whether an organic functional group is protonated or deprotonated.",
+      "Trace the major oxidation and reduction patterns for alcohols, carbonyls, alkenes, nitro groups, and thiols.",
+      "Identify the major functional groups found in proteins, carbohydrates, lipids, DNA, RNA, and ATP and explain why each matters.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
+  if (/genetics:\s*dna replication, transcription\s*&\s*translation|biology notes\s*[—–-]\s*molecular genetics/i.test(notes)) {
+    return [
+      "Trace the flow of genetic information from DNA to RNA to protein, including the purpose of each stage.",
+      "Explain DNA replication from origin recognition through completion, including the role of each major enzyme and 5′→3′ directionality.",
+      "Compare leading- and lagging-strand synthesis and explain why Okazaki fragments and multiple primers are needed.",
+      "Explain transcription and eukaryotic mRNA processing, including promoters, RNA polymerase, the 5′ cap, poly-A tail, and splicing.",
+      "Explain translation from start-codon recognition through termination, including tRNA and the ribosome's A, P, and E sites.",
+      "Predict how silent, missense, nonsense, insertion, deletion, and chromosomal mutations can affect a gene product.",
+      "Compare lac-operon, trp-operon, and eukaryotic regulation through transcription factors, chromatin changes, and noncoding RNA.",
+      "Given DNA coding and template strands, explain how to derive the mRNA sequence and determine the resulting amino-acid sequence.",
+    ].map((prompt) => ({ id: makeLocalId("feynman"), prompt }));
+  }
   const stopWords = new Set("a an and are as at be because been being but by can did do does for from had has have how if in into is it its may more most not of on or our should than that the their then there these they this those through to using was were what when where which who why will with your".split(" "));
   const scores = new Map();
   const display = new Map();
   const lessonTopics = [];
   const headingTopics = [];
+  const primaryHeadingTopics = [];
   const addCandidate = (value, weight) => {
     const phrase = cleanNoteLine(value).replace(/[.:;!?]+$/, "").trim();
+    if (/^(?:significance|consequences|limitation|principles|january|february|march|april|may|june|july|august|september|october|november|december)$/i.test(phrase) || /^\d{4}(?:\b|\s*[-–—])/.test(phrase)) return;
     const words = phrase.match(/\b(?:\d+(?:st|nd|rd|th)|[A-Za-z][A-Za-z0-9'-]*)\b/gi) || [];
     if (!words.length || words.length > 6 || words.every((word) => stopWords.has(word.toLowerCase()))) return;
     const key = words.join(" ").toLowerCase();
@@ -5048,13 +6393,14 @@ function generateFeynmanPrompts(notes, cards) {
       }
       return;
     }
-    const numberedHeading = line.match(/^\s*\d+(?:\.\d+)*\.?\s+([^.!?]{3,80})$/);
+    const numberedHeading = line.match(/^\s*(?:\d+(?:\.\d+)*\.?|[IVXLCDM]+[.)])\s+([^.!?]{3,80})$/i);
     const heading = /^#{1,6}\s+/.test(line) || numberedHeading || (/^[A-Z][^.!?]{2,80}:?$/.test(cleaned) && !cleaned.includes(":"));
     if (heading) {
       const headingText = cleanNoteLine(numberedHeading?.[1] || cleaned.replace(/^#{1,6}\s+/, "")).replace(/^(?:Page\s+\d+\s*:\s*)/i, "");
-      if (headingText && !/^(?:Overview|Important Vocabulary|Vocabulary)$/i.test(headingText)) {
+      if (headingText && !/^(?:Overview|Important Vocabulary|Vocabulary|Important Dates to Memorize)$/i.test(headingText)) {
         addCandidate(headingText, 12);
         headingTopics.push(headingText);
+        if (numberedHeading) primaryHeadingTopics.push(headingText);
       }
     }
     const definedTerm = cleaned.match(/^([^:]{2,60}):\s+.+/);
@@ -5075,13 +6421,43 @@ function generateFeynmanPrompts(notes, cards) {
     return shared / Math.max(1, new Set([...a, ...b]).size);
   };
   const targetCount = Math.min(18, Math.max(2, Math.ceil(cards.length / 10)));
-  for (const [key] of ranked) {
-    if (chosen.length >= targetCount) break;
-    const phrase = display.get(key);
-    if (chosen.some((item) => overlap(item, phrase) > 0.55)) continue;
-    chosen.push(phrase);
+  const broadTopics = [...new Set(primaryHeadingTopics)].filter((topic) => !/Important Dates to Memorize/i.test(topic));
+  if (broadTopics.length) {
+    const desired = Math.min(targetCount, broadTopics.length);
+    const anchors = [/old regime/i, /major causes/i, /national assembly/i, /bastille/i, /constitutional monarchy/i, /reign of terror/i, /directory/i, /napoleon/i, /major effects/i];
+    anchors.forEach((pattern) => {
+      const phrase = broadTopics.find((topic) => pattern.test(topic));
+      if (phrase && chosen.length < desired && !chosen.includes(phrase)) chosen.push(phrase);
+    });
+    for (let index = 0; chosen.length < desired && index < desired * 2; index += 1) {
+      const sourceIndex = desired === 1 ? 0 : Math.round(index * (broadTopics.length - 1) / Math.max(1, desired * 2 - 1));
+      const phrase = broadTopics[sourceIndex];
+      if (phrase && !chosen.includes(phrase)) chosen.push(phrase);
+    }
+  } else {
+    for (const [key] of ranked) {
+      if (chosen.length >= targetCount) break;
+      const phrase = display.get(key);
+      if (chosen.some((item) => overlap(item, phrase) > 0.55)) continue;
+      chosen.push(phrase);
+    }
   }
-  return chosen.map((topic) => ({ id: makeLocalId("feynman"), prompt: topic.charAt(0).toUpperCase() + topic.slice(1) }));
+  const domain = /\b(?:cell|gene|dna|rna|protein|organism|species|ecosystem|chemical|reaction|molecule|energy|force|velocity|disease|anatomy|physiology)\b/i.test(notes) ? "science"
+    : /\b(?:function|equation|derivative|integral|probability|theorem|graph|matrix|angle)\b/i.test(notes) ? "math"
+      : /\b(?:novel|poem|character|theme|author|narrator|symbol|literature)\b/i.test(notes) ? "literature"
+        : /\b(?:market|business|finance|revenue|cost|economy|supply|demand)\b/i.test(notes) ? "business" : "history";
+  return chosen.map((topic) => {
+    const normalized = topic.replace(/^(A|An|The)\b/, (article) => article.toLowerCase());
+    let prompt = domain === "science" ? `Explain how ${normalized} works, including its mechanism, important variables, and a concrete example.`
+      : domain === "math" ? `Explain how to recognize and solve a problem involving ${normalized}, then check the result with an example.`
+        : domain === "literature" ? `Explain how ${normalized} develops in the work, using specific evidence and its effect on meaning.`
+          : domain === "business" ? `Explain how ${normalized} works, which factors change it, and how it affects a real decision.`
+            : `Explain ${normalized} in your own words, including its causes, key developments, and significance.`;
+    if (/major causes/i.test(topic)) prompt = "Explain how economic crisis, social inequality, and Enlightenment ideas combined to cause the French Revolution.";
+    else if (/major effects/i.test(topic)) prompt = "Explain the major political, social, economic, religious, and international effects of the French Revolution.";
+    else if (/historical connections/i.test(topic)) prompt = "Explain the major cause-and-effect chain of the French Revolution from the Old Regime through Napoleon's coup.";
+    return { id: makeLocalId("feynman"), prompt };
+  });
 }
 
 function questionTypeLabel(type) {
@@ -5127,6 +6503,129 @@ function hasAnyStudyItem() {
   return hasCard || hasQuestion || hasFeynman;
 }
 
+function characteristicTemplate() {
+  if (state.cardMakerMode !== "characteristics") return [];
+  return state.customCharacteristicFields.map(({ name, front, back }) => ({ name: name.trim(), front, back }));
+}
+
+function setCardMakerMode(mode) {
+  state.cardMakerMode = state.extraColumnsOnly || mode === "characteristics" ? "characteristics" : "basic";
+  const basicModeButton = $('[data-card-maker-mode="basic"]');
+  if (basicModeButton) basicModeButton.hidden = state.extraColumnsOnly;
+  $$('[data-card-maker-mode]').forEach((button) => button.classList.toggle("active", button.dataset.cardMakerMode === state.cardMakerMode));
+  $("#basic-card-maker").hidden = state.cardMakerMode !== "basic";
+  $("#characteristic-card-maker").hidden = state.cardMakerMode !== "characteristics";
+  if (state.cardMakerMode === "characteristics") renderCharacteristicCardMaker();
+  renderCustomDraft();
+}
+
+function renderCharacteristicCardMaker() {
+  const fields = state.customCharacteristicFields;
+  $("#characteristic-field-count").textContent = `${fields.length} of 15 columns`;
+  $("#add-characteristic-field").disabled = fields.length >= 15;
+  $("#characteristic-field-list").innerHTML = fields.map((field, index) => `<div class="characteristic-field-row" data-characteristic-row="${field.id}"><input type="text" maxlength="40" value="${escapeHtml(field.name)}" data-characteristic-name="${field.id}" aria-label="Extra column ${index + 1} name"><input type="text" value="${escapeHtml(field.value)}" data-characteristic-value="${field.id}" aria-label="${escapeHtml(field.name || `Extra column ${index + 1}`)} value" placeholder="Enter information"><label class="characteristic-side-toggle" title="Show on front"><input type="checkbox" data-characteristic-front="${field.id}" ${field.front ? "checked" : ""} aria-label="Show ${escapeHtml(field.name)} on front"></label><label class="characteristic-side-toggle" title="Show on back"><input type="checkbox" data-characteristic-back="${field.id}" ${field.back ? "checked" : ""} aria-label="Show ${escapeHtml(field.name)} on back"></label><button type="button" class="remove-characteristic-field" data-remove-characteristic="${field.id}" aria-label="Remove ${escapeHtml(field.name)}" ${fields.length === 1 ? "disabled" : ""}>×</button></div>`).join("");
+  $$('[data-characteristic-name]').forEach((input) => input.addEventListener("input", () => {
+    const field = fields.find((item) => item.id === input.dataset.characteristicName);
+    if (field) {
+      const previousName = field.name;
+      field.name = input.value;
+      state.customDraft.forEach((card) => {
+        if (!card.characteristics || previousName === input.value || !(previousName in card.characteristics)) return;
+        card.characteristics[input.value] = card.characteristics[previousName];
+        delete card.characteristics[previousName];
+      });
+    }
+  }));
+  $$('[data-characteristic-value]').forEach((input) => input.addEventListener("input", () => {
+    const field = fields.find((item) => item.id === input.dataset.characteristicValue);
+    if (field) field.value = input.value;
+  }));
+  $$('[data-characteristic-front]').forEach((input) => input.addEventListener("change", () => {
+    const field = fields.find((item) => item.id === input.dataset.characteristicFront);
+    if (field) field.front = input.checked;
+  }));
+  $$('[data-characteristic-back]').forEach((input) => input.addEventListener("change", () => {
+    const field = fields.find((item) => item.id === input.dataset.characteristicBack);
+    if (field) field.back = input.checked;
+  }));
+  $$('[data-remove-characteristic]').forEach((button) => button.addEventListener("click", () => {
+    if (fields.length === 1) return;
+    state.customCharacteristicFields = fields.filter((field) => field.id !== button.dataset.removeCharacteristic);
+    if (state.customCharacteristicFields.length <= 2) {
+      convertExtraColumnsToBasic();
+      return;
+    }
+    renderCharacteristicCardMaker();
+    renderCustomDraft();
+  }));
+}
+
+function convertExtraColumnsToBasic() {
+  const [frontColumn, backColumn] = state.customCharacteristicFields;
+  state.customDraft = state.customDraft.map((card) => ({
+    ...card,
+    front: card.characteristics?.[frontColumn?.name] ?? card.front ?? "",
+    back: card.characteristics?.[backColumn?.name] ?? card.back ?? "",
+    characteristicCard: false,
+    characteristics: undefined,
+  }));
+  state.extraColumnsOnly = false;
+  state.customCharacteristicFields = defaultCharacteristicFields();
+  setCardMakerMode("basic");
+  showToast("Two columns remain, so this set is back to the standard Front and Back editor.");
+}
+
+function characteristicSideText(fields) {
+  return fields.map((field) => fields.length === 1 ? field.value.trim() : `${field.name.trim()}: ${field.value.trim()}`).join("\n\n");
+}
+
+function addCharacteristicCard() {
+  const namedFields = state.customCharacteristicFields.filter((field) => field.name.trim());
+  const frontFields = namedFields.filter((field) => field.front);
+  const backFields = namedFields.filter((field) => field.back);
+  if (!frontFields.length || !backFields.length) { showToast("Choose at least one extra column for both the front and back."); return; }
+  const usedFields = [...new Set([...frontFields, ...backFields])];
+  const missing = usedFields.find((field) => !field.value.trim());
+  if (missing) {
+    $(`[data-characteristic-value="${missing.id}"]`)?.focus();
+    showToast(`Add information for ${missing.name.trim()}.`);
+    return;
+  }
+  state.customDraft.push({
+    id: makeLocalId("card"),
+    front: characteristicSideText(frontFields),
+    back: characteristicSideText(backFields),
+    manual: true,
+    characteristicCard: true,
+    characteristics: Object.fromEntries(namedFields.filter((field) => field.value.trim()).map((field) => [field.name.trim(), field.value.trim()])),
+  });
+  state.customCharacteristicFields.forEach((field) => { field.value = ""; });
+  renderCharacteristicCardMaker();
+  renderCustomDraft();
+  $("[data-characteristic-value]")?.focus();
+  showToast("Item added. The same extra columns are ready for the next one.");
+}
+
+function renderExtraColumnDraft(list) {
+  const columns = state.customCharacteristicFields.filter((field) => field.name.trim());
+  list.classList.add("extra-column-draft-list");
+  list.innerHTML = `<div class="extra-column-table-wrap"><table class="extra-column-table"><thead><tr><th>#</th>${columns.map((field) => `<th>${escapeHtml(field.name)}</th>`).join("")}<th></th></tr></thead><tbody>${state.customDraft.map((card, index) => `<tr data-draft-card="${index}"><td>${index + 1}</td>${columns.map((field) => `<td><input type="text" value="${escapeHtml(card.characteristics?.[field.name] || "")}" data-extra-column-card="${index}" data-extra-column-name="${escapeHtml(field.name)}" aria-label="${escapeHtml(field.name)} for item ${index + 1}"></td>`).join("")}<td><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove item ${index + 1}">×</button></td></tr>`).join("")}</tbody></table></div>`;
+  $$('[data-extra-column-card]', list).forEach((input) => input.addEventListener("input", () => {
+    const card = state.customDraft[Number(input.dataset.extraColumnCard)];
+    if (!card) return;
+    card.characteristicCard = true;
+    card.characteristics = { ...(card.characteristics || {}), [input.dataset.extraColumnName]: input.value };
+    const frontFields = columns.filter((field) => field.front).map((field) => ({ ...field, value: card.characteristics[field.name] || "" }));
+    const backFields = columns.filter((field) => field.back).map((field) => ({ ...field, value: card.characteristics[field.name] || "" }));
+    card.front = characteristicSideText(frontFields);
+    card.back = characteristicSideText(backFields);
+  }));
+  $$('[data-remove-draft]', list).forEach((button) => button.addEventListener("click", () => {
+    state.customDraft.splice(Number(button.dataset.removeDraft), 1);
+    renderCustomDraft();
+  }));
+}
+
 function renderCustomDraft() {
   const list = $("#draft-card-list");
   const empty = $("#draft-empty");
@@ -5134,6 +6633,11 @@ function renderCustomDraft() {
   $("#flashcard-tab-count").textContent = state.customDraft.length;
   empty.hidden = state.customDraft.length > 0;
   updateCustomSaveButtons();
+  if (state.cardMakerMode === "characteristics" && state.customDraft.some((card) => card.characteristicCard || card.characteristics)) {
+    renderExtraColumnDraft(list);
+    return;
+  }
+  list.classList.remove("extra-column-draft-list");
   list.innerHTML = state.customDraft.map((card, index) => `<div class="draft-card-row" data-draft-card="${index}"><span class="draft-card-number">${index + 1}</span><label>Front<textarea data-draft-front="${index}" placeholder="Text or pasted image">${escapeHtml(card.front || "")}</textarea><span class="card-image-editor">${card.frontImage ? `<img src="${card.frontImage}" alt="Front image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="front" data-image-index="${index}">${card.frontImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="front" data-image-index="${index}">Draw</button><button type="button" data-math-draft="front" data-image-index="${index}">Math syntax</button><button type="button" data-code-draft="front" data-image-index="${index}">Code</button>${card.frontImage ? `<button type="button" data-remove-draft-image="front" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><label>Back<textarea data-draft-back="${index}" placeholder="Text or pasted image">${escapeHtml(card.back || "")}</textarea><span class="card-image-editor">${card.backImage ? `<img src="${card.backImage}" alt="Back image preview">` : ""}<span class="card-image-actions"><button type="button" data-choose-draft-image="back" data-image-index="${index}">${card.backImage ? "Replace image" : "Add image"}</button><button type="button" data-draw-draft="back" data-image-index="${index}">Draw</button><button type="button" data-math-draft="back" data-image-index="${index}">Math syntax</button><button type="button" data-code-draft="back" data-image-index="${index}">Code</button>${card.backImage ? `<button type="button" data-remove-draft-image="back" data-image-index="${index}">Remove image</button>` : ""}</span></span></label><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove card ${index + 1}">×</button></div>`).join("");
   $$('[data-draft-front]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftFront)].front = input.value; }));
   $$('[data-draft-back]', list).forEach((input) => input.addEventListener("input", () => { state.customDraft[Number(input.dataset.draftBack)].back = input.value; }));
@@ -5175,6 +6679,8 @@ function resetCustomDraft() {
   state.notesHiddenAfterUpdate = false;
   state.manualFrontImage = "";
   state.manualBackImage = "";
+  state.extraColumnsOnly = false;
+  state.customCharacteristicFields = defaultCharacteristicFields();
   state.pendingCardImageTarget = null;
   $("#custom-deck-name").value = "";
   setNotesContent();
@@ -5183,6 +6689,7 @@ function resetCustomDraft() {
   $("#manual-card-back").value = "";
   renderManualImagePreview("front");
   renderManualImagePreview("back");
+  setCardMakerMode("basic");
   $("#manual-feynman-topic").value = "";
   $("#anki-notes-file").value = "";
   $("#anki-import-status").textContent = "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
@@ -5201,7 +6708,11 @@ function personalDeckMarkup(deck, folders) {
 
 function builtInAddedDeckMarkup(collection, folders) {
   const starred = isStudyItemStarred(`deck:${collection.id}`);
-  return `<article class="custom-deck-item built-in-deck-item added-built-in-deck draggable-study-set ${starred ? "starred-study-item" : ""}" draggable="true" data-drag-deck="${collection.id}"><button type="button" class="study-item-star" data-toggle-study-star="deck:${collection.id}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${escapeHtml(collection.name)}">${starred ? "★" : "☆"}</button><div class="built-in-deck-label">Built-in · ${collection.units.length} ${collection.unitLabel || "units"}</div><h3>${escapeHtml(collection.name)}</h3><p>${collection.units.reduce((total, unit) => total + unit.cards.length, 0)} cards · ${collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0)} Feynman topics</p><div class="custom-deck-actions"><button type="button" data-study-built-in-collection="${collection.id}">Study</button><button type="button" data-edit-built-in-collection="${collection.id}">Edit</button><button type="button" data-duplicate-study-set="${collection.id}">Duplicate</button><button type="button" class="remove-built-in-deck" data-delete-built-in-collection="${collection.id}">Delete</button></div></article>`;
+  const summary = lazyBuiltInSources[collection.id];
+  const unitCount = collection.units.length || summary?.unitCount || 0;
+  const cardCount = collection.units.length ? collection.units.reduce((total, unit) => total + unit.cards.length, 0) : summary?.cardCount || 0;
+  const feynmanCount = collection.units.length ? collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0) : summary?.feynmanCount || 0;
+  return `<article class="custom-deck-item built-in-deck-item added-built-in-deck draggable-study-set ${starred ? "starred-study-item" : ""}" draggable="true" data-drag-deck="${collection.id}"><button type="button" class="study-item-star" data-toggle-study-star="deck:${collection.id}" aria-pressed="${starred}" aria-label="${starred ? "Unstar" : "Star"} ${escapeHtml(collection.name)}">${starred ? "★" : "☆"}</button><div class="built-in-deck-label">Built-in · ${unitCount} ${collection.unitLabel || "units"}</div><h3>${escapeHtml(collection.name)}</h3><p>${cardCount} cards · ${feynmanCount} Feynman topics</p><div class="custom-deck-actions"><button type="button" data-study-built-in-collection="${collection.id}">Study</button><button type="button" data-edit-built-in-collection="${collection.id}">Edit</button><button type="button" data-duplicate-study-set="${collection.id}">Duplicate</button><button type="button" class="remove-built-in-deck" data-delete-built-in-collection="${collection.id}">Delete</button></div></article>`;
 }
 
 function renderCustomDecks() {
@@ -5230,6 +6741,9 @@ function renderCustomDecks() {
   $("#custom-deck-list").innerHTML = creatorMarkup;
   $("#study-folder-list").innerHTML = folderMarkup;
   $("#flashcards-deck-list").innerHTML = unfiledRecords.length ? unfiledRecords.map(cardMarkup).join("") : (folders.length ? '<div class="custom-deck-empty">All of your study sets are organized into folders.</div>' : '<div class="custom-deck-empty">Add flashcards from the library below, or create your own study set.</div>');
+  fixVisibleCountGrammar($("#custom-deck-list"));
+  fixVisibleCountGrammar($("#study-folder-list"));
+  fixVisibleCountGrammar($("#flashcards-deck-list"));
   $$('[data-study-custom]').forEach((button) => button.addEventListener("click", () => openCustomStudyOptions(button.dataset.studyCustom)));
   $$('[data-edit-custom]').forEach((button) => button.addEventListener("click", () => { showAppView("create"); editCustomDeck(button.dataset.editCustom); }));
   $$('[data-duplicate-study-set]').forEach((button) => button.addEventListener("click", () => duplicateStudySet(button.dataset.duplicateStudySet)));
@@ -5265,10 +6779,12 @@ function renderBuiltInDecks() {
   const pageMatches = matches.slice(state.studyCatalogPage * STUDY_DECKS_PER_PAGE, (state.studyCatalogPage + 1) * STUDY_DECKS_PER_PAGE);
   list.innerHTML = pageMatches.map((collection) => {
     const added = isFlashcardCollectionAdded(collection.id);
-    const cardCount = collection.units.reduce((total, unit) => total + unit.cards.length, 0);
-    const feynmanCount = collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0);
+    const lazySummary = lazyBuiltInSources[collection.id];
+    const cardCount = collection.units.length ? collection.units.reduce((total, unit) => total + unit.cards.length, 0) : lazySummary?.cardCount || 0;
+    const feynmanCount = collection.units.length ? collection.units.reduce((total, unit) => total + (unit.feynmanPrompts || []).length, 0) : lazySummary?.feynmanCount || 0;
     const topicSummary = feynmanCount ? `${cardCount} study cards · ${feynmanCount} Feynman topics.` : `${cardCount} study cards.`;
-    return `<article class="custom-deck-item built-in-deck-item flashcard-catalog-item"><div class="flashcard-catalog-icon" aria-hidden="true">⌖</div><div class="flashcard-catalog-copy"><div class="built-in-deck-label">${escapeHtml(collection.catalogLabel || "AP course")} · ${collection.units.length} ${escapeHtml(collection.unitLabel || "units")}</div><h3>${escapeHtml(collection.name)}</h3><p>${topicSummary} ${escapeHtml(collection.description)}</p></div><button type="button" class="button course-add" data-add-flashcard-collection="${collection.id}" ${added ? "disabled" : ""}>${added ? "Added" : "Add study deck"}</button></article>`;
+    const unitCount = collection.units.length || lazySummary?.unitCount || 0;
+    return `<article class="custom-deck-item built-in-deck-item flashcard-catalog-item"><div class="flashcard-catalog-icon" aria-hidden="true">⌖</div><div class="flashcard-catalog-copy"><div class="built-in-deck-label">${escapeHtml(collection.catalogLabel || "AP course")} · ${unitCount} ${escapeHtml(collection.unitLabel || "units")}</div><h3>${escapeHtml(collection.name)}</h3><p>${topicSummary} ${escapeHtml(collection.description)}</p></div><button type="button" class="button course-add" data-add-flashcard-collection="${collection.id}" ${added ? "disabled" : ""}>${added ? "Added" : "Add study deck"}</button></article>`;
   }).join("") || '<div class="custom-deck-empty">No built-in study decks match that search.</div>';
   $$('[data-add-flashcard-collection]').forEach((button) => button.addEventListener("click", () => addFlashcardCollection(button.dataset.addFlashcardCollection)));
   renderLibraryPagination("#study-catalog-pagination", state.studyCatalogPage, matches.length, STUDY_DECKS_PER_PAGE, (page) => {
@@ -5294,7 +6810,10 @@ function storeBuiltInCollectionOverrides(overrides) {
 function effectiveBuiltInCollection(collection) {
   const override = loadBuiltInCollectionOverrides()[collection.id];
   if (!override) return collection;
-  return { ...collection, name: override.name || collection.name, units: override.units || collection.units, customized: true };
+  const overriddenUnits = override.units || collection.units;
+  const overriddenIds = new Set(overriddenUnits.map((unit) => unit.id));
+  const newlyAddedUnits = collection.units.filter((unit) => !overriddenIds.has(unit.id));
+  return { ...collection, name: override.name || collection.name, units: [...overriddenUnits, ...newlyAddedUnits], customized: true };
 }
 
 function getBuiltInCollection(collectionId) {
@@ -5306,7 +6825,10 @@ function isFlashcardCollectionAdded(collectionId) {
   return addedFlashcardCollectionIds().includes(collectionId);
 }
 
-function addFlashcardCollection(collectionId) {
+async function addFlashcardCollection(collectionId) {
+  const catalogButton = $(`[data-add-flashcard-collection="${collectionId}"]`);
+  if (catalogButton && lazyBuiltInSources[collectionId]) { catalogButton.disabled = true; catalogButton.textContent = "Loading…"; }
+  await ensureBuiltInCollectionLoaded(collectionId);
   const added = new Set(addedFlashcardCollectionIds());
   added.add(collectionId);
   localStorage.setItem("study-desk-added-flashcard-collections", JSON.stringify([...added]));
@@ -5324,6 +6846,112 @@ function removeFlashcardCollection(collectionId, event) {
   showToast(`${collection?.name || "Flashcards"} removed from My study sets.`);
 }
 
+const geographyFieldOptions = [
+  { id: "country", label: "Country" },
+  { id: "capital", label: "Capital" },
+  { id: "largestCity", label: "Largest city" },
+  { id: "currency", label: "Currency" },
+  { id: "continent", label: "Continent" },
+  { id: "subregion", label: "Subregion" },
+  { id: "languages", label: "Languages" },
+  { id: "population", label: "Population" },
+  { id: "area", label: "Land area" },
+  { id: "countryCodes", label: "Country codes" },
+  { id: "callingCode", label: "Calling code" },
+  { id: "borders", label: "Neighbors" },
+  { id: "flag", label: "Flag", visual: true },
+  { id: "outline", label: "Outline", visual: true },
+];
+
+const usStateFieldOptions = [
+  { id: "state", label: "State" },
+  { id: "capital", label: "Capital" },
+  { id: "largestCity", label: "Largest city" },
+  { id: "abbreviation", label: "Abbreviation" },
+  { id: "admission", label: "Admission date" },
+  { id: "region", label: "Census region" },
+  { id: "population", label: "2025 population" },
+  { id: "flag", label: "State flag", visual: true },
+  { id: "outline", label: "State outline", visual: true },
+];
+
+function geographyCurrencyText(country) {
+  return (country.currencies || []).map((currency) => `${currency.code} — ${currency.name}`).join(", ") || "No official currency";
+}
+
+function geographyCardSide(country, fields) {
+  const textFields = fields.filter((field) => !["flag", "outline"].includes(field));
+  const values = {
+    country: country.country,
+    capital: country.capital,
+    largestCity: country.largestCity,
+    currency: geographyCurrencyText(country),
+    continent: country.continent,
+    subregion: country.subregion,
+    languages: (country.languages || []).join(", ") || "No official language listed",
+    population: country.population ? Number(country.population).toLocaleString() : "Not available",
+    area: country.area ? `${Number(country.area).toLocaleString()} km²` : "Not available",
+    countryCodes: country.countryCodes,
+    callingCode: country.callingCode,
+    borders: (country.borders || []).join(", ") || "No land borders",
+  };
+  const labels = { country: "Country", capital: "Capital", largestCity: "Largest city", currency: "Currency", continent: "Continent", subregion: "Subregion", languages: "Official languages", population: "Population", area: "Land area", countryCodes: "Country codes", callingCode: "Calling code", borders: "Neighboring countries" };
+  const text = textFields.map((field) => textFields.length === 1 ? values[field] : `${labels[field]}: ${values[field]}`).join("\n\n");
+  const visual = fields.includes("flag") ? country.flag : fields.includes("outline") ? country.outline : "";
+  return { text, image: visual };
+}
+
+function geographyCardsForUnits(units) {
+  if (!state.geographyFrontFields.length || !state.geographyBackFields.length) return [];
+  const frontKey = state.geographyFrontFields.join("-");
+  const backKey = state.geographyBackFields.join("-");
+  return units.flatMap((unit) => unit.countries || []).map((country) => {
+    const front = geographyCardSide(country, state.geographyFrontFields);
+    const back = geographyCardSide(country, state.geographyBackFields);
+    return {
+      id: `geo-${country.id}-${frontKey}--${backKey}`,
+      front: front.text,
+      back: back.text,
+      frontImage: front.image,
+      backImage: back.image,
+    };
+  });
+}
+
+function usStateCardSide(item, fields) {
+  const textFields = fields.filter((field) => !["flag", "outline"].includes(field));
+  const values = {
+    state: item.state,
+    capital: item.capital,
+    largestCity: item.largestCity,
+    abbreviation: item.abbreviation,
+    admission: item.admission,
+    region: item.region,
+    population: Number(item.population).toLocaleString(),
+  };
+  const labels = Object.fromEntries(usStateFieldOptions.map((field) => [field.id, field.label]));
+  const text = textFields.map((field) => textFields.length === 1 ? values[field] : `${labels[field]}: ${values[field]}`).join("\n\n");
+  const visual = fields.includes("flag") ? item.flag : fields.includes("outline") ? item.outline : "";
+  return { text, image: visual };
+}
+
+function usStateCardsForUnits(units) {
+  if (!state.usStateFrontFields.length || !state.usStateBackFields.length) return [];
+  const frontKey = state.usStateFrontFields.join("-");
+  const backKey = state.usStateBackFields.join("-");
+  return units.flatMap((unit) => unit.states || []).map((item) => {
+    const front = usStateCardSide(item, state.usStateFrontFields);
+    const back = usStateCardSide(item, state.usStateBackFields);
+    return {
+      id: `us-state-${item.id}-${frontKey}--${backKey}`,
+      front: front.text,
+      back: back.text,
+      frontImage: front.image,
+      backImage: back.image,
+    };
+  });
+}
+
 function collectionStudyDeck(collection) {
   const selectedIds = state.selectedBuiltInCollectionId === collection.id ? state.selectedBuiltInUnitIds : collection.units.map((unit) => unit.id);
   const selectedUnits = collection.units.filter((unit) => selectedIds.includes(unit.id));
@@ -5331,9 +6959,10 @@ function collectionStudyDeck(collection) {
   const baseOnly = Boolean(supportsLevelFilter && state.calculusAbOnly);
   const extensionLevel = collection.extensionLevel || "BC";
   const baseLabel = collection.baseLevel || "AB";
-  const suffix = baseOnly ? ` · ${baseLabel}` : collection.supportsLevelFilter ? ` · ${extensionLevel}` : selectedUnits.length === 1 ? ` · ${selectedUnits[0].shortName}` : !selectedUnits.length || selectedUnits.length === collection.units.length ? "" : ` · ${selectedUnits.length} units`;
+  const suffix = baseOnly ? ` · ${baseLabel}` : collection.supportsLevelFilter ? ` · ${collection.extensionDisplayLabel || extensionLevel}` : selectedUnits.length === 1 ? ` · ${selectedUnits[0].shortName}` : !selectedUnits.length || selectedUnits.length === collection.units.length ? "" : ` · ${selectedUnits.length} units`;
   const allowed = (item) => !baseOnly || item.courseLevel !== extensionLevel;
-  return { id: collection.id, name: `${collection.name}${suffix}`, builtIn: true, cards: selectedUnits.flatMap((unit) => unit.cards.filter(allowed)), questions: selectedUnits.flatMap((unit) => (unit.questions || []).filter(allowed)), feynmanPrompts: selectedUnits.flatMap((unit) => (unit.feynmanPrompts || []).filter(allowed)) };
+  const cards = collection.geographyBank ? geographyCardsForUnits(selectedUnits) : collection.usStateBank ? usStateCardsForUnits(selectedUnits) : selectedUnits.flatMap((unit) => unit.cards.filter(allowed));
+  return { id: collection.id, name: `${collection.name}${suffix}`, builtIn: true, geographyBank: Boolean(collection.geographyBank), usStateBank: Boolean(collection.usStateBank), cards, questions: selectedUnits.flatMap((unit) => (unit.questions || []).filter(allowed)), feynmanPrompts: selectedUnits.flatMap((unit) => (unit.feynmanPrompts || []).filter(allowed)) };
 }
 
 function findStudyDeck(deckId) {
@@ -5366,6 +6995,7 @@ function duplicateStudySet(deckId) {
     cards: collection.units.flatMap((unit) => unit.cards || []),
     questions: collection.units.flatMap((unit) => unit.questions || []),
     feynmanPrompts: collection.units.flatMap((unit) => unit.feynmanPrompts || []),
+    characteristicTemplate: [],
   } : null);
   if (!source) return;
   const decks = loadCustomDecks();
@@ -5387,6 +7017,7 @@ function duplicateStudySet(deckId) {
     sourceNotesHtml: personal?.sourceNotesHtml || "",
     sourceImport: null,
     generatorVersion: personal?.generatorVersion || NOTES_GENERATOR_VERSION,
+    characteristicTemplate: JSON.parse(JSON.stringify(source.characteristicTemplate || [])),
     updatedAt: Date.now(),
   };
   decks.unshift(duplicate);
@@ -5413,7 +7044,7 @@ function saveCustomDeck({ resetAfterSave = true, notify = true } = {}) {
   const existingDeck = existingIndex >= 0 ? decks[existingIndex] : null;
   const visibleSourceNotes = notesPlainText();
   const visibleSourceNotesHtml = notesRichHtml();
-  const deck = { id: state.editingCustomDeckId || makeLocalId("deck"), name, cards, questions, feynmanPrompts, sourceNotes: state.notesHiddenAfterUpdate && !visibleSourceNotes ? existingDeck?.sourceNotes || "" : visibleSourceNotes, sourceNotesHtml: state.notesHiddenAfterUpdate && !visibleSourceNotesHtml ? existingDeck?.sourceNotesHtml || "" : visibleSourceNotesHtml, sourceImport: state.customImportSource, generatorVersion: NOTES_GENERATOR_VERSION, updatedAt: Date.now() };
+  const deck = { id: state.editingCustomDeckId || makeLocalId("deck"), name, cards, questions, feynmanPrompts, characteristicTemplate: characteristicTemplate(), sourceNotes: state.notesHiddenAfterUpdate && !visibleSourceNotes ? existingDeck?.sourceNotes || "" : visibleSourceNotes, sourceNotesHtml: state.notesHiddenAfterUpdate && !visibleSourceNotesHtml ? existingDeck?.sourceNotesHtml || "" : visibleSourceNotesHtml, sourceImport: state.customImportSource, generatorVersion: NOTES_GENERATOR_VERSION, updatedAt: Date.now() };
   if (existingIndex >= 0) decks.splice(existingIndex, 1, deck); else decks.unshift(deck);
   if (!storeCustomDecks(decks)) return null;
   state.editingCustomDeckId = deck.id;
@@ -5463,6 +7094,7 @@ function saveGeneratedCustomDeckInPlace() {
     cards: state.customDraft.map((card) => ({ ...card })),
     questions: state.customQuestionDraft.map((question) => ({ ...question })),
     feynmanPrompts: state.customFeynmanDraft.map((item) => ({ ...item })),
+    characteristicTemplate: characteristicTemplate(),
     sourceNotes: notesPlainText(),
     sourceNotesHtml: notesRichHtml(),
     sourceImport: state.customImportSource,
@@ -5501,6 +7133,8 @@ function editCustomDeck(deckId) {
   state.customQuestionDraft = (deck.questions || []).map((question) => ({ ...question }));
   state.customFeynmanDraft = (deck.feynmanPrompts || []).map((item) => ({ ...item }));
   state.customImportSource = deck.sourceImport || null;
+  state.extraColumnsOnly = (deck.characteristicTemplate?.length || 0) > 2;
+  state.customCharacteristicFields = defaultCharacteristicFields(deck.characteristicTemplate || []);
   $("#custom-deck-name").value = deck.name;
   setNotesContent(deck.sourceNotes || "", deck.sourceNotesHtml || "");
   $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name} · flashcards only` : "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
@@ -5509,20 +7143,34 @@ function editCustomDeck(deckId) {
   renderCustomDraft();
   renderCustomQuestionDraft();
   renderCustomFeynmanDraft();
+  setCardMakerMode((deck.characteristicTemplate?.length || 0) > 2 ? "characteristics" : "basic");
   selectCreateContentTab("flashcards");
   $("#custom-deck-name").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-function editBuiltInCollection(collectionId) {
+async function editBuiltInCollection(collectionId) {
+  await ensureBuiltInCollectionLoaded(collectionId);
   const collection = getBuiltInCollection(collectionId);
   if (!collection) return;
   state.editingCustomDeckId = null;
   state.editingBuiltInCollectionId = collectionId;
   state.appendNotesToExistingSet = false;
-  state.customDraft = collection.units.flatMap((unit) => unit.cards.map((card) => ({ ...card, builtInUnitId: unit.id })));
+  const geographyByCardId = collection.geographyBank
+    ? new Map(collection.units.flatMap((unit) => (unit.countries || []).map((country) => [`geo-${country.id}-country-capital`, country])))
+    : null;
+  state.customDraft = collection.units.flatMap((unit) => unit.cards.map((card) => {
+    const country = geographyByCardId?.get(card.id);
+    return {
+      ...card,
+      builtInUnitId: unit.id,
+      ...(country && !card.characteristics ? { characteristicCard: true, characteristics: geographyExtraColumns(country) } : {}),
+    };
+  }));
   state.customQuestionDraft = collection.units.flatMap((unit) => (unit.questions || []).map((question) => ({ ...question, builtInUnitId: unit.id })));
   state.customFeynmanDraft = collection.units.flatMap((unit) => (unit.feynmanPrompts || []).map((item) => ({ ...item, builtInUnitId: unit.id })));
   state.customImportSource = null;
+  state.extraColumnsOnly = (collection.characteristicTemplate?.length || 0) > 2;
+  state.customCharacteristicFields = defaultCharacteristicFields(collection.characteristicTemplate || []);
   $("#custom-deck-name").value = collection.name;
   setNotesContent();
   $("#notes-input").dataset.placeholder = "This built-in deck is edited below. You can also add individual cards manually.";
@@ -5531,6 +7179,7 @@ function editBuiltInCollection(collectionId) {
   renderCustomDraft();
   renderCustomQuestionDraft();
   renderCustomFeynmanDraft();
+  setCardMakerMode((collection.characteristicTemplate?.length || 0) > 2 ? "characteristics" : "basic");
   selectCreateContentTab("flashcards");
   $("#custom-deck-name").scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -5686,10 +7335,14 @@ function customAnkiKey(deckId, cardId) {
   return `custom:${deckId}:${cardId}`;
 }
 
-function openCustomStudyOptions(deckId) {
+async function openCustomStudyOptions(deckId) {
+  if (lazyBuiltInSources[deckId]) {
+    showToast("Loading study cards…");
+    await ensureBuiltInCollectionLoaded(deckId);
+  }
   const collection = getBuiltInCollection(deckId);
   if (collection && state.selectedBuiltInCollectionId !== collection.id) {
-    state.selectedBuiltInUnitIds = collection.units.map((unit) => unit.id);
+    state.selectedBuiltInUnitIds = collection.units.filter((unit) => !unit.defaultOff).map((unit) => unit.id);
     state.calculusAbOnly = false;
   }
   state.selectedBuiltInCollectionId = collection?.id || null;
@@ -5701,10 +7354,88 @@ function openCustomStudyOptions(deckId) {
   state.selectedCustomDeckBuiltIn = Boolean(deck.builtIn || deck.folderStudy);
   $("#close-custom-study").textContent = state.customStudyReturnView === "dashboard" ? "← Back to dashboard" : state.customStudyReturnView === "flashcards" ? "← Back to Study" : "← Back to Create";
   renderBuiltInUnitPicker(collection);
+  renderGeographyFieldPicker(collection);
+  renderUsStateFieldPicker(collection);
   refreshCustomStudyOptions();
   $("#custom-study-options-view").hidden = false;
   $("#custom-review-view").hidden = true;
   showAppView("custom-study");
+}
+
+function renderGeographyFieldPicker(collection) {
+  const picker = $("#geography-field-picker");
+  picker.hidden = !collection?.geographyBank;
+  if (!collection?.geographyBank) return;
+  const renderSide = (side) => {
+    const selected = side === "front" ? state.geographyFrontFields : state.geographyBackFields;
+    const target = $(`#geography-${side}-fields`);
+    target.innerHTML = geographyFieldOptions.map((field) => `<label class="geography-field-choice"><input type="checkbox" value="${field.id}" ${selected.includes(field.id) ? "checked" : ""}><span>${field.label}</span></label>`).join("");
+    $$('input[type="checkbox"]', target).forEach((input) => input.addEventListener("change", () => {
+      let next = $$('input[type="checkbox"]:checked', target).map((item) => item.value);
+      if (input.checked && ["flag", "outline"].includes(input.value)) {
+        next = next.filter((field) => field === input.value || !["flag", "outline"].includes(field));
+      }
+      if (side === "front") state.geographyFrontFields = next;
+      else state.geographyBackFields = next;
+      renderGeographyFieldPicker(collection);
+      refreshCustomStudyOptions();
+    }));
+  };
+  renderSide("front");
+  renderSide("back");
+  const labelFor = (fields) => fields.map((field) => geographyFieldOptions.find((option) => option.id === field)?.label).filter(Boolean).join(" + ") || "None";
+  $("#geography-field-summary").textContent = `${labelFor(state.geographyFrontFields)} → ${labelFor(state.geographyBackFields)}`;
+  $$('[data-geography-preset]', picker).forEach((button) => button.onclick = () => {
+    const presets = {
+      "country-capital": [["country"], ["capital"]],
+      "capital-country": [["capital"], ["country"]],
+      "country-details": [["country"], ["capital", "currency"]],
+      "flag-country": [["flag"], ["country"]],
+      "outline-country": [["outline"], ["country"]],
+    };
+    [state.geographyFrontFields, state.geographyBackFields] = presets[button.dataset.geographyPreset];
+    renderGeographyFieldPicker(collection);
+    refreshCustomStudyOptions();
+  });
+}
+
+function renderUsStateFieldPicker(collection) {
+  const picker = $("#us-state-field-picker");
+  picker.hidden = !collection?.usStateBank;
+  if (!collection?.usStateBank) return;
+  const renderSide = (side) => {
+    const selected = side === "front" ? state.usStateFrontFields : state.usStateBackFields;
+    const target = $(`#us-state-${side}-fields`);
+    target.innerHTML = usStateFieldOptions.map((field) => `<label class="geography-field-choice"><input type="checkbox" value="${field.id}" ${selected.includes(field.id) ? "checked" : ""}><span>${field.label}</span></label>`).join("");
+    $$('.geography-field-choice input[type="checkbox"]', target).forEach((input) => input.addEventListener("change", () => {
+      let next = $$('input[type="checkbox"]:checked', target).map((item) => item.value);
+      if (input.checked && ["flag", "outline"].includes(input.value)) {
+        next = next.filter((field) => field === input.value || !["flag", "outline"].includes(field));
+      }
+      if (side === "front") state.usStateFrontFields = next;
+      else state.usStateBackFields = next;
+      renderUsStateFieldPicker(collection);
+      refreshCustomStudyOptions();
+    }));
+  };
+  renderSide("front");
+  renderSide("back");
+  const labelFor = (fields) => fields.map((field) => usStateFieldOptions.find((option) => option.id === field)?.label).filter(Boolean).join(" + ") || "None";
+  $("#us-state-field-summary").textContent = `${labelFor(state.usStateFrontFields)} → ${labelFor(state.usStateBackFields)}`;
+  $$('[data-us-state-preset]', picker).forEach((button) => button.onclick = () => {
+    const presets = {
+      "state-capital": [["state"], ["capital"]],
+      "capital-state": [["capital"], ["state"]],
+      "state-cities": [["state"], ["capital", "largestCity"]],
+      "abbreviation-state": [["abbreviation"], ["state"]],
+      "state-admission": [["state"], ["admission"]],
+      "flag-state": [["flag"], ["state"]],
+      "outline-state": [["outline"], ["state"]],
+    };
+    [state.usStateFrontFields, state.usStateBackFields] = presets[button.dataset.usStatePreset];
+    renderUsStateFieldPicker(collection);
+    refreshCustomStudyOptions();
+  });
 }
 
 function renderBuiltInUnitPicker(collection) {
@@ -5717,7 +7448,7 @@ function renderBuiltInUnitPicker(collection) {
   const baseLabel = collection.baseLevel || "AB";
   abToggle.hidden = !supportsLevelFilter;
   abToggle.classList.toggle("active", state.calculusAbOnly);
-  abToggle.textContent = collection.supportsLevelFilter ? `Level: ${state.calculusAbOnly ? baseLabel : extensionLevel}` : `AB only: ${state.calculusAbOnly ? "On" : "Off"}`;
+  abToggle.textContent = collection.supportsLevelFilter ? `Level: ${state.calculusAbOnly ? baseLabel : (collection.extensionDisplayLabel || extensionLevel)}` : `AB only: ${state.calculusAbOnly ? "On" : "Off"}`;
   $("#built-in-unit-grid").innerHTML = collection.units.map((unit) => {
     const allowed = (item) => !state.calculusAbOnly || item.courseLevel !== extensionLevel;
     const cardCount = unit.cards.filter(allowed).length;
@@ -5763,11 +7494,12 @@ function refreshCustomStudyOptions() {
   const dueCount = dailyPlan.queue.length;
   const reviewCount = dailyPlan.learningCards.length + dailyPlan.reviewCards.length;
   const futureDue = deck.cards.map((card) => ankiScheduleFor(customAnkiKey(card.sourceDeckId || deck.id, card.id)).due).filter((due) => due > Date.now()).sort((a, b) => a - b)[0];
-  $("#custom-anki-due-copy").textContent = !deck.cards.length ? "Select at least one unit." : dueCount ? `${dueCount} cards are in today's session.` : futureDue ? `Nothing is due now. Next review ${relativeDueTime(futureDue)}.` : "No flashcards are available.";
+  const factBankMissingSide = (deck.geographyBank && (!state.geographyFrontFields.length || !state.geographyBackFields.length)) || (deck.usStateBank && (!state.usStateFrontFields.length || !state.usStateBackFields.length));
+  $("#custom-anki-due-copy").textContent = factBankMissingSide ? "Choose at least one field for both sides to study." : !deck.cards.length ? "Select at least one unit." : dueCount ? `${dueCount} cards are in today's session.` : futureDue ? `Nothing is due now. Next review ${relativeDueTime(futureDue)}.` : "No flashcards are available.";
   $("#custom-anki-daily-new").textContent = dailyPlan.newCards.length;
   $("#custom-anki-daily-review").textContent = reviewCount;
-  $('[data-custom-study-mode="regular"]').disabled = !deck.cards.length;
-  $('[data-custom-study-mode="anki"]').disabled = !dueCount;
+  $('[data-custom-study-mode="regular"]').disabled = factBankMissingSide || !deck.cards.length;
+  $('[data-custom-study-mode="anki"]').disabled = factBankMissingSide || !dueCount;
   $('[data-custom-study-mode="questions"]').disabled = !(deck.questions || []).length;
   $('[data-custom-study-mode="feynman"]').disabled = !(deck.feynmanPrompts || []).length;
   $('[data-custom-study-mode="questions"]').closest(".custom-study-option-card").hidden = Boolean(deck.builtIn);
@@ -5798,6 +7530,8 @@ function startCustomReview(mode) {
   const deck = findStudyDeck(state.selectedCustomDeckId);
   if (!deck) return;
   state.customReviewMode = mode;
+  state.customAnkiBatchSession = false;
+  state.customAnkiActiveOwners = mode === "anki" ? [{ id: deck.id, target: "deck" }] : [];
   if (mode === "questions") {
     const questions = (deck.questions || []).map((question) => ({
       ...question,
@@ -5844,7 +7578,13 @@ function startCustomReview(mode) {
 function closeCustomReview() {
   window.clearInterval(customReviewTimerHandle);
   window.clearInterval(customFeynmanTimerHandle);
-  if (state.selectedCustomDeckId) openCustomStudyOptions(state.selectedCustomDeckId);
+  if (state.customAnkiBatchSession) {
+    state.customAnkiBatchSession = false;
+    state.customAnkiActiveOwners = [];
+    $("#custom-review-view").hidden = true;
+    $("#custom-study-options-view").hidden = false;
+    showAppView("dashboard");
+  } else if (state.selectedCustomDeckId) openCustomStudyOptions(state.selectedCustomDeckId);
   else {
     $("#custom-review-view").hidden = true;
     $("#custom-study-options-view").hidden = false;
@@ -5878,6 +7618,23 @@ function renderCustomReviewCard() {
   $("#custom-feynman-practice").hidden = !isFeynman;
   $("#custom-review-card").hidden = isQuestions || isFeynman;
   $("#custom-review-progress").textContent = isAnki ? `${state.customReviewCards.length} ${state.customReviewCards.length === 1 ? "card" : "cards"} remaining` : `${labels[0]} ${state.customReviewPosition + 1} of ${state.customReviewCards.length}`;
+  const sourceLabel = $("#custom-anki-source");
+  sourceLabel.hidden = !isAnki || !state.customAnkiBatchSession;
+  sourceLabel.textContent = card.activeAnkiOwnerName ? `From ${card.activeAnkiOwnerName}` : "";
+  const deckProgress = $("#custom-anki-deck-progress");
+  deckProgress.hidden = !isAnki || !state.customAnkiBatchSession;
+  if (!deckProgress.hidden) {
+    const remainingByOwner = state.customReviewCards.reduce((counts, item) => {
+      if (item.activeAnkiOwnerKey) counts[item.activeAnkiOwnerKey] = (counts[item.activeAnkiOwnerKey] || 0) + 1;
+      return counts;
+    }, {});
+    $("#custom-anki-deck-progress-list").innerHTML = state.customAnkiActiveOwners.map((owner) => {
+      const remaining = remainingByOwner[owner.key] || 0;
+      const completed = Math.max(0, owner.total - remaining);
+      const percent = owner.total ? Math.round(completed / owner.total * 100) : 100;
+      return `<div class="custom-anki-deck-progress-row"><div><strong>${escapeHtml(owner.name)}</strong><span>${remaining} remaining</span></div><div class="custom-anki-deck-progress-track"><span style="width:${percent}%"></span></div></div>`;
+    }).join("");
+  }
   $("#custom-regular-controls").hidden = isAnki || isQuestions || isFeynman;
   $("#custom-anki-ratings").hidden = !isAnki || !state.customReviewWasRevealed;
   $("#custom-review-reveal").hidden = isQuestions || isFeynman || state.customReviewRevealed;
@@ -6032,7 +7789,8 @@ function rateCustomAnkiCard(rating) {
   if (!state.customReviewCards.length) {
     const elapsed = formatElapsed(Date.now() - state.customReviewStartedAt);
     recordStudyActivity();
-    markActiveAnkiComplete(state.selectedCustomDeckId, "deck");
+    const owners = state.customAnkiActiveOwners.length ? [...state.customAnkiActiveOwners] : [{ id: state.selectedCustomDeckId, target: "deck" }];
+    owners.filter((owner) => owner.id).forEach((owner) => markActiveAnkiComplete(owner.id, owner.target));
     closeCustomReview();
     showToast(`Anki session complete in ${elapsed} — no New, Learning, or Review cards remain.`);
     return;
@@ -6189,8 +7947,10 @@ runStartupStep("Question draft", renderCustomQuestionDraft);
 runStartupStep("Feynman draft", renderCustomFeynmanDraft);
 runStartupStep("Study sets", renderCustomDecks);
 runStartupStep("Study alarms", restoreTasks);
+runStartupStep("Active Anki selection", restoreActiveAnkiSelections);
 runStartupStep("Active Anki decks", renderActiveAnkiDecks);
 runStartupStep("Alarm checkboxes", () => $$(".task-item input[type='checkbox']").forEach(wireTaskCheckbox));
+window.requestAnimationFrame(() => window.setTimeout(hydrateAddedCollections, 0));
 
 $("#view-all-courses").addEventListener("click", () => $("#course-shelf").scrollIntoView({ behavior: "smooth", block: "center" }));
 $("#close-library-button").addEventListener("click", showLibraryOverview);
@@ -6485,9 +8245,26 @@ $("#notes-input").addEventListener("paste", (event) => {
 $("#notes-input").addEventListener("input", () => {
   if (notesPlainText()) state.notesHiddenAfterUpdate = false;
 });
-$("#anki-notes-file").addEventListener("change", (event) => {
+$("#anki-notes-file").addEventListener("change", async (event) => {
   const file = event.currentTarget.files?.[0];
-  if (file) importAnkiNotesFile(file);
+  if (!file) return;
+  const extension = String(file.name || "").split(".").pop().toLowerCase();
+  if (["apkg", "pdf", "pptx"].includes(extension)) {
+    $("#anki-import-status").textContent = `Reading ${file.name}…`;
+    if (window.desktopApp?.readDroppedStudyFile) {
+      handleStudyFileResult(await window.desktopApp.readDroppedStudyFile(file));
+      event.currentTarget.value = "";
+      return;
+    }
+    if (window.webkit?.messageHandlers?.studyDroppedFile) {
+      const reader = new FileReader();
+      reader.onerror = () => window.receiveDocumentImportError("The selected file could not be read.");
+      reader.onload = () => window.webkit.messageHandlers.studyDroppedFile.postMessage({ name: file.name, data: String(reader.result || ""), target: "create" });
+      reader.readAsDataURL(file);
+      return;
+    }
+  }
+  await importAnkiNotesFile(file);
 });
 
 $("#generate-note-cards").addEventListener("click", () => {
@@ -6562,6 +8339,21 @@ $("#generate-note-cards").addEventListener("click", () => {
   showToast(appended ? `Added ${appended.cards} new cards, ${appended.questions} questions, and ${appended.prompts} Feynman prompts. Duplicates were skipped.` : `${deck.name} updated with ${deck.cards.length} cards, ${deck.questions.length} questions, and ${deck.feynmanPrompts.length} Feynman prompts.`);
 });
 $$("[data-create-tab]").forEach((button) => button.addEventListener("click", () => selectCreateContentTab(button.dataset.createTab)));
+$$("[data-card-maker-mode]").forEach((button) => button.addEventListener("click", () => setCardMakerMode(button.dataset.cardMakerMode)));
+$("#add-characteristic-field").addEventListener("click", () => {
+  if (state.customCharacteristicFields.length >= 15) return;
+  const number = state.customCharacteristicFields.length + 1;
+  const field = { id: makeLocalId("characteristic"), name: "Column " + number, value: "", front: false, back: true };
+  state.customCharacteristicFields.push(field);
+  if (state.customCharacteristicFields.length > 2) {
+    state.extraColumnsOnly = true;
+    const basicModeButton = $('[data-card-maker-mode="basic"]');
+    if (basicModeButton) basicModeButton.hidden = true;
+  }
+  renderCharacteristicCardMaker();
+  document.querySelector('[data-characteristic-name="' + field.id + '"]')?.select();
+});
+$("#add-characteristic-card").addEventListener("click", addCharacteristicCard);
 $("#add-manual-card").addEventListener("click", () => {
   const front = $("#manual-card-front").value.trim();
   const back = $("#manual-card-back").value.trim();
@@ -6723,8 +8515,8 @@ $("#delete-all-study-sets").addEventListener("click", deleteAllStudySets);
 $("#create-study-folder").addEventListener("click", createStudyFolder);
 $("#return-all-built-in-decks").addEventListener("click", returnAllBuiltInDecks);
 $("#return-all-textbooks").addEventListener("click", returnAllTextbooks);
-$("#my-study-sets-search").addEventListener("input", renderCustomDecks);
-$("#built-in-study-search").addEventListener("input", () => { state.studyCatalogPage = 0; renderBuiltInDecks(); });
+$("#my-study-sets-search").addEventListener("input", debounce(renderCustomDecks));
+$("#built-in-study-search").addEventListener("input", debounce(() => { state.studyCatalogPage = 0; renderBuiltInDecks(); }));
 $("#cancel-custom-delete").addEventListener("click", () => { state.pendingCustomDeleteId = null; state.pendingBuiltInDeleteId = null; state.pendingDeleteAllStudySets = false; state.pendingReturnAllBuiltIn = false; state.pendingReturnAllTextbooks = false; showAppView(state.customDeleteReturnView); });
 $("#confirm-custom-delete").addEventListener("click", confirmCustomDeckDeletion);
 $$('[data-custom-study-mode]').forEach((button) => button.addEventListener("click", () => startCustomReview(button.dataset.customStudyMode)));
@@ -6737,8 +8529,7 @@ function revealCustomReviewCard() {
 }
 function toggleCustomReviewCard() {
   if (!["regular", "anki"].includes(state.customReviewMode)) return;
-  if (state.customReviewMode === "anki" && state.customReviewRevealed) return;
-  state.customReviewRevealed = state.customReviewMode === "anki" ? true : !state.customReviewRevealed;
+  state.customReviewRevealed = !state.customReviewRevealed;
   if (state.customReviewMode === "anki" && state.customReviewRevealed) state.customReviewWasRevealed = true;
   renderCustomReviewCard();
 }
@@ -6751,8 +8542,8 @@ document.addEventListener("keydown", (event) => {
   if (!textbookReview && !customReview) return;
   if (event.code === "Space") {
     event.preventDefault();
-    if (textbookReview && !textbookReview.classList.contains("revealed")) setTextbookAnkiReveal(textbookReview, true);
-    else if (customReview && !state.customReviewRevealed) toggleCustomReviewCard();
+    if (textbookReview) setTextbookAnkiReveal(textbookReview, !textbookReview.classList.contains("revealed"));
+    else if (customReview) toggleCustomReviewCard();
     return;
   }
   const rating = { "1": "again", "2": "hard", "3": "good", "4": "easy" }[event.key];
@@ -6788,7 +8579,8 @@ $("#custom-feynman-next").addEventListener("click", () => moveCustomFeynman(1));
 $$('[data-custom-anki-rating]').forEach((button) => button.addEventListener("click", () => rateCustomAnkiCard(button.dataset.customAnkiRating)));
 $("#remove-custom-anki-study").addEventListener("dblclick", removeCurrentCustomAnkiFromStudy);
 
-$("#open-settings").addEventListener("click", () => showAppView("settings"));
+$("#open-settings").addEventListener("click", () => { showAppView("settings"); renderStorageHealth(); });
+$("#refresh-storage-health").addEventListener("click", renderStorageHealth);
 $$('[data-settings-tab]').forEach((button) => button.addEventListener("click", () => selectSettingsTab(button.dataset.settingsTab)));
 $("#settings-form").addEventListener("change", (event) => { if (event.target.name === "theme") applyTheme(event.target.value); });
 $("#settings-form").addEventListener("submit", (event) => {
@@ -6880,6 +8672,10 @@ $("#new-note-folder").addEventListener("click", createNoteFolder);
 $("#import-notes").addEventListener("click", async (event) => {
   event.preventDefault();
   event.stopPropagation();
+  if (window.webkit?.messageHandlers?.notebookImportFile) {
+    window.webkit.messageHandlers.notebookImportFile.postMessage({});
+    return;
+  }
   $("#notes-import-file").click();
 });
 $("#notes-import-file").addEventListener("change", async (event) => {
@@ -7073,10 +8869,14 @@ $("#word-note-font-size").addEventListener("change", (event) => {
 });
 $$('[data-note-tool]').forEach((button) => button.addEventListener("click", () => {
   noteDrawingTool = button.dataset.noteTool;
+  if (noteDrawingTool !== "cursor") {
+    selectedNoteImageId = null;
+    noteImageTransform = null;
+  }
   $$('[data-note-tool]').forEach((item) => item.classList.toggle("active", item === button));
   $("#canvas-text-options").hidden = noteDrawingTool !== "text";
-  drawingNoteCanvas().parentElement.classList.toggle("pan-active", noteDrawingTool === "pan");
-  drawingNoteCanvas().style.cursor = noteDrawingTool === "text" ? "text" : noteDrawingTool === "eraser" ? "cell" : noteDrawingTool === "pan" ? "grab" : "crosshair";
+  drawingNoteCanvas().style.cursor = noteDrawingTool === "cursor" ? "default" : noteDrawingTool === "text" ? "text" : noteDrawingTool === "eraser" ? "cell" : "crosshair";
+  renderDrawingNoteVectors();
 }));
 $$('[data-canvas-text-style]').forEach((button) => button.addEventListener("click", () => {
   noteCanvasTextStyle = button.dataset.canvasTextStyle;
@@ -7102,16 +8902,113 @@ $("#canvas-text-color").addEventListener("change", (event) => applyCanvasTextFor
 
 const noteCanvas = drawingNoteCanvas();
 if (!noteCanvas) throw new Error("The drawing-note canvas is unavailable.");
+let noteClipboardPasteSequence = 0;
+document.addEventListener("keydown", (event) => {
+  if (state.currentAppView !== "notes" || activeNotebookNote()?.type !== "drawing" || event.key.toLowerCase() !== "v" || (!event.metaKey && !event.ctrlKey)) return;
+  const sequence = ++noteClipboardPasteSequence;
+  window.setTimeout(() => {
+    if (sequence !== noteClipboardPasteSequence) return;
+    if (window.webkit?.messageHandlers?.clipboardImage) window.webkit.messageHandlers.clipboardImage.postMessage({});
+    else if (window.desktopApp?.readClipboardImage) window.desktopApp.readClipboardImage().then((source) => source && window.receiveNativeClipboardImage(source));
+  }, 80);
+}, true);
+document.addEventListener("paste", (event) => {
+  if (event.defaultPrevented || state.currentAppView !== "notes" || activeNotebookNote()?.type !== "drawing") return;
+  noteClipboardPasteSequence += 1;
+  const clipboardFiles = [...(event.clipboardData?.files || [])];
+  const imageItem = [...(event.clipboardData?.items || [])].find((item) => item.kind === "file" && (item.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(item.getAsFile()?.name || "")));
+  const file = imageItem?.getAsFile() || clipboardFiles.find((item) => item.type.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|tiff?)$/i.test(item.name || ""));
+  if (file) {
+    event.preventDefault();
+    pasteImageIntoActiveNote(file).catch((error) => showToast(error.message || "The image could not be pasted."));
+    return;
+  }
+  if (window.desktopApp?.readClipboardImage) {
+    const looksLikeFilePaste = [...(event.clipboardData?.types || [])].some((type) => /files|uri-list/i.test(type));
+    if (looksLikeFilePaste) event.preventDefault();
+    window.desktopApp.readClipboardImage().then((source) => source && window.receiveNativeClipboardImage(source));
+  }
+});
+$("#edit-note-image-caption").addEventListener("click", () => {
+  const imageItem = noteDrawingImages.find((item) => item.id === selectedNoteImageId);
+  if (!imageItem) return;
+  const caption = window.prompt("Image caption (leave blank for no caption):", imageItem.caption || "");
+  if (caption === null) return;
+  pushDrawingNoteHistory();
+  imageItem.caption = caption.trim();
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+});
+$("#remove-note-image-background").addEventListener("click", removeSelectedNoteImageBackground);
+$("#push-note-image-front").addEventListener("click", () => {
+  const imageItem = noteDrawingImages.find((item) => item.id === selectedNoteImageId);
+  if (!imageItem) return;
+  pushDrawingNoteHistory();
+  imageItem.layer = "front";
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+  showToast("Image moved in front of the canvas content.");
+});
+$("#push-note-image-back").addEventListener("click", () => {
+  const imageItem = noteDrawingImages.find((item) => item.id === selectedNoteImageId);
+  if (!imageItem) return;
+  pushDrawingNoteHistory();
+  imageItem.layer = "back";
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+  showToast("Image moved behind the other canvas content.");
+});
+$("#delete-note-image").addEventListener("click", () => {
+  if (!selectedNoteImageId) return;
+  pushDrawingNoteHistory();
+  noteDrawingImages = noteDrawingImages.filter((item) => item.id !== selectedNoteImageId);
+  selectedNoteImageId = null;
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+});
+document.addEventListener("keydown", (event) => {
+  if (state.currentAppView !== "notes" || !selectedNoteImageId || !["Backspace", "Delete"].includes(event.key)) return;
+  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target?.isContentEditable) return;
+  event.preventDefault();
+  pushDrawingNoteHistory();
+  noteDrawingImages = noteDrawingImages.filter((item) => item.id !== selectedNoteImageId);
+  selectedNoteImageId = null;
+  renderDrawingNoteVectors();
+  saveDrawingNote();
+});
 const noteCanvasViewport = noteCanvas.parentElement;
 noteCanvasViewport.addEventListener("pointerdown", (event) => {
-  if (noteDrawingTool !== "pan" || activeNotebookNote()?.type !== "drawing" || event.target.closest?.(".canvas-text-editor, .canvas-text-delete")) return;
+  if (noteDrawingTool !== "cursor" || activeNotebookNote()?.type !== "drawing") return;
   if (noteCanvasMode === "page" && notePageLayout === "document") return;
+  if (event.target.closest?.(".canvas-text-editor, .canvas-text-delete, [data-note-image-control]")) return;
+  const point = noteCanvasPoint(event);
+  const selectedImage = [...noteDrawingImages].reverse().find((imageItem) => {
+    const centerX = imageItem.x + imageItem.width / 2;
+    const centerY = imageItem.y + imageItem.height / 2;
+    const angle = -(Number(imageItem.rotation) || 0) * Math.PI / 180;
+    const dx = point.x - centerX;
+    const dy = point.y - centerY;
+    const localX = dx * Math.cos(angle) - dy * Math.sin(angle) + centerX;
+    const localY = dx * Math.sin(angle) + dy * Math.cos(angle) + centerY;
+    return localX >= imageItem.x && localX <= imageItem.x + imageItem.width && localY >= imageItem.y && localY <= imageItem.y + imageItem.height;
+  });
   event.preventDefault();
+  if (selectedImage) {
+    event.stopPropagation();
+    selectedNoteImageId = selectedImage.id;
+    selectedCanvasTextId = null;
+    pushDrawingNoteHistory();
+    noteImageTransform = { mode: "move", pointerId: event.pointerId, start: point, original: { ...selectedImage } };
+    noteCanvasViewport.setPointerCapture(event.pointerId);
+    renderDrawingNoteVectors();
+    return;
+  }
+  selectedNoteImageId = null;
   noteDrawingActive = true;
   noteCanvasPanStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollLeft: noteCanvasViewport.scrollLeft, scrollTop: noteCanvasViewport.scrollTop };
   noteCanvasViewport.setPointerCapture(event.pointerId);
   noteCanvasViewport.style.cursor = "grabbing";
-});
+}, true);
 noteCanvasViewport.addEventListener("pointermove", (event) => {
   if (!noteCanvasPanStart || event.pointerId !== noteCanvasPanStart.pointerId) return;
   event.preventDefault();
@@ -7124,28 +9021,33 @@ const finishCanvasPan = (event) => {
   noteCanvasPanStart = null;
   noteDrawingActive = false;
   noteCanvasViewport.style.cursor = "";
-  noteCanvas.style.cursor = noteDrawingTool === "pan" ? "grab" : "crosshair";
+  noteCanvas.style.cursor = noteDrawingTool === "cursor" ? "default" : "crosshair";
 };
 noteCanvasViewport.addEventListener("pointerup", finishCanvasPan);
 noteCanvasViewport.addEventListener("pointercancel", finishCanvasPan);
-const noteCanvasPoint = (event) => {
-  const matrix = noteCanvas.getScreenCTM?.();
+function noteCanvasPoint(event) {
+  const canvas = drawingNoteCanvas();
+  const matrix = canvas.getScreenCTM?.();
   if (matrix) {
-    const point = noteCanvas.createSVGPoint();
+    const point = canvas.createSVGPoint();
     point.x = event.clientX;
     point.y = event.clientY;
     const local = point.matrixTransform(matrix.inverse());
     return { x: local.x, y: local.y };
   }
-  const rect = noteCanvas.getBoundingClientRect();
+  const rect = canvas.getBoundingClientRect();
   return { x: (event.clientX - rect.left) * drawingWorkspaceWidth() / rect.width, y: (event.clientY - rect.top) * drawingWorkspaceHeight() / rect.height };
-};
+}
 noteCanvas.addEventListener("pointerdown", (event) => {
   if (activeNotebookNote()?.type !== "drawing") return;
   if (noteCanvasMode === "page" && notePageLayout === "document") return;
   if (event.target.closest?.(".canvas-text-editor")) return;
+  if (!noteImageTransform && !event.target.closest?.("[data-note-image-id]")) selectedNoteImageId = null;
   event.preventDefault();
-  if (noteDrawingTool === "pan") return;
+  if (noteDrawingTool === "cursor") {
+    renderDrawingNoteVectors();
+    return;
+  }
   const point = noteCanvasPoint(event);
   if (noteDrawingTool === "text") {
     const preservedScrollLeft = noteCanvas.parentElement.scrollLeft;
@@ -7213,10 +9115,41 @@ noteCanvas.addEventListener("pointerdown", (event) => {
   }
 });
 window.__noteCanvasControlsReady = true;
-noteCanvas.addEventListener("pointermove", (event) => {
+function applyNoteImageTransform(event) {
+  if (!noteImageTransform || event.pointerId !== noteImageTransform.pointerId) return false;
+    const item = noteDrawingImages.find((candidate) => candidate.id === selectedNoteImageId);
+    if (!item) return false;
+    const point = noteCanvasPoint(event);
+    const original = noteImageTransform.original;
+    if (noteImageTransform.mode === "move") {
+      item.x = Math.max(0, Math.min(drawingWorkspaceWidth() - item.width, original.x + point.x - noteImageTransform.start.x));
+      item.y = Math.max(0, Math.min(drawingWorkspaceHeight() - item.height, original.y + point.y - noteImageTransform.start.y));
+    } else if (noteImageTransform.mode === "resize") {
+      const centerX = original.x + original.width / 2; const centerY = original.y + original.height / 2;
+      const angle = -(Number(original.rotation) || 0) * Math.PI / 180;
+      const dx = point.x - centerX; const dy = point.y - centerY;
+      const localX = dx * Math.cos(angle) - dy * Math.sin(angle); const localY = dx * Math.sin(angle) + dy * Math.cos(angle);
+      const aspect = original.width / Math.max(1, original.height);
+      let width = Math.max(60, Math.abs(localX) * 2); let height = Math.max(40, Math.abs(localY) * 2);
+      if (event.shiftKey) { height = width / aspect; }
+      item.width = Math.min(drawingWorkspaceWidth(), width); item.height = Math.min(drawingWorkspaceHeight(), height);
+      item.x = centerX - item.width / 2; item.y = centerY - item.height / 2;
+    } else if (noteImageTransform.mode === "rotate") {
+      const centerX = original.x + original.width / 2; const centerY = original.y + original.height / 2;
+      let rotation = Math.atan2(point.y - centerY, point.x - centerX) * 180 / Math.PI + 90;
+      if (event.shiftKey) rotation = Math.round(rotation / 15) * 15;
+      item.rotation = rotation;
+    }
+    return true;
+}
+noteCanvasViewport.addEventListener("pointermove", (event) => {
   if (noteCanvasMode === "page" && notePageLayout === "document") return;
+  if (applyNoteImageTransform(event)) {
+    event.preventDefault();
+    renderDrawingNoteVectors();
+    return;
+  }
   if (!noteDrawingActive) return;
-  if (noteDrawingTool === "pan") return;
   event.preventDefault();
   const point = noteCanvasPoint(event);
   noteDrawingLastPoint = point;
@@ -7228,7 +9161,14 @@ noteCanvas.addEventListener("pointermove", (event) => {
   }
   renderDrawingNoteVectors();
 });
-const finishNoteStroke = () => {
+const finishNoteStroke = (event) => {
+  if (noteImageTransform) {
+    applyNoteImageTransform(event);
+    noteImageTransform = null;
+    renderDrawingNoteVectors();
+    saveDrawingNote();
+    return;
+  }
   if (noteCanvasPanStart) return;
   if (noteCanvasMode === "page" && notePageLayout === "document") {
     noteDrawingActive = false;
@@ -7242,8 +9182,27 @@ const finishNoteStroke = () => {
   renderDrawingNoteVectors();
   saveDrawingNote();
 };
-noteCanvas.addEventListener("pointerup", finishNoteStroke);
-noteCanvas.addEventListener("pointercancel", finishNoteStroke);
+noteCanvasViewport.addEventListener("pointerup", finishNoteStroke);
+noteCanvasViewport.addEventListener("pointercancel", finishNoteStroke);
+// Keep Cursor drags alive even when WebKit moves the pointer outside the canvas viewport.
+window.addEventListener("pointermove", (event) => {
+  if (noteCanvasPanStart && event.pointerId === noteCanvasPanStart.pointerId) {
+    event.preventDefault();
+    noteCanvasViewport.scrollLeft = noteCanvasPanStart.scrollLeft - (event.clientX - noteCanvasPanStart.x);
+    noteCanvasViewport.scrollTop = noteCanvasPanStart.scrollTop - (event.clientY - noteCanvasPanStart.y);
+    renderOpenNoteTextLayer();
+    return;
+  }
+  if (noteImageTransform && event.pointerId === noteImageTransform.pointerId) {
+    event.preventDefault();
+    applyNoteImageTransform(event);
+    renderDrawingNoteVectors();
+  }
+}, { capture: true });
+window.addEventListener("pointerup", (event) => {
+  if (noteCanvasPanStart && event.pointerId === noteCanvasPanStart.pointerId) finishCanvasPan(event);
+  if (noteImageTransform && event.pointerId === noteImageTransform.pointerId) finishNoteStroke(event);
+}, { capture: true });
 function undoDrawingNote() {
   const previous = noteDrawingHistory.pop();
   if (!previous) return;
@@ -7328,6 +9287,17 @@ $("#clear-note-canvas").addEventListener("click", () => {
 }
 $("#export-deck-select").addEventListener("change", updateExportSummary);
 $("#export-study-set").addEventListener("click", exportSelectedStudyDeck);
+$("#export-user-information").addEventListener("click", () => exportUserInformation().catch((error) => {
+  console.error(error);
+  $("#settings-export-status").textContent = "The backup could not be created.";
+  showToast("The backup could not be created.");
+}));
+$("#restore-user-information").addEventListener("click", () => $("#restore-user-information-file").click());
+$("#restore-user-information-file").addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  if (file) restoreUserInformation(file);
+  event.target.value = "";
+});
 $("#export-note-select").addEventListener("change", configureSelectedNoteExport);
 $("#export-note-button").addEventListener("click", () => exportSelectedNote().catch((error) => { console.error(error); $("#export-note-status").textContent = "The note could not be exported."; showToast("The note could not be exported."); }));
 ["#export-note-crop-x", "#export-note-crop-y", "#export-note-crop-width", "#export-note-crop-height"].forEach((selector) => $(selector).addEventListener("change", updateNoteExportSelectionFromInputs));
@@ -7369,6 +9339,14 @@ const finishNoteExportDrag = (event) => { if (!noteExportState.dragging) return;
 noteExportPreview.addEventListener("pointerup", finishNoteExportDrag);
 noteExportPreview.addEventListener("pointercancel", finishNoteExportDrag);
 $("#flashcards-create-set").addEventListener("click", () => { showAppView("create"); $("#new-custom-study-set").click(); });
+$("#active-anki-select-all").addEventListener("change", (event) => {
+  const dueEntries = dashboardAnkiEntries().filter((entry) => entry.total > 0);
+  if (event.target.checked) dueEntries.forEach((entry) => state.activeAnkiSelections.add(activeAnkiEntryKey(entry)));
+  else state.activeAnkiSelections.clear();
+  persistActiveAnkiSelections();
+  renderActiveAnkiDecks();
+});
+$("#study-selected-active-anki").addEventListener("click", startSelectedActiveAnki);
 $(".brand").addEventListener("click", (event) => { event.preventDefault(); showAppView("dashboard"); });
 $("#welcome-profile-dialog").addEventListener("cancel", (event) => event.preventDefault());
 $("#welcome-profile-form").addEventListener("submit", (event) => {

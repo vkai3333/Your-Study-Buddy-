@@ -1,0 +1,49 @@
+# U.S. president portrait credits
+
+Portraits were downloaded from Wikimedia Commons and retain the licenses listed on their source pages.
+
+- **George Washington** — [portrait source](https://wikipedia.org/wiki/George_Washington); attribution and license are listed on the linked source page.
+- **John Adams** — [portrait source](https://wikipedia.org/wiki/John_Adams); attribution and license are listed on the linked source page.
+- **Thomas Jefferson** — [portrait source](https://wikipedia.org/wiki/Thomas_Jefferson); attribution and license are listed on the linked source page.
+- **James Madison** — [portrait source](https://wikipedia.org/wiki/James_Madison); attribution and license are listed on the linked source page.
+- **James Monroe** — [portrait source](https://wikipedia.org/wiki/James_Monroe); attribution and license are listed on the linked source page.
+- **John Quincy Adams** — [portrait source](https://wikipedia.org/wiki/John_Quincy_Adams); attribution and license are listed on the linked source page.
+- **Andrew Jackson** — [portrait source](https://wikipedia.org/wiki/Andrew_Jackson); attribution and license are listed on the linked source page.
+- **Martin Van Buren** — [portrait source](https://wikipedia.org/wiki/Martin_Van_Buren); attribution and license are listed on the linked source page.
+- **William Henry Harrison** — [portrait source](https://wikipedia.org/wiki/William_Henry_Harrison); attribution and license are listed on the linked source page.
+- **John Tyler** — [portrait source](https://wikipedia.org/wiki/John_Tyler); attribution and license are listed on the linked source page.
+- **James K. Polk** — [portrait source](https://wikipedia.org/wiki/James_K._Polk); attribution and license are listed on the linked source page.
+- **Zachary Taylor** — [portrait source](https://wikipedia.org/wiki/Zachary_Taylor); attribution and license are listed on the linked source page.
+- **Millard Fillmore** — [portrait source](https://wikipedia.org/wiki/Millard_Fillmore); attribution and license are listed on the linked source page.
+- **Franklin Pierce** — [portrait source](https://wikipedia.org/wiki/Franklin_Pierce); attribution and license are listed on the linked source page.
+- **James Buchanan** — [portrait source](https://wikipedia.org/wiki/James_Buchanan); attribution and license are listed on the linked source page.
+- **Abraham Lincoln** — [portrait source](https://wikipedia.org/wiki/Abraham_Lincoln); attribution and license are listed on the linked source page.
+- **Andrew Johnson** — [portrait source](https://wikipedia.org/wiki/Andrew_Johnson); attribution and license are listed on the linked source page.
+- **Ulysses S. Grant** — [portrait source](https://wikipedia.org/wiki/Ulysses_S._Grant); attribution and license are listed on the linked source page.
+- **Rutherford B. Hayes** — [portrait source](https://wikipedia.org/wiki/Rutherford_B._Hayes); attribution and license are listed on the linked source page.
+- **James A. Garfield** — [portrait source](https://wikipedia.org/wiki/James_A._Garfield); attribution and license are listed on the linked source page.
+- **Chester A. Arthur** — [portrait source](https://wikipedia.org/wiki/Chester_Arthur); attribution and license are listed on the linked source page.
+- **Grover Cleveland** — [portrait source](https://wikipedia.org/wiki/Grover_Cleveland); attribution and license are listed on the linked source page.
+- **Benjamin Harrison** — [portrait source](https://wikipedia.org/wiki/Benjamin_Harrison); attribution and license are listed on the linked source page.
+- **William McKinley** — [portrait source](https://wikipedia.org/wiki/William_McKinley); attribution and license are listed on the linked source page.
+- **Theodore Roosevelt** — [portrait source](https://wikipedia.org/wiki/Theodore_Roosevelt); attribution and license are listed on the linked source page.
+- **William Howard Taft** — [portrait source](https://wikipedia.org/wiki/William_Howard_Taft); attribution and license are listed on the linked source page.
+- **Woodrow Wilson** — [portrait source](https://wikipedia.org/wiki/Woodrow_Wilson); attribution and license are listed on the linked source page.
+- **Warren G. Harding** — [portrait source](https://wikipedia.org/wiki/Warren_G._Harding); attribution and license are listed on the linked source page.
+- **Calvin Coolidge** — [portrait source](https://wikipedia.org/wiki/Calvin_Coolidge); attribution and license are listed on the linked source page.
+- **Herbert Hoover** — [portrait source](https://wikipedia.org/wiki/Herbert_Hoover); attribution and license are listed on the linked source page.
+- **Franklin D. Roosevelt** — [portrait source](https://wikipedia.org/wiki/Franklin_D._Roosevelt); attribution and license are listed on the linked source page.
+- **Harry S. Truman** — [portrait source](https://wikipedia.org/wiki/Harry_S._Truman); attribution and license are listed on the linked source page.
+- **Dwight D. Eisenhower** — [portrait source](https://wikipedia.org/wiki/Dwight_D._Eisenhower); attribution and license are listed on the linked source page.
+- **John F. Kennedy** — [portrait source](https://wikipedia.org/wiki/John_F._Kennedy); attribution and license are listed on the linked source page.
+- **Lyndon B. Johnson** — [portrait source](https://wikipedia.org/wiki/Lyndon_B._Johnson); attribution and license are listed on the linked source page.
+- **Richard Nixon** — [portrait source](https://wikipedia.org/wiki/Richard_Nixon); attribution and license are listed on the linked source page.
+- **Gerald Ford** — [portrait source](https://wikipedia.org/wiki/Gerald_Ford); attribution and license are listed on the linked source page.
+- **Jimmy Carter** — [portrait source](https://wikipedia.org/wiki/Jimmy_Carter); attribution and license are listed on the linked source page.
+- **Ronald Reagan** — [portrait source](https://wikipedia.org/wiki/Ronald_Reagan); attribution and license are listed on the linked source page.
+- **George H. W. Bush** — [portrait source](https://en.wikipedia.org/wiki/George_H._W._Bush); attribution and license are listed on the linked source page.
+- **Bill Clinton** — [portrait source](https://wikipedia.org/wiki/Bill_Clinton); attribution and license are listed on the linked source page.
+- **George W. Bush** — [portrait source](https://wikipedia.org/wiki/George_W._Bush); attribution and license are listed on the linked source page.
+- **Barack Obama** — [portrait source](https://wikipedia.org/wiki/Barack_Obama); attribution and license are listed on the linked source page.
+- **Donald Trump** — [portrait source](https://wikipedia.org/wiki/Donald_Trump); attribution and license are listed on the linked source page.
+- **Joe Biden** — [portrait source](https://wikipedia.org/wiki/Joe_Biden); attribution and license are listed on the linked source page.

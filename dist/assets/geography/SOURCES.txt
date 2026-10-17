@@ -1,0 +1,22 @@
+Countries of the World data and image sources
+
+Country names, capitals, and currencies
+REST Countries project data snapshot
+https://github.com/restcountries/restcountries
+
+Largest-city selection
+GeoNames cities15000 data, licensed under CC BY 4.0
+https://download.geonames.org/export/dump/
+https://www.geonames.org/about.html
+
+Country boundary geometry
+Natural Earth Admin 0 Countries, public domain
+https://www.naturalearthdata.com/downloads/
+
+San Marino high-detail boundary
+geoBoundaries Database (www.geoboundaries.org)
+https://www.geoboundaries.org/api/current/gbOpen/SMR/ADM0/
+
+Flag artwork
+flag-icons, MIT License
+https://github.com/lipis/flag-icons

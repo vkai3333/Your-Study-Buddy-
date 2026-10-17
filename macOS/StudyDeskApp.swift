@@ -10,6 +10,30 @@ private struct PackageImportFailure: LocalizedError {
 }
 
 private final class StudyWebView: WKWebView {
+    private func clipboardPNGData() -> Data? {
+        let pasteboard = NSPasteboard.general
+        let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
+        if let url = pasteboard.readObjects(forClasses: [NSURL.self], options: options)?.first as? URL,
+           let image = NSImage(contentsOf: url),
+           let tiff = image.tiffRepresentation,
+           let bitmap = NSBitmapImageRep(data: tiff) {
+            return bitmap.representation(using: .png, properties: [:])
+        }
+        if let png = pasteboard.data(forType: .png) { return png }
+        if let tiff = pasteboard.data(forType: .tiff),
+           let bitmap = NSBitmapImageRep(data: tiff),
+           let png = bitmap.representation(using: .png, properties: [:]) { return png }
+        return nil
+    }
+
+    fileprivate func pasteClipboardImageIntoNotes() -> Bool {
+        guard let png = clipboardPNGData() else { return false }
+        let source = "data:image/png;base64,\(png.base64EncodedString())"
+        let script = "window.receiveNativeClipboardImage?.('\(source)')"
+        evaluateJavaScript(script, completionHandler: nil)
+        return true
+    }
+
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         // Only the narrow header at the top moves the window. Keeping the rest
@@ -30,6 +54,7 @@ private final class StudyWebView: WKWebView {
                 return NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: self)
             }
             if key == "v" {
+                if pasteClipboardImageIntoNotes() { return true }
                 return NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: self)
             }
         }
@@ -49,6 +74,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         configuration.userContentController.add(self, name: "noteExport")
         configuration.userContentController.add(self, name: "studyDroppedFile")
         configuration.userContentController.add(self, name: "notebookImportFile")
+        configuration.userContentController.add(self, name: "clipboardImage")
         configuration.userContentController.add(self, name: "studyFullscreen")
 
         let webView = StudyWebView(frame: .zero, configuration: configuration)
@@ -99,6 +125,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         }
         if message.name == "notebookImportFile" {
             chooseNotebookImportFile(in: message.webView)
+            return
+        }
+        if message.name == "clipboardImage" {
+            _ = (message.webView as? StudyWebView)?.pasteClipboardImageIntoNotes()
             return
         }
         if message.name == "studyFullscreen" {
@@ -364,11 +394,17 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         editMenu.addItem(.separator())
         editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
         editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        let paste = editMenu.addItem(withTitle: "Paste", action: #selector(pasteFromClipboard(_:)), keyEquivalent: "v")
+        paste.target = self
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenuItem.submenu = editMenu
 
         NSApp.mainMenu = mainMenu
+    }
+
+    @objc private func pasteFromClipboard(_ sender: Any?) {
+        if let webView = window?.contentView as? StudyWebView, webView.pasteClipboardImageIntoNotes() { return }
+        NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: sender)
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
