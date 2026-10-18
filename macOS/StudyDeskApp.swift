@@ -72,6 +72,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         configuration.userContentController.add(self, name: "studyAlarm")
         configuration.userContentController.add(self, name: "studyExport")
         configuration.userContentController.add(self, name: "noteExport")
+        configuration.userContentController.add(self, name: "userDataExport")
+        configuration.userContentController.add(self, name: "appUpdateCheck")
+        configuration.userContentController.add(self, name: "appUpdateOpen")
         configuration.userContentController.add(self, name: "studyDroppedFile")
         configuration.userContentController.add(self, name: "notebookImportFile")
         configuration.userContentController.add(self, name: "clipboardImage")
@@ -117,6 +120,18 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         }
         if message.name == "noteExport" {
             exportNote(payload)
+            return
+        }
+        if message.name == "userDataExport" {
+            exportUserBackup(payload, in: message.webView)
+            return
+        }
+        if message.name == "appUpdateCheck" {
+            checkForAppUpdate(payload, in: message.webView)
+            return
+        }
+        if message.name == "appUpdateOpen" {
+            openAppUpdate(payload)
             return
         }
         if message.name == "studyDroppedFile" {
@@ -283,6 +298,128 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         else { completion(panel.runModal()) }
     }
 
+    private func sendUserBackupResult(_ result: [String: Any], requestID: String, to webView: WKWebView?) {
+        guard let webView,
+              let data = try? JSONSerialization.data(withJSONObject: ["requestId": requestID, "result": result]),
+              let json = String(data: data, encoding: .utf8) else { return }
+        webView.evaluateJavaScript("(()=>{const payload=\(json);window.resolveNativeUserDataExport(payload.requestId,payload.result);})()")
+    }
+
+    private func exportUserBackup(_ payload: [String: Any], in webView: WKWebView?) {
+        let requestID = (payload["requestId"] as? String) ?? ""
+        guard let json = payload["json"] as? String, let data = json.data(using: .utf8) else {
+            sendUserBackupResult(["error": "The backup data could not be encoded."], requestID: requestID, to: webView)
+            return
+        }
+        do {
+            guard let backup = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  backup["application"] as? String == "Your Study Buddy",
+                  (backup["version"] as? NSNumber)?.intValue == 1,
+                  backup["storage"] is [String: Any] else { throw NSError(domain: "YourStudyBuddy", code: 1, userInfo: [NSLocalizedDescriptionKey: "The backup data is incomplete."]) }
+        } catch {
+            sendUserBackupResult(["error": error.localizedDescription], requestID: requestID, to: webView)
+            return
+        }
+        let rawName = (payload["name"] as? String) ?? "Your Study Buddy backup"
+        let safeName = rawName.replacingOccurrences(of: "[^A-Za-z0-9._ -]", with: "-", options: .regularExpression)
+        let panel = NSSavePanel()
+        panel.title = "Export your information"
+        panel.nameFieldStringValue = "\(safeName).json"
+        panel.allowedContentTypes = [.json]
+        let completion: (NSApplication.ModalResponse) -> Void = { response in
+            guard response == .OK, let url = panel.url else {
+                self.sendUserBackupResult(["canceled": true], requestID: requestID, to: webView)
+                return
+            }
+            do {
+                try data.write(to: url, options: .atomic)
+                let savedData = try Data(contentsOf: url)
+                guard let saved = try JSONSerialization.jsonObject(with: savedData) as? [String: Any],
+                      saved["application"] as? String == "Your Study Buddy",
+                      (saved["version"] as? NSNumber)?.intValue == 1 else { throw NSError(domain: "YourStudyBuddy", code: 2, userInfo: [NSLocalizedDescriptionKey: "The saved backup could not be verified."]) }
+                let storageCount = (saved["storage"] as? [String: Any])?.count ?? 0
+                let assetCount = (saved["assets"] as? [[String: Any]])?.count ?? 0
+                self.sendUserBackupResult(["path": url.path, "storageGroups": storageCount, "pdfAssets": assetCount], requestID: requestID, to: webView)
+            } catch {
+                self.sendUserBackupResult(["error": error.localizedDescription], requestID: requestID, to: webView)
+            }
+        }
+        if let window { panel.beginSheetModal(for: window, completionHandler: completion) }
+        else { completion(panel.runModal()) }
+    }
+
+    private func versionParts(_ value: String) -> [Int] {
+        let core = value.replacingOccurrences(of: #"^[vV]"#, with: "", options: .regularExpression).split(separator: "-").first ?? "0"
+        var parts = core.split(separator: ".").prefix(3).map { Int($0) ?? 0 }
+        while parts.count < 3 { parts.append(0) }
+        return parts
+    }
+
+    private func compareVersions(_ left: String, _ right: String) -> Int {
+        let a = versionParts(left); let b = versionParts(right)
+        for index in 0..<3 where a[index] != b[index] { return a[index] < b[index] ? -1 : 1 }
+        return 0
+    }
+
+    private func sendAppUpdateResult(_ result: [String: Any], requestID: String, to webView: WKWebView?) {
+        guard let webView,
+              let data = try? JSONSerialization.data(withJSONObject: ["requestId": requestID, "result": result]),
+              let json = String(data: data, encoding: .utf8) else { return }
+        DispatchQueue.main.async {
+            webView.evaluateJavaScript("(()=>{const payload=\(json);window.resolveNativeAppUpdate(payload.requestId,payload.result);})()")
+        }
+    }
+
+    private func checkForAppUpdate(_ payload: [String: Any], in webView: WKWebView?) {
+        let requestID = (payload["requestId"] as? String) ?? ""
+        let currentVersion = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "0.0.0"
+        guard let url = URL(string: "https://api.github.com/repos/vkai3333/Your-Study-Buddy-/releases?per_page=20") else {
+            sendAppUpdateResult(["currentVersion": currentVersion, "available": false, "error": "The update address is invalid."], requestID: requestID, to: webView)
+            return
+        }
+        var request = URLRequest(url: url)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Your-Study-Buddy/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error {
+                self.sendAppUpdateResult(["currentVersion": currentVersion, "available": false, "error": error.localizedDescription], requestID: requestID, to: webView)
+                return
+            }
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode), let data else {
+                self.sendAppUpdateResult(["currentVersion": currentVersion, "available": false, "error": "GitHub could not be reached."], requestID: requestID, to: webView)
+                return
+            }
+            do {
+                let releases = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] ?? []
+                let published = releases.filter { ($0["draft"] as? Bool) != true && (($0["tag_name"] as? String)?.isEmpty == false) }
+                let latest = published.sorted { self.compareVersions(($0["tag_name"] as? String) ?? "0", ($1["tag_name"] as? String) ?? "0") > 0 }.first
+                guard let latest, let tag = latest["tag_name"] as? String else {
+                    self.sendAppUpdateResult(["currentVersion": currentVersion, "available": false, "message": "No published releases were found."], requestID: requestID, to: webView)
+                    return
+                }
+                let latestVersion = tag.replacingOccurrences(of: #"^[vV]"#, with: "", options: .regularExpression)
+                var result: [String: Any] = [
+                    "currentVersion": currentVersion,
+                    "latestVersion": latestVersion,
+                    "available": self.compareVersions(latestVersion, currentVersion) > 0,
+                    "releaseName": (latest["name"] as? String)?.isEmpty == false ? latest["name"] as! String : "Version \(latestVersion)"
+                ]
+                if let releaseURL = latest["html_url"] as? String { result["releaseUrl"] = releaseURL }
+                if let publishedAt = latest["published_at"] as? String { result["publishedAt"] = publishedAt }
+                self.sendAppUpdateResult(result, requestID: requestID, to: webView)
+            } catch {
+                self.sendAppUpdateResult(["currentVersion": currentVersion, "available": false, "error": "GitHub returned an unreadable update response."], requestID: requestID, to: webView)
+            }
+        }.resume()
+    }
+
+    private func openAppUpdate(_ payload: [String: Any]) {
+        guard let value = payload["releaseUrl"] as? String,
+              value.range(of: #"^https://github\.com/vkai3333/Your-Study-Buddy-/releases(?:/|$)"#, options: [.regularExpression, .caseInsensitive]) != nil,
+              let url = URL(string: value) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     private func exportData(_ payload: [String: Any], format: String) throws -> Data {
         if format == "json" { return try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]) }
         let delimiter = format == "csv" ? "," : "\t"
@@ -424,26 +561,30 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
         initiatedByFrame frame: WKFrameInfo,
         completionHandler: @escaping ([URL]?) -> Void
     ) {
-        let panel = NSOpenPanel()
-        panel.title = "Choose a file"
-        panel.prompt = "Choose"
-        panel.message = "Choose an image, Anki APKG package, or notes export."
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
-        // PPTX and APKG are ZIP-based formats. On Macs without Microsoft Office,
-        // Launch Services can report them as unrelated dynamic types and gray
-        // them out when a narrow content-type filter is used. Allow files here
-        // and validate the extension after selection instead.
-        panel.allowedContentTypes = [.item]
+        webView.evaluateJavaScript("window.nativeFilePickerPurpose || ''") { value, _ in
+            let restoringBackup = (value as? String) == "restore-backup"
+            webView.evaluateJavaScript("window.nativeFilePickerPurpose = ''")
+            let panel = NSOpenPanel()
+            panel.title = restoringBackup ? "Restore Your Study Buddy backup" : "Choose a file"
+            panel.prompt = restoringBackup ? "Restore" : "Choose"
+            panel.message = restoringBackup ? "Choose a Your Study Buddy JSON backup." : "Choose an image, Anki APKG package, or notes export."
+            panel.canChooseFiles = true
+            panel.canChooseDirectories = false
+            panel.allowsMultipleSelection = restoringBackup ? false : parameters.allowsMultipleSelection
+            // PPTX and APKG are ZIP-based formats. On Macs without Microsoft Office,
+            // Launch Services can report them as unrelated dynamic types and gray
+            // them out when a narrow content-type filter is used. Only backup restore
+            // uses a narrow filter; all other importers validate after selection.
+            panel.allowedContentTypes = restoringBackup ? [.json] : [.item]
 
-        if let window {
-            panel.beginSheetModal(for: window) { response in
+            if let window = self.window {
+                panel.beginSheetModal(for: window) { response in
+                    self.finishFileSelection(response: response, urls: panel.urls, webView: webView, completionHandler: completionHandler)
+                }
+            } else {
+                let response = panel.runModal()
                 self.finishFileSelection(response: response, urls: panel.urls, webView: webView, completionHandler: completionHandler)
             }
-        } else {
-            let response = panel.runModal()
-            finishFileSelection(response: response, urls: panel.urls, webView: webView, completionHandler: completionHandler)
         }
     }
 

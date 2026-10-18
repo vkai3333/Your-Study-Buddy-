@@ -318,6 +318,21 @@ async function exportNote(window, payload) {
   return { path: result.filePath, format: extension };
 }
 
+async function exportUserBackup(window, payload) {
+  const json = String(payload?.json || "");
+  let backup;
+  try { backup = JSON.parse(json); }
+  catch { throw new Error("The backup data could not be encoded."); }
+  if (backup?.application !== "Your Study Buddy" || backup?.version !== 1 || !backup.storage || typeof backup.storage !== "object") throw new Error("The backup data is incomplete.");
+  const safeName = String(payload?.name || "Your Study Buddy backup").replace(/[\\/:*?"<>|]+/g, "-");
+  const result = await dialog.showSaveDialog(window, { title: "Export your information", defaultPath: `${safeName}.json`, filters: [{ name: "Your Study Buddy backup", extensions: ["json"] }] });
+  if (result.canceled || !result.filePath) return { canceled: true };
+  fs.writeFileSync(result.filePath, `${JSON.stringify(backup, null, 2)}\n`, "utf8");
+  const saved = JSON.parse(fs.readFileSync(result.filePath, "utf8"));
+  if (saved.application !== "Your Study Buddy" || saved.version !== 1) throw new Error("The saved backup could not be verified.");
+  return { path: result.filePath, storageGroups: Object.keys(saved.storage).length, pdfAssets: Array.isArray(saved.assets) ? saved.assets.length : 0 };
+}
+
 function cancelAlarm(id) {
   const timer = alarmTimers.get(id);
   if (timer) clearTimeout(timer);
@@ -410,6 +425,10 @@ ipcMain.handle("study-deck:export", async (event, payload) => {
 ipcMain.handle("note:export", async (event, payload) => {
   try { return await exportNote(BrowserWindow.fromWebContents(event.sender), payload); }
   catch (error) { return { error: error?.message || "This note could not be exported." }; }
+});
+ipcMain.handle("user-data:export", async (event, payload) => {
+  try { return await exportUserBackup(BrowserWindow.fromWebContents(event.sender), payload); }
+  catch (error) { return { error: error?.message || "Your information could not be exported." }; }
 });
 ipcMain.handle("window:set-fullscreen", (event, active) => {
   const window = BrowserWindow.fromWebContents(event.sender);

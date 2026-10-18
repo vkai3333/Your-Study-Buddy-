@@ -3071,15 +3071,34 @@ function renderAppUpdate(result) {
   else status.textContent = result.message || "You have the newest published version.";
 }
 
+const nativeAppUpdateResolvers = new Map();
+window.resolveNativeAppUpdate = (requestId, result) => {
+  const resolve = nativeAppUpdateResolvers.get(String(requestId));
+  if (!resolve) return;
+  nativeAppUpdateResolvers.delete(String(requestId));
+  resolve(result || { available: false, error: "The native update check did not return a result." });
+};
+
+function checkForUpdatesWithNativeMac() {
+  const handler = window.webkit?.messageHandlers?.appUpdateCheck;
+  if (!handler) return null;
+  const requestId = makeLocalId("update-check");
+  return new Promise((resolve) => {
+    nativeAppUpdateResolvers.set(requestId, resolve);
+    handler.postMessage({ requestId });
+  });
+}
+
 async function checkForAppUpdates(showFeedback = true) {
   const button = $("#check-for-updates"); const status = $("#app-update-status");
-  if (!window.desktopApp?.checkForUpdates) {
+  const nativeMacCheck = checkForUpdatesWithNativeMac();
+  if (!window.desktopApp?.checkForUpdates && !nativeMacCheck) {
     if (status) status.textContent = "Update checking is available in the installed desktop app.";
     return;
   }
   if (button) button.disabled = true;
   if (status && showFeedback) status.textContent = "Checking GitHub for updates…";
-  const result = await window.desktopApp.checkForUpdates();
+  const result = nativeMacCheck ? await nativeMacCheck : await window.desktopApp.checkForUpdates();
   renderAppUpdate(result);
   if (button) button.disabled = false;
   if (showFeedback && result?.available) showToast(`${result.releaseName || `Version ${result.latestVersion}`} is ready to download.`);
@@ -4593,12 +4612,39 @@ async function portableUserData() {
   return { application: "Your Study Buddy", version: 1, exportedAt: new Date().toISOString(), storage, assets };
 }
 
+const nativeUserDataExportResolvers = new Map();
+window.resolveNativeUserDataExport = (requestId, result) => {
+  const resolve = nativeUserDataExportResolvers.get(String(requestId));
+  if (!resolve) return;
+  nativeUserDataExportResolvers.delete(String(requestId));
+  resolve(result || { error: "The native backup export did not return a result." });
+};
+
+function exportUserDataWithNativeMac(payload) {
+  const handler = window.webkit?.messageHandlers?.userDataExport;
+  if (!handler) return null;
+  const requestId = makeLocalId("backup-export");
+  return new Promise((resolve) => {
+    nativeUserDataExportResolvers.set(requestId, resolve);
+    handler.postMessage({ ...payload, requestId });
+  });
+}
+
 async function exportUserInformation() {
   $("#settings-export-status").textContent = "Preparing your backup…";
   const backup = await portableUserData();
-  browserDownload(`Your Study Buddy backup ${localStudyDate()}`, "json", JSON.stringify(backup, null, 2));
-  $("#settings-export-status").textContent = "Backup exported. Keep the JSON file somewhere safe.";
-  showToast("Your information was exported.");
+  const name = `Your Study Buddy backup ${localStudyDate()}`;
+  const payload = { name, json: JSON.stringify(backup) };
+  const nativeMacExport = exportUserDataWithNativeMac(payload);
+  if (!window.desktopApp?.exportUserData && !nativeMacExport) throw new Error("Backup export is only available in the installed desktop app.");
+  const result = nativeMacExport ? await nativeMacExport : await window.desktopApp.exportUserData(payload);
+  if (result?.error) throw new Error(result.error);
+  if (result?.canceled) {
+    $("#settings-export-status").textContent = "Backup export canceled.";
+    return;
+  }
+  $("#settings-export-status").textContent = `Backup saved and verified${result?.path ? ` at ${result.path}` : ""}. Keep the JSON file somewhere safe.`;
+  showToast("Your information was exported and verified.");
 }
 
 async function restoreUserInformation(file) {
@@ -9320,8 +9366,12 @@ $("#export-user-information").addEventListener("click", () => exportUserInformat
   $("#settings-export-status").textContent = "The backup could not be created.";
   showToast("The backup could not be created.");
 }));
-$("#restore-user-information").addEventListener("click", () => $("#restore-user-information-file").click());
+$("#restore-user-information").addEventListener("click", () => {
+  window.nativeFilePickerPurpose = "restore-backup";
+  $("#restore-user-information-file").click();
+});
 $("#restore-user-information-file").addEventListener("change", (event) => {
+  window.nativeFilePickerPurpose = "";
   const file = event.target.files?.[0];
   if (file) restoreUserInformation(file);
   event.target.value = "";
@@ -9329,7 +9379,9 @@ $("#restore-user-information-file").addEventListener("change", (event) => {
 $("#check-for-updates").addEventListener("click", () => checkForAppUpdates(true));
 $("#download-app-update").addEventListener("click", (event) => {
   const releaseUrl = event.currentTarget.dataset.releaseUrl;
-  if (releaseUrl) window.desktopApp?.openUpdate?.(releaseUrl);
+  if (!releaseUrl) return;
+  if (window.desktopApp?.openUpdate) window.desktopApp.openUpdate(releaseUrl);
+  else window.webkit?.messageHandlers?.appUpdateOpen?.postMessage({ releaseUrl });
 });
 $("#export-note-select").addEventListener("change", configureSelectedNoteExport);
 $("#export-note-button").addEventListener("click", () => exportSelectedNote().catch((error) => { console.error(error); $("#export-note-status").textContent = "The note could not be exported."; showToast("The note could not be exported."); }));

@@ -9,6 +9,8 @@ const root = path.resolve(__dirname, "..");
 const dist = path.join(root, "dist");
 const html = fs.readFileSync(path.join(dist, "index.html"), "utf8");
 const app = fs.readFileSync(path.join(dist, "app.js"), "utf8");
+const main = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
+const preload = fs.readFileSync(path.join(root, "electron", "preload.cjs"), "utf8");
 const selectionStorage = require(path.join(dist, "anki-selection-storage.js"));
 
 function generatorHarness() {
@@ -95,6 +97,19 @@ test("portable user backups can be exported and restored", () => {
   assert.match(app, /function portableUserData\(/);
   assert.match(app, /async function restoreUserInformation\(/);
   assert.match(app, /This is not a valid Your Study Buddy backup/);
+  assert.match(app, /desktopApp\?\.exportUserData/);
+  assert.match(main, /async function exportUserBackup\(/);
+  assert.match(main, /fs\.writeFileSync\(result\.filePath/);
+  assert.match(main, /The saved backup could not be verified/);
+  assert.match(preload, /exportUserData\(payload\)/);
+  assert.match(app, /messageHandlers\?\.userDataExport/);
+  assert.match(app, /resolveNativeUserDataExport/);
+  assert.match(app, /nativeFilePickerPurpose = "restore-backup"/);
+  assert.match(main, /ipcMain\.handle\("user-data:export"/);
+  const nativeMac = fs.readFileSync(path.join(root, "macOS", "StudyDeskApp.swift"), "utf8");
+  assert.match(nativeMac, /Restore Your Study Buddy backup/);
+  assert.match(nativeMac, /Choose a Your Study Buddy JSON backup/);
+  assert.match(nativeMac, /restoringBackup \? \[\.json\] : \[\.item\]/);
 });
 
 test("generator avoids malformed generic questions", () => {
@@ -130,6 +145,15 @@ test("settings exposes storage health and recovery diagnostics", () => {
   assert.match(app, /async function renderStorageHealth\(/);
   assert.match(app, /Recovery copies:/);
   assert.match(app, /warnIfLocalPayloadLarge/);
+});
+
+test("software updates are connected on Electron and native macOS", () => {
+  assert.match(app, /messageHandlers\?\.appUpdateCheck/);
+  assert.match(app, /resolveNativeAppUpdate/);
+  assert.match(main, /ipcMain\.handle\("app-update:check"/);
+  const nativeMac = fs.readFileSync(path.join(root, "macOS", "StudyDeskApp.swift"), "utf8");
+  assert.match(nativeMac, /configuration\.userContentController\.add\(self, name: "appUpdateCheck"\)/);
+  assert.match(nativeMac, /api\.github\.com\/repos\/vkai3333\/Your-Study-Buddy-\/releases/);
 });
 
 test("large deck searches are debounced", () => {

@@ -638,6 +638,11 @@
               <div class="storage-meter" role="progressbar" aria-label="Device storage used by application data" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="storage-meter-fill"></span></div>
               <div class="storage-diagnostics" id="storage-diagnostics" aria-live="polite"></div>
             </section>
+            <section class="settings-card" aria-labelledby="app-update-title">
+              <div class="settings-card-heading"><div><p class="section-label">Application</p><h3 id="app-update-title">Software updates</h3></div><p>Check GitHub for a newer release without changing or removing your local study data.</p></div>
+              <div class="app-update-summary"><div><strong id="app-update-version">Current version</strong><span id="app-update-status" aria-live="polite">Updates are checked when the app opens.</span></div><div class="settings-data-actions"><button type="button" class="button secondary-button" id="check-for-updates">Check for updates</button><button type="button" class="button primary-button" id="download-app-update" hidden>Download update</button></div></div>
+              <p class="settings-export-status">Unsigned builds open the GitHub release for manual installation. Replacing the app keeps notes, decks, settings, and review progress stored on this computer.</p>
+            </section>
             </div>
             <div class="settings-panel" data-settings-panel="anki" hidden>
             <section class="settings-card">

@@ -127,6 +127,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .storage-meter.warning > span { background: #d98b32; }
 .storage-meter.danger > span { background: #c34f45; }
 .storage-diagnostics { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.app-update-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.app-update-summary > div:first-child { display: grid; gap: 5px; }
+.app-update-summary strong { font-size: .78rem; }
+.app-update-summary span { color: var(--muted); font-size: .65rem; line-height: 1.5; }
 
 .notes-page { max-width: 1440px; margin: -30px auto 0; }
 .notes-page-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 8px; padding: 0 2px; }

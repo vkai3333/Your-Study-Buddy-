@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld("desktopApp", {
   exportNote(payload) {
     return ipcRenderer.invoke("note:export", payload);
   },
+  exportUserData(payload) {
+    return ipcRenderer.invoke("user-data:export", payload);
+  },
   setFullscreen(active) {
     return ipcRenderer.invoke("window:set-fullscreen", Boolean(active));
   },
