@@ -1,16 +1,34 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "your-study-buddy",
-  "main": "./worker/index.mjs",
-  "compatibility_date": "2026-10-21",
-  "workers_dev": true,
-  "preview_urls": true,
-  // Account sync and Community features require the D1 and R2 bindings created in CLOUDFLARE_SETUP.md.
-  "r2_buckets": [{ "binding": "NOTE_ASSETS", "bucket_name": "your-study-buddy-note-assets" }],
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
-  }
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "your-study-buddy",
+	"main": "./worker/index.mjs",
+	"compatibility_date": "2026-10-21",
+	"workers_dev": true,
+	"preview_urls": true,
+	// Account sync and Community features require the D1 and R2 bindings created in CLOUDFLARE_SETUP.md.
+	"r2_buckets": [
+		{
+			"binding": "NOTE_ASSETS",
+			"bucket_name": "your-study-buddy-note-assets"
+		},
+		{
+			"bucket_name": "your-study-buddy-note-assets",
+			"binding": "your_study_buddy_note_assets"
+		}
+	],
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "your-study-buddy",
+			"database_id": "7bffde57-aa80-473b-bb24-09798391ff8d"
+		}
+	]
 }

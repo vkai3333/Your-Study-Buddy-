@@ -125,7 +125,17 @@ function cookieValue(request, name) {
 
 function allowedMutation(request) {
   const origin = request.headers.get("Origin");
-  return Boolean(origin && ALLOWED_ORIGINS.has(origin));
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    // Preview and production Workers deployments can receive a generated
+    // workers.dev hostname. Keep those usable without weakening the check to
+    // arbitrary origins or non-HTTPS URLs.
+    return url.protocol === "https:" && url.hostname.endsWith(".workers.dev");
+  } catch (_) {
+    return false;
+  }
 }
 
 function accountAssetId(pathname) {
