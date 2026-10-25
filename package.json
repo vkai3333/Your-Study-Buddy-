@@ -5,8 +5,12 @@
   "description": "Your Study Buddy is a native, fully offline macOS study app with original study companions for biology, physiology, plant biology, general chemistry, and physical chemistry.",
   "main": "electron/main.cjs",
   "scripts": {
+    "build:web": "node tools/build-browser-bundle.mjs",
+    "cloudflare:database:create": "wrangler d1 create your-study-buddy --binding DB --update-config",
+    "cloudflare:database:migrate": "wrangler d1 migrations apply your-study-buddy --remote",
+    "cloudflare:assets:create": "wrangler r2 bucket create your-study-buddy-note-assets",
     "test": "node --test tests/*.test.js",
-    "test:syntax": "node --check dist/app.js && node --check electron/main.cjs && node --check electron/preload.cjs",
+    "test:syntax": "node --check dist/app.js && node --check electron/main.cjs && node --check electron/preload.cjs && node --check worker/index.mjs",
     "bundle:pdf": "esbuild dist/pdf-annotation.js --bundle --format=iife --platform=browser --target=safari16 --minify --outfile=dist/pdf-annotation.bundle.js",
     "start": "electron .",
     "make": "electron-forge make",

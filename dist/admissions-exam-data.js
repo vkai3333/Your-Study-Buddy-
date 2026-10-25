@@ -162,4 +162,35 @@
     unit("dat-quantitative-reasoning", "DAT · Quantitative Reasoning", "Quantitative Reasoning", datQr, datUrl),
   ];
 
+  // Add only directly relevant, already-curated material from the app's IB/AP
+  // banks. Front-text deduplication prevents this from padding the DAT with copies.
+  const normalizeFront = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const appendRelevantCards = (target, sourceUnits, prefix, crosswalkSource) => {
+    const seen = new Set(target.cards.map((card) => normalizeFront(card.front)));
+    (sourceUnits || []).flatMap((sourceUnit) => sourceUnit.cards || []).forEach((source) => {
+      const key = normalizeFront(source.front);
+      if (!key || !source.back || seen.has(key)) return;
+      seen.add(key);
+      target.cards.push({
+        ...JSON.parse(JSON.stringify(source)),
+        id: `${prefix}-${target.cards.length + 1}`,
+        crosswalkSource,
+      });
+    });
+  };
+
+  appendRelevantCards(window.DAT_DECKS[0], window.IB_BIOLOGY_DECKS, "dat-ib-bio", "IB Biology crosswalk");
+  appendRelevantCards(window.DAT_DECKS[1], window.IB_CHEMISTRY_DECKS, "dat-ib-chem", "IB Chemistry crosswalk");
+  appendRelevantCards(window.DAT_DECKS[5], window.AP_PRECALCULUS_DECKS, "dat-ap-precalc", "AP Precalculus quantitative crosswalk");
+  appendRelevantCards(window.DAT_DECKS[5], (window.AP_STATISTICS_DECKS || []).slice(0, 4), "dat-ap-stats", "AP Statistics data and probability crosswalk");
+  window.DAT_DECKS.forEach((deck) => {
+    const seen = new Set();
+    deck.cards = deck.cards.filter((card) => {
+      const key = normalizeFront(card.front);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  });
+
 })();

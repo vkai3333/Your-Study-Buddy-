@@ -2,6 +2,9 @@
 
 Every image in this folder was downloaded from Wikimedia Commons. None was generated for Your Study Buddy.
 
+- `biochemistry-glycolysis.svg` — Yikrazuul, *Glycolysis overview.svg*, public domain. https://commons.wikimedia.org/wiki/File:Glycolysis_overview.svg
+- `biochemistry-citric-acid-cycle.svg` — Choij, *Citric acid cycle.svg*, public domain. https://commons.wikimedia.org/wiki/File:Citric_acid_cycle.svg
+- `biochemistry-electron-transport-chain.svg` — T-Fork, *Electron transport chain.svg*, CC0 1.0/public-domain dedication. https://commons.wikimedia.org/wiki/File:Electron_transport_chain.svg
 - `biology-mitochondrion.svg` — Kelvinsong, *Mitochondrion (standalone version)-en.svg*, CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:Mitochondrion_(standalone_version)-en.svg
 - `biology-membrane.svg` — LadyofHats, *Cell membrane detailed diagram en.svg*, public domain. https://commons.wikimedia.org/wiki/File:Cell_membrane_detailed_diagram_en.svg
 - `biology-cell-cycle.svg` — George Weller, *The Cell Cycle.svg*, CC BY-SA. https://commons.wikimedia.org/wiki/File:The_Cell_Cycle.svg

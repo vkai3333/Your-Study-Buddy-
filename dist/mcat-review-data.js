@@ -28,11 +28,15 @@
   }));
   const seen = new Set();
   const normalize = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const cleanImportedText = (value) => String(value || "").replace(/\s+[1-9]\.\s*$/, "").trim();
   const add = (theme, card, sourceUnit = "") => {
-    const key = normalize(card.front);
+    const importedCard = JSON.parse(JSON.stringify(card));
+    importedCard.front = cleanImportedText(importedCard.front);
+    importedCard.back = cleanImportedText(importedCard.back);
+    const key = normalize(importedCard.front);
     if (!key || seen.has(key)) return;
     seen.add(key);
-    decks[theme].cards.push({ ...JSON.parse(JSON.stringify(card)), id: `mcat-t${theme + 1}-c${decks[theme].cards.length + 1}`, crosswalkSourceUnit: sourceUnit });
+    decks[theme].cards.push({ ...importedCard, id: `mcat-t${theme + 1}-c${decks[theme].cards.length + 1}`, crosswalkSourceUnit: sourceUnit });
   };
   const addSource = (source, map, filter = () => true) => (source || []).forEach((deck) => {
     const theme = map[deck.id];

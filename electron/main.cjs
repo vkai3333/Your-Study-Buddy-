@@ -120,7 +120,10 @@ async function readStudyFile(filePath) {
   const extension = path.extname(filePath).slice(1).toLowerCase();
   if (extension === "apkg") return { kind: "apkg", payload: await readAnkiPackage(filePath) };
   if (extension === "pdf") return { kind: "document", name: path.basename(filePath), extension, text: await readPdfText(filePath) };
-  if (extension === "pptx") return { kind: "document", name: path.basename(filePath), extension, text: readPowerPointText(filePath) };
+  if (extension === "pptx") {
+    const slides = readPowerPointSlides(filePath);
+    return { kind: "document", name: path.basename(filePath), extension, slides, text: slides.join("\n\n"), data: `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${fs.readFileSync(filePath).toString("base64")}` };
+  }
   if (["txt", "md", "csv", "tsv"].includes(extension)) {
     return { kind: "text", name: path.basename(filePath), extension, text: fs.readFileSync(filePath, "utf8") };
   }
@@ -212,12 +215,14 @@ function powerpointSlideText(xml) {
   return [plainTitle ? `## ${plainTitle}` : "", ...uniqueBody].filter(Boolean).join("\n");
 }
 
-function readPowerPointText(filePath) {
+function readPowerPointSlides(filePath) {
   const archive = new AdmZip(filePath);
-  const slides = archive.getEntries().filter((entry) => /^ppt\/slides\/slide\d+\.xml$/.test(entry.entryName)).sort((a, b) => Number(a.entryName.match(/\d+/)?.[0]) - Number(b.entryName.match(/\d+/)?.[0])).map((entry) => powerpointSlideText(entry.getData().toString("utf8"))).filter(Boolean);
+  const slides = archive.getEntries().filter((entry) => /^ppt\/slides\/slide\d+\.xml$/.test(entry.entryName)).sort((a, b) => Number(a.entryName.match(/\d+/)?.[0]) - Number(b.entryName.match(/\d+/)?.[0])).map((entry, index) => powerpointSlideText(entry.getData().toString("utf8")) || `## Slide ${index + 1}`);
   if (!slides.length) throw new Error("No usable study text was found in this PowerPoint.");
-  return slides.join("\n\n");
+  return slides;
 }
+
+function readPowerPointText(filePath) { return readPowerPointSlides(filePath).join("\n\n"); }
 
 function exportText(cards, format) {
   const separator = format === "csv" ? "," : "\t";
@@ -308,7 +313,7 @@ async function exportStudyDeck(window, payload) {
 }
 
 async function exportNote(window, payload) {
-  const extension = ["png", "html", "txt", "pdf"].includes(payload?.extension) ? payload.extension : "png";
+  const extension = ["png", "html", "txt", "pdf", "pptx", "ysb"].includes(payload?.extension) ? payload.extension : "png";
   const safeName = String(payload?.name || "Note").replace(/[\\/:*?"<>|]+/g, "-");
   const match = String(payload?.data || "").match(/^data:[^;,]+;base64,(.+)$/s);
   if (!match) throw new Error("The note file could not be decoded.");

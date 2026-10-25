@@ -14,10 +14,10 @@
       href="./your-study-buddy-icon.png"
     />
     <title>Your Study Buddy</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20261025-geo10" />
   </head>
   <body>
-    <div class="window-drag-region" aria-label="Drag to move the window"><span>Your Study Buddy</span></div>
+    <div class="window-drag-region" aria-hidden="true"></div>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
         <a class="brand" href="#dashboard" aria-label="Your Study Buddy home">
@@ -34,7 +34,7 @@
           </a>
           <a class="nav-item" href="#courses">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5M21 10v6" /></svg>
-            <span>Textbooks</span>
+            <span>Browse</span>
           </a>
           <a class="nav-item" href="#flashcards">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6M9 13h4" /></svg>
@@ -52,13 +52,13 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5" /><path d="M5 19h14" /></svg>
             <span>Export</span>
           </a>
-          <a class="nav-item" href="#study-guide">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
-            <span>Study Guide</span>
-          </a>
         </nav>
 
         <div class="sidebar-footer">
+          <button class="nav-item account-button" type="button" id="open-account-dialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg>
+            <span id="account-nav-label">Log in</span>
+          </button>
           <button class="nav-item settings-button" type="button" id="open-settings">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.08H9.55V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 4.05 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.08V9.55h.08a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.86-2.86.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.08h4.05v.08a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1 .4h.08v4.05H21a1.7 1.7 0 0 0-1.6 1.1Z" /></svg>
             <span>Settings</span>
@@ -67,10 +67,10 @@
           <div class="profile-card">
             <div class="avatar" id="profile-avatar" aria-hidden="true">?</div>
             <div class="profile-copy">
-              <strong id="profile-name">Student</strong>
-              <span>Student plan</span>
+              <strong id="profile-name">Guest</strong>
+              <span id="profile-account-label">Not signed in</span>
             </div>
-            <button class="icon-button profile-menu" type="button" aria-label="Open profile menu" data-toast="Profile menu coming soon.">
+            <button class="icon-button profile-menu" type="button" id="open-account-settings" aria-label="Open account">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>
             </button>
           </div>
@@ -81,7 +81,7 @@
         <header class="topbar">
           <div>
             <p class="eyebrow" id="today-label">Thursday, October 8</p>
-            <h1><span id="dashboard-greeting">Good afternoon, Student</span> <span aria-hidden="true">👋</span></h1>
+            <h1><span id="dashboard-greeting">Good afternoon, Guest</span> <span aria-hidden="true">👋</span></h1>
             <p class="intro">Keep your momentum going with one focused step.</p>
           </div>
         </header>
@@ -96,10 +96,9 @@
           <article class="stat-card">
             <span class="stat-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9" /></svg></span>
             <div>
-              <p>Study alarms</p>
-              <strong>Coming soon</strong>
-              <span class="trend">Reminders are being redesigned</span>
-              <span id="tasks-done-stat" hidden>0</span>
+              <p>Saved study sets</p>
+              <strong id="dashboard-study-set-count">0 sets</strong>
+              <span class="trend" id="dashboard-study-set-detail">Ready when you are</span>
             </div>
           </article>
           <article class="stat-card">
@@ -114,43 +113,37 @@
 
         <section class="library-section courses-page" id="courses" aria-labelledby="courses-page-heading" hidden>
           <header class="courses-page-header">
-            <div><p class="eyebrow">Textbook library</p><h1 id="courses-page-heading">Your textbooks</h1><p class="intro">Open an added textbook to choose a unit, chapter, lesson, or Anki review.</p></div>
-            <button class="button secondary-button" type="button" id="view-all-courses">Browse textbooks</button>
+            <div><p class="eyebrow">Library</p><h1 id="courses-page-heading">Browse</h1><p class="intro">Explore curated study sets with flashcards, practice questions, and Feynman prompts where available.</p></div>
           </header>
-          <div class="library-heading-row">
-            <div>
-              <p class="section-label">Your library</p>
-              <h2 id="library-heading">My textbooks</h2>
-              <p class="library-intro">Textbooks you add will appear here and stay saved on this Mac.</p>
-            </div>
-            <div class="course-heading-actions">
-              <button class="button secondary-button" type="button" id="return-all-textbooks">Return all to library</button>
-              <label class="textbook-search"><span class="sr-only">Search your textbooks</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-courses-search" placeholder="Search your textbooks" autocomplete="off"></label>
-            </div>
-          </div>
-          <div class="course-shelf" id="my-course-shelf" aria-live="polite"></div>
-          <div class="catalog-divider">
-            <div><p class="section-label">Textbook catalog</p><h3>Available textbooks</h3></div>
-            <div class="catalog-search-wrap"><label class="textbook-search"><span class="sr-only">Search textbook catalog</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="catalog-courses-search" placeholder="Search textbook catalog" autocomplete="off"></label><span>Choose Add textbook</span></div>
-          </div>
-          <nav class="library-pagination" id="textbook-catalog-pagination" aria-label="Textbook catalog pages"></nav>
-          <div class="course-shelf" id="course-shelf" aria-live="polite"></div>
+          <nav class="browse-library-toggle" aria-label="Browse library type">
+            <button type="button" class="active" data-browse-library-view="built-in" aria-pressed="true">Curated sets</button>
+            <button type="button" data-browse-library-view="community" aria-pressed="false">Community</button>
+            <button type="button" data-browse-library-view="mine" aria-pressed="false">My Public Library</button>
+          </nav>
+          <section class="flashcards-library built-in-flashcards-library browse-library-panel" id="browse-flashcard-sets">
+            <div class="saved-decks-heading"><div><p class="section-label">Study library</p><h2>Available study decks</h2><p class="deck-source-copy">Add a curated set to My Study Sets.</p></div><div class="built-in-library-heading-actions"><span id="built-in-deck-count">0 decks</span><button type="button" class="button secondary-button" id="return-all-built-in-decks">Return all to library</button><label class="textbook-search study-deck-search"><span class="sr-only">Search study deck library</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="built-in-study-search" placeholder="Search study deck library" autocomplete="off"></label></div></div>
+            <nav class="library-pagination" id="study-catalog-pagination" aria-label="Study deck library pages"></nav>
+            <div id="built-in-deck-list" class="custom-deck-list flashcards-deck-grid"></div>
+          </section>
+          <section class="flashcards-library browse-library-panel community-library" id="browse-community" hidden>
+            <div class="community-library-toolbar"><div class="community-library-heading"><h2>Community library</h2><p class="deck-source-copy">Explore curated starter collections and study material published by students.</p></div><div class="community-library-actions"><div class="community-kind-filter" role="group" aria-label="Community content type"><button type="button" class="active" data-community-kind="all">All</button><button type="button" data-community-kind="study_set">Study sets</button><button type="button" data-community-kind="note">Notes</button></div><label class="community-sort-control"><span>Sort by</span><select id="community-sort"><option value="relevance">Relevance</option><option value="rating">Rating</option><option value="new">Newest</option><option value="adds">Most saved</option></select></label><label class="textbook-search study-deck-search"><span class="sr-only">Search community library</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="search" id="community-search" placeholder="Search sets, notes, or creators" autocomplete="off"></label></div></div>
+            <div id="community-library-list" class="custom-deck-list flashcards-deck-grid"><div class="custom-deck-empty">Open Community to load published items.</div></div>
+          </section>
+          <section class="flashcards-library browse-library-panel my-public-library" id="browse-my-public" hidden>
+            <div class="community-library-toolbar my-public-library-toolbar"><div class="community-library-heading"><h2>My Public Library</h2><p class="deck-source-copy">See the study sets and notes that other students can currently find in Community.</p></div><div class="community-library-actions"><div class="community-kind-filter" role="group" aria-label="Your public content type"><button type="button" class="active" data-my-public-kind="all">All</button><button type="button" data-my-public-kind="study_set">Study sets</button><button type="button" data-my-public-kind="note">Notes</button></div><button type="button" class="button secondary-button" id="refresh-my-public-library">Refresh</button></div></div>
+            <div id="my-public-library-list" class="custom-deck-list flashcards-deck-grid"><div class="custom-deck-empty">Open My Public Library to load your published items.</div></div>
+          </section>
         </section>
 
         <section class="flashcards-page" id="flashcards" aria-labelledby="flashcards-page-heading" hidden>
           <header class="flashcards-page-header">
-            <div><p class="eyebrow">Study decks</p><h1 id="flashcards-page-heading">Study</h1><p class="intro">Study a built-in deck or open one of your own saved sets.</p></div>
+            <div><p class="eyebrow">Your study sets</p><h1 id="flashcards-page-heading">Study</h1><p class="intro">Open one of your saved study sets or organize them into folders.</p></div>
             <button class="button primary-button" type="button" id="flashcards-create-set">+ Create study set</button>
           </header>
           <section class="flashcards-library">
-            <div class="saved-decks-heading"><div><h2>My Study Sets</h2><p class="deck-source-copy">Drag study sets into folders, between folders, or back into the unfiled area. Open a folder to study everything inside it.</p></div><div class="saved-decks-heading-actions"><button type="button" class="button secondary-button" id="create-study-folder">+ New folder</button><span id="flashcards-deck-count">0</span><button type="button" class="button danger-text-button" id="delete-all-study-sets">Delete All</button><label class="textbook-search study-deck-search"><span class="sr-only">Search your study sets</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-study-sets-search" placeholder="Search your study sets" autocomplete="off"></label></div></div>
+            <div class="saved-decks-heading"><div><h2>My Study Sets</h2><p class="deck-source-copy">Drag study sets into folders, between folders, or back into the unfiled area. Open a folder to study everything inside it.</p></div><div class="saved-decks-heading-actions"><button type="button" class="button secondary-button" id="create-study-folder">+ New folder</button><span id="flashcards-deck-count">0</span><button type="button" class="button danger-text-button" id="delete-all-study-sets">Delete all…</button><label class="textbook-search study-deck-search"><span class="sr-only">Search your study sets</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="my-study-sets-search" placeholder="Search your study sets" autocomplete="off"></label></div></div>
             <div id="study-folder-list" class="study-folder-list"></div>
             <div id="flashcards-deck-list" class="custom-deck-list flashcards-deck-grid study-set-drop-zone" data-drop-folder="" aria-label="Unfiled study sets"></div>
-          </section>
-          <section class="flashcards-library built-in-flashcards-library">
-            <div class="saved-decks-heading"><div><p class="section-label">Study library</p><h2>Available study decks</h2><p class="deck-source-copy">Add a built-in collection to My Study Sets.</p></div><div class="built-in-library-heading-actions"><span id="built-in-deck-count">0 decks</span><button type="button" class="button secondary-button" id="return-all-built-in-decks">Return all to library</button><label class="textbook-search study-deck-search"><span class="sr-only">Search study deck library</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input type="search" id="built-in-study-search" placeholder="Search study deck library" autocomplete="off"></label></div></div>
-            <nav class="library-pagination" id="study-catalog-pagination" aria-label="Study deck library pages"></nav>
-            <div id="built-in-deck-list" class="custom-deck-list flashcards-deck-grid"></div>
           </section>
         </section>
 
@@ -169,6 +162,17 @@
               <label class="create-field">Study set name
                 <input id="custom-deck-name" maxlength="80" placeholder="e.g. Cell biology midterm" />
               </label>
+
+              <section class="custom-topic-builder" aria-labelledby="custom-topic-builder-heading">
+                <div class="custom-topic-builder-heading">
+                  <div><p class="section-label">Optional organization</p><h2 id="custom-topic-builder-heading">Units and subtopics</h2><p>Organize your set like an AP course. New material is added to the selected subtopic.</p></div>
+                  <button class="button secondary-button" type="button" id="add-custom-unit">+ Unit</button>
+                </div>
+                <div id="custom-unit-list" class="custom-unit-list"></div>
+                <label class="create-field custom-active-topic">New material goes to
+                  <select id="active-custom-topic"><option value="">General (no subtopic)</option></select>
+                </label>
+              </section>
 
               <section class="create-notes-workspace">
               <div class="create-method-panel">
@@ -207,7 +211,7 @@
                   <div id="basic-card-maker">
                   <div class="manual-card-grid">
                     <label class="create-field">Front<textarea id="manual-card-front" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-front-image-preview" alt="Front image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="front">Add image</button><button type="button" data-draw-manual="front">Draw</button><button type="button" data-math-manual="front">Math syntax</button><button type="button" data-code-manual="front">Code</button><button type="button" data-remove-manual-image="front" hidden>Remove image</button></span></span></label>
-                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or paste an image"></textarea><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-draw-manual="back">Draw</button><button type="button" data-math-manual="back">Math syntax</button><button type="button" data-code-manual="back">Code</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
+                    <label class="create-field">Back<textarea id="manual-card-back" placeholder="Type or paste text, or choose a suggested definition"></textarea><span class="definition-suggestions" id="manual-definition-suggestions" hidden></span><span class="card-image-editor"><img id="manual-back-image-preview" alt="Back image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-image="back">Add image</button><button type="button" data-draw-manual="back">Draw</button><button type="button" data-math-manual="back">Math syntax</button><button type="button" data-code-manual="back">Code</button><button type="button" data-remove-manual-image="back" hidden>Remove image</button></span></span></label>
                   </div>
                   <input id="flashcard-image-file" type="file" accept="image/*" hidden>
                   <p class="flashcard-paste-hint">Copy and paste works for both text and images. Paste while the front or back box is selected.</p>
@@ -225,7 +229,14 @@
                 <div class="draft-section">
                   <div class="draft-heading">
                     <div><p class="section-label">Editable draft</p><h2><span id="draft-card-count">0</span> cards</h2></div>
-                    <button type="button" class="button text-button" id="clear-draft">Clear flashcards</button>
+                    <div class="draft-heading-actions">
+                      <div class="draft-view-filters" id="draft-view-filters">
+                        <label>View unit<select id="draft-view-unit" aria-label="View flashcards from unit"><option value="">All units</option></select></label>
+                        <label>View subtopic<select id="draft-view-topic" aria-label="View flashcards from subtopic"><option value="">All subtopics</option></select></label>
+                        <span id="draft-view-count">0 shown</span>
+                      </div>
+                      <button type="button" class="button text-button" id="clear-draft">Clear flashcards</button>
+                    </div>
                   </div>
                   <div class="draft-empty" id="draft-empty"><strong>No cards yet</strong><span>Paste notes above to generate your study set.</span></div>
                   <div class="draft-card-list" id="draft-card-list" aria-live="polite"></div>
@@ -235,12 +246,25 @@
 
               <section class="create-tab-panel generated-question-section" data-create-panel="questions" hidden>
                 <div class="question-builder-heading"><div><p class="section-label">Generated together</p><h2>Practice questions</h2></div><div class="draft-heading-actions"><span><strong id="question-draft-count">0</strong> questions</span><button type="button" class="button text-button" id="clear-question-draft">Clear questions</button></div></div>
-                <p class="question-builder-copy">These come from the same notes pass as your flashcards. Edit them, add your own, then save the whole study set.</p>
+                <p class="question-builder-copy">Build multiple-choice, stimulus, diagram, true/false, multiple-answer, fill-in-the-blank, and essay practice. Essay prompts can include source packets and a suggested writing time.</p>
                 <div class="manual-question-grid">
-                  <label class="create-field">Question<textarea id="manual-question-prompt" placeholder="What should the learner answer?"></textarea></label>
-                  <label class="create-field">Answer<textarea id="manual-question-answer" placeholder="Correct answer"></textarea></label>
-                  <label class="create-field">Type<select id="manual-question-type"><option value="wh">Who / What / Why / How</option><option value="short_answer">Short answer</option><option value="true_false">True / false</option><option value="cloze">Cloze</option><option value="mcq">Multiple choice</option></select></label>
+                  <div class="manual-question-copy"><label class="create-field" id="manual-question-stimulus-field"><span class="field-label-row"><span>Stimulus</span><small>Optional</small></span><textarea id="manual-question-stimulus" placeholder="Passage, scenario, data, quotation, or source text"></textarea></label><label class="create-field">Question<textarea id="manual-question-prompt" placeholder="Type or paste text, code, math, or an image"></textarea><span class="card-image-editor"><img id="manual-question-image-preview" alt="Question image preview" hidden><span class="card-image-actions"><button type="button" data-choose-manual-question-image>Add image</button><button type="button" data-draw-manual-question>Draw</button><button type="button" data-math-manual-question="question">Math syntax</button><button type="button" data-code-manual-question="question">Code</button><button type="button" data-remove-manual-question-image hidden>Remove image</button></span></span></label></div>
+                  <label class="create-field" id="manual-question-answer-field">Answer<textarea id="manual-question-answer" placeholder="Correct answer"></textarea><span class="card-image-editor"><span class="card-image-actions"><button type="button" data-math-manual-question="answer">Math syntax</button><button type="button" data-code-manual-question="answer">Code</button></span></span></label>
+                  <section class="question-choice-editor manual-question-choice-editor" id="manual-question-choice-editor" aria-labelledby="manual-question-choice-heading" hidden><header><span id="manual-question-choice-heading">Answer choices</span><small id="manual-question-choice-help">Choose one correct answer</small></header><div class="question-choice-list" id="manual-question-choice-list"></div><button type="button" class="question-choice-add" id="add-manual-question-choice">+ Add choice</button></section>
+                  <label class="create-field">Type<select id="manual-question-type"><option value="mcq">Multiple choice</option><option value="multiple_select">Select all that apply</option><option value="stimulus_mcq">Stimulus based</option><option value="diagram_label">Diagram labeling</option><option value="true_false">True / false</option><option value="cloze">Fill in the blank</option><option value="essay">Essay prompt</option></select></label>
                 </div>
+                <details class="manual-question-extras">
+                  <summary>More question options</summary>
+                  <div class="manual-question-extra-grid">
+                    <label class="create-field" id="manual-question-options-field">Answer choices<textarea id="manual-question-options" placeholder="One choice per line"></textarea></label>
+                    <section class="manual-essay-builder" id="manual-essay-builder" hidden>
+                      <label class="create-field">Essay format<select id="manual-essay-type"><option value="argument">Argument</option><option value="rhetorical_analysis">Rhetorical analysis</option><option value="synthesis">Synthesis</option><option value="literary_argument">Literary argument</option><option value="prose_analysis">Prose analysis</option><option value="poetry_analysis">Poetry analysis</option><option value="drama_analysis">Drama analysis</option></select></label>
+                      <label class="create-field">Suggested time<input id="manual-essay-minutes" type="number" min="1" max="180" value="40"><span>minutes</span></label>
+                      <label class="create-field manual-essay-sources-field">Source packet<textarea id="manual-question-sources" placeholder="Title | Author | Year | https://source.url&#10;Paste the source excerpt here.&#10;&#10;---&#10;&#10;Add another source…"></textarea><small>Separate sources with three dashes. Include a public link whenever the text is not your own.</small></label>
+                    </section>
+                  </div>
+                </details>
+                <p class="flashcard-paste-hint">Copy and paste works for question text and images. Paste while the Question box is selected.</p>
                 <button class="button secondary-button create-action" type="button" id="add-manual-question">Add question</button>
                 <div class="draft-card-list question-draft-list" id="question-draft-list"></div>
                 <div class="draft-empty" id="question-draft-empty"><strong>No questions yet</strong><span>Generate a study set from notes or add a question manually.</span></div>
@@ -271,7 +295,7 @@
           <input class="notes-only-toggle-input" id="notes-only-toggle" type="checkbox" aria-label="Show only this note">
           <header class="notes-page-header">
             <div><h1 id="notes-page-title">Notes</h1></div>
-            <div class="notes-new-actions"><button class="button secondary-button" type="button" id="import-notes">Import notes</button><input id="notes-import-file" type="file" accept=".pdf,.pptx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown" hidden><button class="button secondary-button" type="button" id="new-note-folder">+ Notebook</button><button class="button secondary-button" type="button" id="new-drawing-note" data-new-note="open">+ Open note</button><button class="button primary-button" type="button" id="new-word-note" data-new-note="page">+ Page note</button></div>
+            <div class="notes-new-actions"><button class="button secondary-button" type="button" id="import-notes">Import notes</button><input id="notes-import-file" type="file" accept=".ysb,.pdf,.pptx,.txt,.md,application/vnd.yourstudybuddy.note+json,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown" hidden><button class="button secondary-button" type="button" id="new-note-folder">+ Notebook</button><details class="note-create-menu" id="note-create-menu"><summary class="button primary-button">+ Note</summary><div><button type="button" data-new-note="open"><strong>Open note</strong><span>Expandable whiteboard</span></button><button type="button" data-new-note="page"><strong>Page note</strong><span>Fixed paper-style pages</span></button><button type="button" data-new-note="outline"><strong>Outline note</strong><span>Structured headings and details</span></button></div></details></div>
           </header>
           <div class="notes-layout">
             <aside class="notes-library" aria-label="Saved notes">
@@ -282,7 +306,7 @@
             <section class="notes-workspace">
               <div class="notes-empty" id="notes-empty"><span aria-hidden="true">✎</span><h2>Choose your note surface</h2><p>Page notes use a fixed letter-style page. Open notes provide a large expandable whiteboard.</p><div><button class="button primary-button" type="button" data-new-note="page">Page note</button><button class="button secondary-button" type="button" data-new-note="open">Open note</button></div></div>
               <article class="word-note-editor" id="word-note-editor" hidden>
-                <div class="note-title-row"><input id="word-note-title" maxlength="100" aria-label="Note title" placeholder="Untitled note"><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
+                <div class="note-title-row"><input id="word-note-title" maxlength="100" aria-label="Note title" placeholder="Untitled note"><label class="note-notebook-control"><span>Notebook</span><select data-note-notebook-select aria-label="Move note to notebook"></select></label><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button secondary-button" type="button" data-publish-active-note>Publish</button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
                 <div class="word-note-toolbar" role="toolbar" aria-label="Text formatting">
                   <button type="button" data-note-command="bold" aria-label="Bold"><strong>B</strong></button><button type="button" data-note-command="italic" aria-label="Italic"><em>I</em></button><button type="button" data-note-command="underline" aria-label="Underline"><u>U</u></button>
                   <button type="button" data-note-block="h2">Heading</button><button type="button" data-note-block="p">Body</button><button type="button" data-note-command="insertUnorderedList">• List</button><button type="button" data-note-command="insertOrderedList">1. List</button>
@@ -293,13 +317,13 @@
                 <p class="note-save-status" id="word-note-status">Saved locally</p>
               </article>
               <article class="pdf-note-editor" id="pdf-note-editor" hidden>
-                <div class="note-title-row"><input id="pdf-note-title" maxlength="100" aria-label="PDF note title" placeholder="Imported PDF"><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
+                <div class="note-title-row"><input id="pdf-note-title" maxlength="100" aria-label="PDF note title" placeholder="Imported PDF"><label class="note-notebook-control"><span>Notebook</span><select data-note-notebook-select aria-label="Move note to notebook"></select></label><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
                 <div class="pdf-annotation-toolbar" role="toolbar" aria-label="PDF annotation tools"><button type="button" class="active" data-pdf-tool="pen">Pen</button><button type="button" data-pdf-tool="highlighter">Highlighter</button><button type="button" data-pdf-tool="text">Text</button><button type="button" data-pdf-tool="eraser">Eraser</button><label>Color<input type="color" id="pdf-annotation-color" value="#e05252"></label><label>Size<input type="range" id="pdf-annotation-size" min="1" max="24" value="4"></label><button type="button" id="pdf-annotation-undo">Undo</button><button type="button" id="pdf-annotation-clear">Clear annotations</button></div>
                 <div class="pdf-note-frame-wrap" id="pdf-note-pages" aria-label="Imported PDF pages"></div>
                 <p class="note-save-status">Original PDF layout preserved locally</p>
               </article>
               <article class="drawing-note-editor" id="drawing-note-editor" hidden>
-                <div class="note-title-row"><input id="drawing-note-title" maxlength="100" aria-label="Note title" placeholder="Untitled drawing"><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
+                <div class="note-title-row"><input id="drawing-note-title" maxlength="100" aria-label="Note title" placeholder="Untitled drawing"><label class="note-notebook-control"><span>Notebook</span><select data-note-notebook-select aria-label="Move note to notebook"></select></label><button class="button secondary-button note-only-toggle" type="button" onclick="const toggle=document.getElementById('notes-only-toggle');toggle.checked=!toggle.checked"><span class="notes-only-enter-label">Show only note</span><span class="notes-only-exit-label">Show all notes</span></button><button class="button secondary-button" type="button" data-publish-active-note>Publish</button><button class="button danger-text-button" type="button" data-delete-note>Delete</button></div>
                 <div class="drawing-note-toolbar" role="toolbar" aria-label="Drawing tools">
                   <div class="drawing-tools">
                     <button type="button" class="active tool-icon-button" data-note-tool="cursor" aria-label="Cursor" title="Cursor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l13 9-6 1.5L9.5 19z"/></svg></button>
@@ -319,7 +343,7 @@
                     <label class="inline-color-control">Text color<input id="canvas-text-color" type="hidden" value="#171b2d"><button type="button" class="inline-color-trigger" data-color-palette-for="canvas-text-color" style="--selected-color:#171b2d" aria-label="Choose text color"></button><div class="inline-color-palette" role="menu" hidden><button type="button" style="--swatch:#171b2d" data-pick-color="#171b2d" aria-label="Black"></button><button type="button" style="--swatch:#ffffff" data-pick-color="#ffffff" aria-label="White"></button><button type="button" style="--swatch:#e05252" data-pick-color="#e05252" aria-label="Red"></button><button type="button" style="--swatch:#f59e0b" data-pick-color="#f59e0b" aria-label="Orange"></button><button type="button" style="--swatch:#f2d34f" data-pick-color="#f2d34f" aria-label="Yellow"></button><button type="button" style="--swatch:#2fac7f" data-pick-color="#2fac7f" aria-label="Green"></button><button type="button" style="--swatch:#3b82f6" data-pick-color="#3b82f6" aria-label="Blue"></button><button type="button" style="--swatch:#665ee8" data-pick-color="#665ee8" aria-label="Purple"></button><button type="button" style="--swatch:#ec65a4" data-pick-color="#ec65a4" aria-label="Pink"></button><button type="button" style="--swatch:#8b5e3c" data-pick-color="#8b5e3c" aria-label="Brown"></button></div></label>
                   </div>
                   <label class="inline-color-control">Color<input id="drawing-note-color" type="hidden" value="#171b2d"><button type="button" class="inline-color-trigger" data-color-palette-for="drawing-note-color" style="--selected-color:#171b2d" aria-label="Choose drawing color"></button><div class="inline-color-palette" role="menu" hidden><button type="button" style="--swatch:#171b2d" data-pick-color="#171b2d" aria-label="Black"></button><button type="button" style="--swatch:#ffffff" data-pick-color="#ffffff" aria-label="White"></button><button type="button" style="--swatch:#e05252" data-pick-color="#e05252" aria-label="Red"></button><button type="button" style="--swatch:#f59e0b" data-pick-color="#f59e0b" aria-label="Orange"></button><button type="button" style="--swatch:#f2d34f" data-pick-color="#f2d34f" aria-label="Yellow"></button><button type="button" style="--swatch:#2fac7f" data-pick-color="#2fac7f" aria-label="Green"></button><button type="button" style="--swatch:#3b82f6" data-pick-color="#3b82f6" aria-label="Blue"></button><button type="button" style="--swatch:#665ee8" data-pick-color="#665ee8" aria-label="Purple"></button><button type="button" style="--swatch:#ec65a4" data-pick-color="#ec65a4" aria-label="Pink"></button><button type="button" style="--swatch:#8b5e3c" data-pick-color="#8b5e3c" aria-label="Brown"></button></div></label><label>Size<input id="drawing-note-size" type="range" min="1" max="36" value="4"></label>
-                  <button type="button" id="undo-note-stroke">Undo</button><button type="button" id="redo-note-stroke">Redo</button><div class="note-image-options" id="note-image-options" hidden><span>Image · drag to move</span><button type="button" id="edit-note-image-caption">Caption</button><button type="button" id="remove-note-image-background">Remove background</button><button type="button" id="push-note-image-front">Push to front</button><button type="button" id="push-note-image-back">Push to back</button><button type="button" id="delete-note-image">Delete</button></div><button type="button" id="drawing-zoom-out" aria-label="Zoom out">−</button><span class="drawing-zoom-value" id="drawing-zoom-value">100%</span><button type="button" id="drawing-zoom-in" aria-label="Zoom in">+</button><button type="button" id="drawing-zoom-fit">Fit all</button><button type="button" id="toggle-page-layout" hidden>Document writing</button><button type="button" id="clear-note-canvas">Clear</button>
+                    <button type="button" id="undo-note-stroke">Undo</button><button type="button" id="redo-note-stroke">Redo</button><div class="note-image-options" id="note-image-options" hidden><span>Image · drag corner to resize</span><button type="button" id="crop-note-image">Crop</button><button type="button" id="edit-note-image-caption">Caption</button><button type="button" id="remove-note-image-background">Remove background</button><button type="button" id="push-note-image-front">Push to front</button><button type="button" id="push-note-image-back">Push to back</button><button type="button" id="delete-note-image">Delete</button></div><button type="button" id="drawing-zoom-out" aria-label="Zoom out">−</button><span class="drawing-zoom-value" id="drawing-zoom-value">100%</span><button type="button" id="drawing-zoom-in" aria-label="Zoom in">+</button><button type="button" id="drawing-zoom-fit">Fit all</button><button type="button" id="toggle-page-layout" hidden>Document writing</button><button type="button" id="clear-note-canvas">Clear</button>
                   <div class="document-text-toolbar" id="document-text-toolbar" hidden>
                     <details class="document-toolbar-menu"><summary>Text</summary><div class="document-toolbar-popover">
                       <div class="document-toolbar-group"><span>Text</span><button type="button" data-document-command="bold"><strong>B</strong></button><button type="button" data-document-command="italic"><em>I</em></button><button type="button" data-document-command="underline"><u>U</u></button></div>
@@ -332,22 +356,24 @@
                       <div class="document-toolbar-group"><span>Line spacing</span><button type="button" data-document-line-spacing="1">1.0</button><button type="button" data-document-line-spacing="1.15">1.15</button><button type="button" data-document-line-spacing="1.5">1.5</button><button type="button" data-document-line-spacing="2">2.0</button></div>
                       <label class="document-format-toggle"><input type="checkbox" id="document-show-page-numbers"><span>Show page numbers</span></label>
                     </div></details>
-                    <details class="document-toolbar-menu"><summary>Insert</summary><div class="document-toolbar-popover document-insert-popover"><button type="button" id="document-insert-table" data-document-table>Table</button><button type="button" id="document-page-add">Add page</button><button type="button" id="document-page-remove">Remove selected page</button></div></details>
+                    <details class="document-toolbar-menu"><summary>Insert</summary><div class="document-toolbar-popover document-insert-popover"><button type="button" id="document-crop-image" disabled>Crop selected image</button><button type="button" id="document-insert-table" data-document-table>Table</button></div></details>
                     <details class="document-toolbar-menu" id="document-edit-menu"><summary>Edit</summary><div class="document-toolbar-popover document-edit-popover">
                       <div class="document-toolbar-group"><span>History</span><button type="button" id="document-edit-undo">Undo</button><button type="button" id="document-edit-redo">Redo</button></div>
                       <p class="document-table-empty" id="document-table-empty">Click inside a table to edit it.</p>
                       <div class="document-table-controls" id="document-table-controls" hidden>
+                        <div class="document-toolbar-group"><span>Cell</span><label>Fill<input type="color" id="document-table-fill-color" value="#ffffff"></label><button type="button" id="document-table-merge-right">Merge right</button><button type="button" id="document-table-merge-down">Merge below</button><button type="button" id="document-table-split-cell">Split cell</button></div>
                         <div class="document-toolbar-group"><span>Borders</span><label>Width<select id="document-table-border-width"><option value="0">None</option><option value="1" selected>1 px</option><option value="2">2 px</option><option value="3">3 px</option><option value="4">4 px</option><option value="6">6 px</option></select></label><label>Color<input type="color" id="document-table-border-color" value="#9aa0af"></label></div>
                         <div class="document-toolbar-group"><span>Rows</span><button type="button" id="document-table-add-row">Add row</button><button type="button" id="document-table-remove-row">Remove row</button></div>
                         <div class="document-toolbar-group"><span>Columns</span><button type="button" id="document-table-add-column">Add column</button><button type="button" id="document-table-remove-column">Remove column</button></div>
                         <button type="button" class="document-delete-table" id="document-table-delete">Delete table</button>
                       </div>
                     </div></details>
+                    <details class="document-toolbar-menu document-page-menu" id="document-page-menu"><summary>+ Page</summary><div class="document-toolbar-popover document-insert-popover"><button type="button" data-add-document-page="blank">Blank page</button><button type="button" data-add-document-page="cornell">Cornell page</button><button type="button" id="document-page-remove">Remove selected page</button></div></details>
                     <span class="document-toolbar-hint">Text, Insert, and Edit</span>
                     <div class="document-page-controls" id="document-page-controls" hidden></div>
                   </div>
                 </div>
-                <div class="drawing-canvas-wrap"><svg id="drawing-note-canvas" viewBox="0 0 2000 4000" preserveAspectRatio="none" role="img" aria-label="Infinite-style drawing canvas"></svg><div class="open-note-text-layer" id="open-note-text-layer" aria-label="Open note text"></div><div class="page-document-pages" id="page-document-pages" hidden></div><div class="page-actions" id="page-actions" hidden><button class="remove-note-page" id="remove-note-page" type="button">− Remove last page</button><button class="add-note-page" id="add-note-page" type="button">＋ Add page</button></div></div>
+                <div class="drawing-canvas-wrap"><svg id="drawing-note-canvas" viewBox="0 0 2000 4000" preserveAspectRatio="none" role="img" aria-label="Infinite-style drawing canvas"></svg><div class="open-note-text-layer" id="open-note-text-layer" aria-label="Open note text"></div><div class="page-document-pages" id="page-document-pages" hidden></div><div class="page-actions" id="page-actions" hidden><button class="remove-note-page" id="remove-note-page" type="button">− Remove last page</button><details class="page-add-menu"><summary>＋ Add page</summary><div><button type="button" data-add-canvas-page="blank">Blank page</button><button type="button" data-add-canvas-page="cornell">Cornell page</button></div></details></div></div>
                 <p class="note-save-status" id="drawing-note-status">Saved locally</p>
               </article>
             </section>
@@ -376,7 +402,7 @@
             </article>
           </div>
           <section class="note-export-section" aria-labelledby="note-export-heading">
-            <div class="note-export-heading"><div><p class="section-label">Your notes</p><h2 id="note-export-heading">Export a note</h2><p>Open notes are cropped to what you actually wrote or drew. Drag across the preview to choose a different section.</p></div></div>
+            <div class="note-export-heading"><div><p class="section-label">Your notes</p><h2 id="note-export-heading">Export a note</h2><p>Choose PDF for sharing or printing. Open notes can also use the editable YSB format to preserve the full canvas.</p></div></div>
             <div class="export-layout note-export-layout">
               <article class="export-card">
                 <label class="export-field">Note<select id="export-note-select"></select></label>
@@ -401,7 +427,7 @@
                   <canvas id="export-note-preview" width="960" height="620" aria-label="Note export preview"></canvas>
                   <div class="note-export-preview-empty" id="export-note-preview-empty">Choose a note to preview it.</div>
                 </div>
-                <p class="note-export-help" id="export-note-help">Drag over the preview to select an area. The shaded region will not be exported.</p>
+                <p class="note-export-help" id="export-note-help">Drag over the preview to select an area. PDF and PNG use this selection; YSB preserves the entire editable canvas.</p>
               </article>
             </div>
           </section>
@@ -409,7 +435,7 @@
 
         <section class="course-page" id="course-page" aria-labelledby="library-dialog-title" hidden>
           <header class="course-page-header">
-            <button class="back-to-courses" type="button" id="close-library-button">← Back to textbooks</button>
+            <button class="back-to-courses" type="button" id="close-library-button">← Back to study sets</button>
             <div><p class="section-label" id="library-dialog-kicker">Textbook</p><h2 id="library-dialog-title">Textbook library</h2></div>
           </header>
           <div class="library-dialog-body">
@@ -427,6 +453,15 @@
             <section class="built-in-unit-picker" id="built-in-unit-picker" hidden>
               <div class="unit-picker-heading"><div><p class="section-label">Choose sections</p><h3>Select what to study</h3></div><div class="unit-picker-actions"><button type="button" id="toggle-calculus-ab" hidden>AB only: Off</button><button type="button" id="toggle-all-built-in-units">Clear all</button></div></div>
               <div class="built-in-unit-grid" id="built-in-unit-grid"></div>
+            </section>
+            <section class="built-in-unit-picker" id="notebook-topic-picker" hidden>
+              <div class="unit-picker-heading"><div><p class="section-label">Choose notes</p><h3>Select what to study</h3></div><div class="unit-picker-actions"><button type="button" id="toggle-all-notebook-topics">Clear all</button></div></div>
+              <p class="notebook-topic-help">Each note works like a topic. All notes are selected when you open the folder.</p>
+              <div class="built-in-unit-grid notebook-topic-grid" id="notebook-topic-grid"></div>
+            </section>
+            <section class="built-in-unit-picker" id="custom-topic-picker" hidden>
+              <div class="unit-picker-heading"><div><p class="section-label">Choose topics</p><h3>Select what to study</h3></div><div class="unit-picker-actions"><button type="button" id="toggle-all-custom-topics">Clear all</button></div></div>
+              <div class="built-in-unit-grid has-ap-subtopics" id="custom-topic-grid"></div>
             </section>
             <section class="geography-field-picker" id="geography-field-picker" hidden>
               <div class="geography-field-heading">
@@ -467,9 +502,20 @@
               <p class="geography-field-help">You can combine any fields and reverse them. Studying stays unavailable until both sides contain at least one field. State flag and state outline are visual choices, so only one can appear on each side. Population figures are official U.S. Census Bureau Vintage 2025 estimates. Flags are public-domain state flag SVGs; outlines are sourced from US-State-SVGs.</p>
             </section>
             <div class="custom-study-options">
-              <div class="custom-study-option-card custom-count-option">
-                <button type="button" class="custom-study-option-main" data-custom-study-mode="regular"><span>Flashcards</span><strong>Regular review</strong><small>Flip through cards without scheduling.</small></button>
-                <label class="mode-count-picker">Cards<input type="number" id="custom-regular-count" min="1" value="20"><small>Random selection</small></label>
+              <div class="custom-study-option-card custom-count-option flashcard-study-option">
+                <button type="button" class="custom-study-option-main" id="start-custom-flashcards"><span>Flashcards</span><strong>Flashcards</strong><small>Start with the selected review style.</small></button>
+                <div class="flashcard-card-controls">
+                  <label class="mode-count-picker">Cards<input type="number" id="custom-regular-count" min="1" value="20"><small>Random selection</small></label>
+                  <div class="flashcard-mode-carousel" aria-label="Flashcard review style">
+                    <span>Mode</span>
+                    <div class="flashcard-mode-carousel-controls">
+                      <button type="button" id="previous-custom-flashcard-mode" aria-label="Previous flashcard mode">&#8249;</button>
+                      <div id="selected-custom-flashcard-mode" aria-live="polite"><strong>Classic</strong><small>One at a time</small></div>
+                      <button type="button" id="next-custom-flashcard-mode" aria-label="Next flashcard mode">&#8250;</button>
+                    </div>
+                    <div class="flashcard-mode-dots" aria-hidden="true"><i class="active"></i><i></i><i></i></div>
+                  </div>
+                </div>
               </div>
               <div class="custom-study-option-card custom-count-option">
                 <button type="button" class="custom-study-option-main" data-custom-study-mode="anki"><span>Spaced repetition</span><strong>Anki review</strong><small id="custom-anki-due-copy">Review due cards and schedule when they return.</small></button>
@@ -479,9 +525,33 @@
                   <div><strong id="custom-anki-daily-review">0</strong><small>Review</small></div>
                 </div>
               </div>
-              <div class="custom-study-option-card custom-count-option">
-                <button type="button" class="custom-study-option-main" data-custom-study-mode="questions"><span>Practice</span><strong>Questions</strong><small>Answer saved questions from this study set.</small></button>
-                <label class="mode-count-picker">Questions<input type="number" id="custom-questions-count" min="1" value="20"><small>Random selection</small></label>
+              <div class="custom-study-option-card custom-count-option question-study-option">
+                <button type="button" class="custom-study-option-main" id="start-custom-questions"><span>Practice</span><strong>Questions</strong><small>Switch between regular practice and a focused essay workspace.</small></button>
+                <div class="question-card-controls">
+                  <label class="mode-count-picker" id="custom-question-count-picker">Questions<input type="number" id="custom-questions-count" min="1" value="20"><small>Random selection</small></label>
+                  <div class="flashcard-mode-carousel question-mode-carousel" aria-label="Question practice style">
+                    <span>Mode</span>
+                    <div class="flashcard-mode-carousel-controls">
+                      <button type="button" id="previous-custom-question-mode" aria-label="Previous question mode">&#8249;</button>
+                      <div id="selected-custom-question-mode" aria-live="polite"><strong>Regular</strong><small>Question worksheet</small></div>
+                      <button type="button" id="next-custom-question-mode" aria-label="Next question mode">&#8250;</button>
+                    </div>
+                    <div class="flashcard-mode-dots question-mode-dots" aria-hidden="true"><i class="active"></i><i></i></div>
+                  </div>
+                  <div class="essay-start-options" id="essay-start-options" hidden>
+                    <div class="essay-prompt-picker" id="essay-prompt-picker">
+                      <span class="essay-prompt-picker-label">Prompt</span>
+                      <button type="button" class="essay-prompt-trigger" id="custom-essay-prompt" aria-haspopup="dialog" aria-expanded="false" aria-controls="custom-essay-prompt-panel">
+                        <span><small id="custom-essay-prompt-type">Any essay type</small><strong id="custom-essay-prompt-title">Random prompt</strong></span><i aria-hidden="true">&#8964;</i>
+                      </button>
+                      <div class="essay-prompt-panel" id="custom-essay-prompt-panel" role="dialog" aria-label="Choose an essay prompt" hidden>
+                        <div class="essay-prompt-filters" id="custom-essay-prompt-filters" aria-label="Filter by essay type"></div>
+                        <div class="essay-prompt-list" id="custom-essay-prompt-list" role="listbox" aria-label="Essay prompts"></div>
+                      </div>
+                    </div>
+                    <div class="essay-timer-row"><label class="essay-timer-toggle"><input type="checkbox" id="custom-essay-timer-enabled"> Timer</label><label class="essay-time-input"><input type="number" id="custom-essay-time-minutes" min="1" max="180" value="40"> min</label></div>
+                  </div>
+                </div>
               </div>
               <div class="custom-study-option-card custom-feynman-option">
                 <button type="button" class="custom-study-option-main" data-custom-study-mode="feynman"><span>Explain deeply</span><strong>Feynman prompts</strong><small>Write a detailed explanation for each broad topic.</small></button>
@@ -520,17 +590,44 @@
                 <span class="anki-count-group anki-count-group-new"><strong class="anki-count-new">0</strong><small>New</small></span><b aria-hidden="true">+</b><span class="anki-count-group anki-count-group-learning"><strong class="anki-count-learning">0</strong><small>Learning</small></span><b aria-hidden="true">+</b><span class="anki-count-group anki-count-group-review"><strong class="anki-count-review">0</strong><small>Review</small></span>
               </div>
               <button type="button" class="button primary-button custom-reveal-button" id="custom-review-reveal">Reveal answer</button>
+              <section class="custom-flashcard-scroll" id="custom-flashcard-scroll" hidden>
+                <div class="custom-question-scroll-heading"><div><span class="custom-question-type">Flashcard scroll</span><h3>Reveal cards as you go</h3></div><button type="button" class="button primary-button" data-finish-flashcard-scroll>Finish review</button></div>
+                <p class="custom-question-scroll-copy">Select any card to switch between its front and back.</p>
+                <div class="custom-flashcard-scroll-list" id="custom-flashcard-scroll-list"></div>
+                <button type="button" class="button primary-button custom-question-finish-bottom" data-finish-flashcard-scroll>Finish review</button>
+              </section>
+              <section class="custom-matching-practice" id="custom-matching-practice" hidden>
+                <div class="custom-question-scroll-heading"><div><span class="custom-question-type">Matching</span><h3>Match each card to its answer</h3></div><strong class="matching-score" id="custom-matching-score">0 correct</strong></div>
+                <p class="custom-question-scroll-copy">Drag an answer tile onto its matching front, or click a tile and then click anywhere on the front card where it belongs. Correct matches turn green and lock; incorrect matches stay movable.</p>
+                <section class="custom-matching-bank-panel" aria-labelledby="custom-matching-bank-title">
+                  <div><span class="custom-question-type">Answer bank</span><h4 id="custom-matching-bank-title">Drag the backs into place</h4></div>
+                  <div class="custom-matching-bank" id="custom-matching-bank" data-matching-bank aria-label="Answer bank"></div>
+                </section>
+                <div class="custom-matching-list" id="custom-matching-list"></div>
+                <button type="button" class="button primary-button custom-matching-submit" id="custom-matching-submit">Submit answers</button>
+              </section>
               <section class="custom-question-practice" id="custom-question-practice" hidden>
-                <span class="custom-question-type" id="custom-question-type">Multiple choice</span>
-                <h3 id="custom-question-prompt"></h3>
-                <div class="custom-question-choices" id="custom-question-choices"></div>
-                <label class="custom-question-response" id="custom-question-response-wrap">Your answer<textarea id="custom-question-response" placeholder="Type your answer here…"></textarea></label>
-                <p class="custom-question-feedback" id="custom-question-feedback" aria-live="polite"></p>
-                <div class="custom-question-actions">
-                  <button type="button" class="button secondary-button" id="custom-question-previous">← Previous</button>
-                  <button type="button" class="button secondary-button" id="check-custom-question">Check answer</button>
-                  <button type="button" class="button primary-button" id="custom-question-next" disabled>Next →</button>
+                <div class="custom-question-scroll-heading">
+                  <div>
+                    <span class="custom-question-type">Question worksheet</span>
+                    <h3>Work down the page</h3>
+                  </div>
+                  <button type="button" class="button primary-button" data-finish-question-scroll>Finish practice</button>
                 </div>
+                <p class="custom-question-scroll-copy">Answer each question and check it when you are ready.</p>
+                <div class="custom-question-scroll-list" id="custom-question-scroll-list"></div>
+                <button type="button" class="button primary-button custom-question-finish-bottom" data-finish-question-scroll>Finish practice</button>
+              </section>
+              <section class="custom-essay-practice" id="custom-essay-practice" hidden>
+                <div class="custom-essay-heading">
+                  <div><span class="custom-question-type" id="custom-essay-type">Essay</span><h3 id="custom-essay-title">Essay practice</h3></div>
+                  <div class="custom-essay-clock" id="custom-essay-clock" hidden>40:00</div>
+                </div>
+                <p class="custom-essay-prompt" id="custom-essay-prompt-text"></p>
+                <div class="custom-essay-sources" id="custom-essay-sources"></div>
+                <label class="custom-essay-response">Your essay<textarea id="custom-essay-response" placeholder="Plan and draft your response here…"></textarea></label>
+                <details class="custom-essay-checklist"><summary>Planning checklist</summary><p id="custom-essay-checklist-text"></p></details>
+                <button type="button" class="button primary-button custom-question-finish-bottom" id="finish-custom-essay">Finish essay</button>
               </section>
               <section class="custom-feynman-practice" id="custom-feynman-practice" hidden>
                 <span class="custom-question-type">Feynman topic</span>
@@ -573,35 +670,6 @@
           </div>
         </section>
 
-        <section class="study-guide-page" id="study-guide-page" aria-labelledby="study-guide-title" hidden>
-          <header class="study-guide-header">
-            <div><p class="section-label">Tips and resources</p><h2 id="study-guide-title">Study Guide</h2><p>Choose a study method that matches how long you need to remember the material.</p></div>
-          </header>
-          <div class="study-guide-grid">
-            <article class="study-guide-card study-guide-featured">
-              <span class="study-guide-icon" aria-hidden="true">↻</span>
-              <p class="section-label">Long-term memory</p>
-              <h3>Anki works best with daily effort</h3>
-              <p>Anki-style spaced repetition is one of the strongest ways to retain information over months or years. It works by bringing cards back near the time you might forget them.</p>
-              <div class="study-guide-callout"><strong>Consistency matters.</strong><span>Complete your due reviews every day. Skipping several days creates a backlog and weakens the benefit of the schedule.</span></div>
-            </article>
-            <article class="study-guide-card">
-              <span class="study-guide-icon" aria-hidden="true">⇩</span>
-              <p class="section-label">More flashcards</p>
-              <h3>Browse Anki shared decks</h3>
-              <p>Find decks created by other learners, download an APKG file, and import it from the Create tab. Review imported cards and correct anything that does not match your course.</p>
-              <a class="button primary-button guide-link" href="https://ankiweb.net/shared/decks" target="_blank" rel="noopener noreferrer">Open Anki shared decks</a>
-            </article>
-            <article class="study-guide-card">
-              <span class="study-guide-icon" aria-hidden="true">✦</span>
-              <p class="section-label">Understand, then remember</p>
-              <h3>Combine methods</h3>
-              <p>Use Feynman prompts to explain broad ideas, questions to practice applying them, and Anki to keep important details available in long-term memory.</p>
-              <ul class="study-guide-steps"><li><strong>Feynman:</strong> explain the whole idea in your own words.</li><li><strong>Questions:</strong> practice recognition and application.</li><li><strong>Anki:</strong> maintain details through spaced review.</li></ul>
-            </article>
-          </div>
-        </section>
-
         <section class="settings-page" id="settings-page" aria-labelledby="settings-title" hidden>
           <header class="settings-page-header">
             <div><p class="section-label">Preferences</p><h2 id="settings-title">Settings</h2><p>Customize the app and how Anki schedules your cards.</p></div>
@@ -616,9 +684,17 @@
               <div class="settings-card-heading"><div><p class="section-label">Profile</p><h3>Name and birthday</h3></div><p>Personalize your greeting and birthday celebration. This stays on your device.</p></div>
               <div class="settings-profile-grid">
                 <label class="settings-profile-name">Name<input id="settings-profile-name" maxlength="50" autocomplete="name" required></label>
-                <label>Birth month<select id="settings-profile-birth-month" aria-label="Birth month" required></select></label>
-                <label>Birth day<select id="settings-profile-birth-day" aria-label="Birth day" required></select></label>
+                <label>Birth month<select id="settings-profile-birth-month" aria-label="Birth month"></select></label>
+                <label>Birth day<select id="settings-profile-birth-day" aria-label="Birth day"></select></label>
               </div>
+            </section>
+            <section class="settings-card" aria-labelledby="profile-privacy-title">
+              <div class="settings-card-heading"><div><p class="section-label">Community profile</p><h3 id="profile-privacy-title">Profile visibility</h3></div><p>Control whether other people can open your profile and browse everything you have published.</p></div>
+              <div class="profile-visibility-options" role="radiogroup" aria-label="Community profile visibility">
+                <label><input type="radio" name="profileVisibility" value="public"><span><strong>Public</strong><small>Anyone can view your profile and its public sets and notes.</small></span></label>
+                <label><input type="radio" name="profileVisibility" value="private"><span><strong>Private</strong><small>Your profile and full publication list are hidden. Items you publish still appear individually in Community.</small></span></label>
+              </div>
+              <p class="settings-export-status" id="profile-visibility-status">Log in with Google to change profile visibility.</p>
             </section>
             <section class="settings-card">
               <div class="settings-card-heading"><div><p class="section-label">Appearance</p><h3>Theme</h3></div><p>Choose how Your Study Buddy looks.</p></div>
@@ -627,10 +703,26 @@
                 <label><input type="radio" name="theme" value="dark"><span><strong>Dark</strong><small>Always use the dark theme</small></span></label>
               </div>
             </section>
+            <section class="settings-card" aria-labelledby="language-accessibility-title">
+              <div class="settings-card-heading"><div><p class="section-label">Language and access</p><h3 id="language-accessibility-title">Interface preferences</h3></div><p>Choose your interface language and reduce effects that can be distracting or slow on smaller devices.</p></div>
+              <div class="settings-grid settings-preference-grid">
+                <label>Interface language<select name="language"><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option></select></label>
+                <label class="settings-check"><input name="reduceMotion" type="checkbox"><span>Reduce animations</span></label>
+                <label class="settings-check"><input name="compactMode" type="checkbox"><span>Use compact spacing</span></label>
+                <label class="settings-check"><input name="dataSaver" type="checkbox"><span>Data saver for slower connections</span></label>
+              </div>
+              <p class="settings-export-status">Language currently covers primary navigation and essential settings. Study material remains in its original language.</p>
+            </section>
+            <section class="settings-card" aria-labelledby="account-sync-title">
+              <div class="settings-card-heading"><div><p class="section-label">Google account</p><h3 id="account-sync-title">Progress sync</h3></div><p>Keep personal sets, notes, note images, PDFs, folders, settings, and Anki progress connected to your Google profile.</p></div>
+              <div class="account-sync-summary"><div><strong id="account-sync-status">Stored on this device</strong><span id="account-sync-detail">Log in on the website to sync supported study progress.</span></div><button type="button" class="button secondary-button" id="sync-progress-now">Sync now</button></div>
+              <p class="settings-export-status">Large PDF files and note images remain on the device where they were added. Export a backup for those files.</p>
+            </section>
             <section class="settings-card">
               <div class="settings-card-heading"><div><p class="section-label">Your data</p><h3>Export your information</h3></div><p>Download a portable JSON backup of your personal study data and preferences.</p></div>
               <div class="settings-data-export"><div><strong>Included in the backup</strong><span>Profile, settings, personal sets, folders, notes, Anki schedules, and review progress.</span></div><div class="settings-data-actions"><button type="button" class="button secondary-button" id="export-user-information">Export my information</button><button type="button" class="button secondary-button" id="restore-user-information">Restore from backup</button><input type="file" id="restore-user-information-file" accept="application/json,.json" hidden></div></div>
-              <p class="settings-export-status" id="settings-export-status" aria-live="polite">Built-in textbook and study-deck content is not duplicated.</p>
+              <p class="settings-export-status" id="settings-export-status" aria-live="polite">Curated study-set content is not duplicated.</p>
+              <div class="site-data-warning"><strong>Before clearing browser data</strong><span>Clearing cookies alone usually keeps progress, but browsers may combine cookies with site data. Clearing all site data can erase anything stored only on this device. Sync or export a backup first.</span></div>
             </section>
             <section class="settings-card" aria-labelledby="storage-health-title">
               <div class="settings-card-heading"><div><p class="section-label">Storage</p><h3 id="storage-health-title">Storage health</h3></div><p>See how much local space your notes, images, decks, and review history use.</p></div>
@@ -643,10 +735,22 @@
               <div class="app-update-summary"><div><strong id="app-update-version">Current version</strong><span id="app-update-status" aria-live="polite">Updates are checked when the app opens.</span></div><div class="settings-data-actions"><button type="button" class="button secondary-button" id="check-for-updates">Check for updates</button><button type="button" class="button primary-button" id="download-app-update" hidden>Download update</button></div></div>
               <p class="settings-export-status">Unsigned builds open the GitHub release for manual installation. Replacing the app keeps notes, decks, settings, and review progress stored on this computer.</p>
             </section>
+            <section class="settings-card" aria-labelledby="privacy-legal-title">
+              <div class="settings-card-heading"><div><p class="section-label">Privacy and safety</p><h3 id="privacy-legal-title">Your rights and account</h3></div><p>Review how data and Community content are handled, or permanently remove your online account.</p></div>
+              <div class="legal-link-grid">
+                <button type="button" class="button secondary-button" data-legal-document="privacy">Privacy</button>
+                <button type="button" class="button secondary-button" data-legal-document="terms">Terms</button>
+                <button type="button" class="button secondary-button" data-legal-document="community">Community Guidelines</button>
+                <button type="button" class="button secondary-button" data-legal-document="copyright">Copyright and reports</button>
+                <button type="button" class="button secondary-button" data-legal-document="deletion">Data deletion</button>
+              </div>
+              <div class="danger-zone"><div><strong>Delete online account</strong><span>Removes your Google-linked profile, synced progress, ratings, reports, and publications. Local device data is not deleted.</span></div><button type="button" class="button danger-button" id="delete-online-account">Delete account</button></div>
+              <p class="settings-export-status" id="account-deletion-status" aria-live="polite"></p>
+            </section>
             </div>
             <div class="settings-panel" data-settings-panel="anki" hidden>
             <section class="settings-card">
-              <div class="settings-card-heading"><div><p class="section-label">Anki</p><h3>Daily limits and order</h3></div><p>These options apply to textbook and personal decks.</p></div>
+              <div class="settings-card-heading"><div><p class="section-label">Anki</p><h3>Daily limits and order</h3></div><p>These options apply to curated and personal study sets.</p></div>
               <div class="settings-grid">
                 <label>New cards per day<input name="newCardsPerDay" type="number" min="0" max="9999"></label>
                 <label>Maximum reviews per day<input name="maxReviewsPerDay" type="number" min="0" max="9999"></label>
@@ -736,14 +840,94 @@
       </main>
     </div>
 
+    <footer class="site-legal-footer" aria-label="Legal and support">
+      <span>© 2026 Your Study Buddy</span>
+      <a href="./privacy.html" target="_blank" rel="noopener">Privacy</a>
+      <a href="./terms.html" target="_blank" rel="noopener">Terms</a>
+      <a href="./community-guidelines.html" target="_blank" rel="noopener">Community Guidelines</a>
+      <a href="mailto:support@yourstudybuddy.net">Support</a>
+    </footer>
+
     <nav class="mobile-nav" aria-label="Mobile navigation">
       <a class="active" href="#dashboard" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v10h-6zM4 14h6v6H4zM14 18h6v2h-6z" /></svg><span>Home</span></a>
-      <a href="#courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></svg><span>Textbooks</span></a>
+      <a href="#courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-5 9 5-9 5-9-5Z" /><path d="M7 12.5V17c3 2 7 2 10 0v-4.5" /></svg><span>Browse</span></a>
       <a href="#flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6" /></svg><span>Study</span></a>
       <a href="#create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Create</span></a>
       <a href="#notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z" /><path d="M8 11h8M8 15h8" /></svg><span>Notes</span></a>
-      <a href="#study-guide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg><span>Guide</span></a>
     </nav>
+
+    <dialog class="account-dialog" id="account-dialog" aria-labelledby="account-dialog-title">
+      <div class="account-dialog-shell">
+        <div class="dialog-header">
+          <div><p class="section-label">Your account</p><h2 id="account-dialog-title">Log in</h2></div>
+          <button class="icon-button" type="button" id="close-account-dialog" aria-label="Close account dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+        </div>
+
+        <section class="account-panel account-signed-out" id="account-signed-out">
+          <span class="account-hero-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg></span>
+          <div><h3>Continue with Google</h3><p>Log in securely without creating another password. Your existing study sets and notes will stay in place.</p></div>
+          <div id="google-signin-button" class="google-signin-button" hidden></div>
+          <p class="account-legal-copy">Online accounts are for ages 13+. By continuing, you agree to the <a href="./terms.html" target="_blank" rel="noopener">Terms</a> and acknowledge the <a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+          <div class="account-message" aria-live="polite"><strong id="google-account-status">Checking sign-in…</strong><span id="google-account-detail">Your study data remains on this device.</span></div>
+        </section>
+
+        <section class="account-panel username-setup" id="username-setup" hidden>
+          <div class="account-profile-summary">
+            <img id="google-account-avatar" alt="" hidden>
+            <div><span>Signed in with Google</span><strong id="google-account-name">Google account</strong><small id="google-account-email"></small></div>
+          </div>
+          <div><p class="section-label">One last step</p><h3>Create your profile</h3><p>Your name is how people see you. Your username is your unique @handle, similar to Discord.</p></div>
+          <form id="username-form">
+            <label for="display-name-input">Name</label>
+            <input class="profile-name-field" id="display-name-input" name="displayName" type="text" minlength="1" maxlength="40" autocomplete="name" placeholder="Your display name" required>
+            <small class="profile-field-help">This does not have to be unique, and you can use spaces.</small>
+            <label for="username-input">Username</label>
+            <div class="username-field"><span aria-hidden="true">@</span><input id="username-input" name="username" type="text" minlength="3" maxlength="24" pattern="[A-Za-z][A-Za-z0-9_]{2,23}" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="student_name" required></div>
+            <small id="username-help">Your unique handle. Use 3–24 lowercase letters, numbers, or underscores, starting with a letter.</small>
+            <strong class="username-availability" id="username-availability" aria-live="polite"></strong>
+            <button class="button primary-button" id="save-username" type="submit">Create account</button>
+          </form>
+        </section>
+
+        <section class="account-panel account-signed-in" id="account-signed-in" hidden>
+          <div class="account-profile-summary account-profile-complete">
+            <img id="signed-in-account-avatar" alt="" hidden>
+            <div><span>Signed in as</span><strong id="signed-in-account-name">Google account</strong><small id="signed-in-account-email"></small></div>
+          </div>
+          <div class="username-badge" id="signed-in-username"></div>
+          <p>Your Google account is linked. Supported study progress syncs securely while local files remain available on this device.</p>
+          <button type="button" class="button secondary-button" id="google-signout">Sign out</button>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog class="legal-dialog" id="legal-dialog" aria-labelledby="legal-dialog-title">
+      <div class="legal-dialog-shell">
+        <div class="dialog-header"><div><p class="section-label">Your Study Buddy</p><h2 id="legal-dialog-title">Privacy</h2></div><button class="icon-button" type="button" id="close-legal-dialog" aria-label="Close">×</button></div>
+        <div class="legal-document" id="legal-document-content"></div>
+      </div>
+    </dialog>
+
+    <dialog class="community-profile-dialog" id="community-profile-dialog" aria-labelledby="community-profile-name">
+      <div class="community-profile-shell">
+        <header class="community-profile-header">
+          <div class="community-profile-cover" aria-hidden="true"><span></span><span></span><span></span></div>
+          <button class="community-profile-close" type="button" id="close-community-profile" aria-label="Close creator profile">×</button>
+          <div class="community-profile-heading">
+            <div class="community-profile-identity"><span class="community-profile-avatar" id="community-profile-avatar" aria-hidden="true">S</span><div><span class="community-profile-badge" id="community-profile-badge">Public profile</span><h2 id="community-profile-name">Student</h2><p id="community-profile-username">@student</p></div></div>
+            <div class="community-profile-stats" aria-label="Creator statistics">
+              <div><strong id="community-profile-published-count">0</strong><span>Published</span></div>
+              <div><strong id="community-profile-card-count">0</strong><span>Cards</span></div>
+              <div><strong id="community-profile-save-count">0</strong><span>Saves</span></div>
+            </div>
+          </div>
+        </header>
+        <section class="community-profile-library" aria-labelledby="community-profile-library-title">
+          <div class="community-profile-library-heading"><div><span class="section-label">Library</span><h3 id="community-profile-library-title">Published study material</h3></div><p class="community-profile-summary" id="community-profile-summary"></p></div>
+          <div class="community-profile-items" id="community-profile-items"></div>
+        </section>
+      </div>
+    </dialog>
 
     <dialog class="task-dialog" id="task-dialog" aria-labelledby="task-dialog-title">
       <form method="dialog" id="task-form">
@@ -766,7 +950,7 @@
 
     <dialog class="card-tool-dialog drawing-dialog" id="drawing-dialog" aria-labelledby="drawing-dialog-title">
       <div class="card-tool-shell">
-        <div class="dialog-header"><div><p class="section-label">Flashcard drawing</p><h2 id="drawing-dialog-title">Draw on the card</h2></div><button class="icon-button" type="button" id="close-drawing-dialog" aria-label="Close drawing tool">×</button></div>
+        <div class="dialog-header"><div><p class="section-label">Study item drawing</p><h2 id="drawing-dialog-title">Draw on the study item</h2></div><button class="icon-button" type="button" id="close-drawing-dialog" aria-label="Close drawing tool">×</button></div>
         <div class="drawing-toolbar" role="toolbar" aria-label="Drawing tools"><button type="button" class="active" data-drawing-tool="pen">Pen</button><button type="button" data-drawing-tool="eraser">Eraser</button><label class="inline-color-control">Color<input type="hidden" id="drawing-color" value="#171b2d"><button type="button" class="inline-color-trigger" data-color-palette-for="drawing-color" style="--selected-color:#171b2d" aria-label="Choose drawing color"></button><div class="inline-color-palette" role="menu" hidden><button type="button" style="--swatch:#171b2d" data-pick-color="#171b2d" aria-label="Black"></button><button type="button" style="--swatch:#ffffff" data-pick-color="#ffffff" aria-label="White"></button><button type="button" style="--swatch:#e05252" data-pick-color="#e05252" aria-label="Red"></button><button type="button" style="--swatch:#f59e0b" data-pick-color="#f59e0b" aria-label="Orange"></button><button type="button" style="--swatch:#f2d34f" data-pick-color="#f2d34f" aria-label="Yellow"></button><button type="button" style="--swatch:#2fac7f" data-pick-color="#2fac7f" aria-label="Green"></button><button type="button" style="--swatch:#3b82f6" data-pick-color="#3b82f6" aria-label="Blue"></button><button type="button" style="--swatch:#665ee8" data-pick-color="#665ee8" aria-label="Purple"></button><button type="button" style="--swatch:#ec65a4" data-pick-color="#ec65a4" aria-label="Pink"></button><button type="button" style="--swatch:#8b5e3c" data-pick-color="#8b5e3c" aria-label="Brown"></button></div></label><label>Size <input type="range" id="drawing-size" min="2" max="36" value="6"></label><button type="button" id="drawing-undo">Undo</button><button type="button" id="drawing-clear">Clear</button></div>
         <div class="drawing-stage"><canvas id="flashcard-drawing-canvas" width="1000" height="600" aria-label="Drawing canvas"></canvas></div>
         <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-drawing">Cancel</button><button type="button" class="button primary-button" id="save-drawing">Use drawing</button></div>
@@ -775,7 +959,7 @@
 
     <dialog class="card-tool-dialog math-dialog" id="math-dialog" aria-labelledby="math-dialog-title">
       <div class="card-tool-shell">
-        <div class="dialog-header"><div><p class="section-label">Flashcard text</p><h2 id="math-dialog-title">Insert math syntax</h2></div><button class="icon-button" type="button" id="close-math-dialog" aria-label="Close math tool">×</button></div>
+        <div class="dialog-header"><div><p class="section-label">Study item text</p><h2 id="math-dialog-title">Insert math syntax</h2></div><button class="icon-button" type="button" id="close-math-dialog" aria-label="Close math tool">×</button></div>
         <label class="math-expression-label">Expression<textarea id="math-expression" rows="2" placeholder="Example: E = mc^2 or \sqrt{x}"></textarea></label>
         <section class="math-glossary" aria-labelledby="math-glossary-heading">
           <div class="math-glossary-heading"><div><p class="section-label">Reference</p><h3 id="math-glossary-heading">Math glossary</h3></div><label><span class="sr-only">Search math glossary</span><input id="math-glossary-search" type="search" placeholder="Search integral, derivative, Greek…"></label></div>
@@ -783,37 +967,19 @@
         </section>
         <div class="math-preview"><span>Preview</span><strong id="math-preview">Your expression will appear here.</strong></div>
         <p class="math-help">Choose an entry from the glossary or type syntax such as <code>\int</code>, <code>\partial</code>, <code>\sqrt{x}</code>, <code>\frac{a}{b}</code>, <code>^2</code>, and <code>_1</code>.</p>
-        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-math">Cancel</button><button type="button" class="button primary-button" id="insert-math">Insert into card</button></div>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-math">Cancel</button><button type="button" class="button primary-button" id="insert-math">Insert</button></div>
       </div>
     </dialog>
 
     <dialog class="card-tool-dialog code-dialog" id="code-dialog" aria-labelledby="code-dialog-title">
       <div class="card-tool-shell">
-        <div class="dialog-header"><div><p class="section-label">Flashcard text</p><h2 id="code-dialog-title">Insert code snippet</h2></div><button class="icon-button" type="button" id="close-code-dialog" aria-label="Close code tool">×</button></div>
+        <div class="dialog-header"><div><p class="section-label">Study item text</p><h2 id="code-dialog-title">Insert code snippet</h2></div><button class="icon-button" type="button" id="close-code-dialog" aria-label="Close code tool">×</button></div>
         <div class="code-options"><label>Language<select id="code-language"><option value="">Plain text</option><option value="python">Python</option><option value="javascript">JavaScript</option><option value="typescript">TypeScript</option><option value="java">Java</option><option value="c">C</option><option value="cpp">C++</option><option value="csharp">C#</option><option value="swift">Swift</option><option value="r">R</option><option value="sql">SQL</option><option value="html">HTML</option><option value="css">CSS</option><option value="bash">Shell</option></select></label><label class="code-line-toggle"><input id="code-line-numbers" type="checkbox" checked><span>Show line numbers</span></label></div>
         <label class="code-editor-label">Code<textarea id="code-expression" rows="9" spellcheck="false" placeholder="Type or paste several lines of code…"></textarea></label>
         <div class="code-preview"><span>Preview</span><div id="code-preview-content"></div></div>
-        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-code">Cancel</button><button type="button" class="button primary-button" id="insert-code">Insert into card</button></div>
+        <div class="dialog-actions"><button type="button" class="button secondary-button" id="cancel-code">Cancel</button><button type="button" class="button primary-button" id="insert-code">Insert</button></div>
       </div>
     </dialog>
-
-    <dialog class="welcome-profile-dialog" id="welcome-profile-dialog" aria-labelledby="welcome-profile-title">
-      <form method="dialog" id="welcome-profile-form">
-        <div class="welcome-bear" aria-hidden="true"><img src="./your-study-buddy-icon.png" alt=""></div>
-        <p class="section-label">Welcome to Your Study Buddy</p>
-        <h2 id="welcome-profile-title">Let’s personalize your app</h2>
-        <p class="welcome-profile-copy">Tell your study buddy what to call you—and when to celebrate you.</p>
-        <label>Your name<input id="welcome-profile-name" name="name" required maxlength="50" autocomplete="name" placeholder="What should we call you?"></label>
-        <fieldset class="welcome-birthday-fields">
-          <legend>Your birthday</legend>
-          <label>Month<select id="welcome-profile-birth-month" name="birthMonth" required aria-label="Birth month"></select></label>
-          <label>Day<select id="welcome-profile-birth-day" name="birthDay" required aria-label="Birth day"></select></label>
-        </fieldset>
-        <p class="welcome-privacy">Your information stays on this device.</p>
-        <button class="button primary-button" type="submit">Start studying</button>
-      </form>
-    </dialog>
-
 
     <dialog class="task-dialog folder-editor-dialog" id="folder-editor-dialog" aria-labelledby="folder-editor-title">
       <form method="dialog" id="folder-editor-form">
@@ -848,60 +1014,56 @@
         <div class="note-actions-grid">
           <button class="button secondary-button" type="button" id="note-actions-copy">Make a copy</button>
           <button class="button secondary-button" type="button" id="note-actions-create-cards">Create flashcards</button>
+          <button class="button primary-button" type="button" id="note-actions-publish">Publish note</button>
         </div>
         <div class="dialog-actions"><button class="button secondary-button" type="button" id="cancel-note-actions">Close</button></div>
       </form>
     </dialog>
 
+    <dialog class="task-dialog publish-dialog" id="publish-dialog" aria-labelledby="publish-dialog-title">
+      <form id="publish-form">
+        <div class="dialog-header">
+          <div><p class="section-label">Share with Community</p><h2 id="publish-dialog-title">Publish</h2></div>
+          <button class="icon-button" type="button" id="close-publish-dialog" aria-label="Close publish dialog">×</button>
+        </div>
+        <p class="publish-dialog-copy">Anyone will be able to find this item and save their own copy.</p>
+        <label class="publish-description-field">Description <span>Optional</span>
+          <textarea id="publish-description" maxlength="280" rows="5" placeholder="Tell students what this includes, who it is for, or how to use it."></textarea>
+        </label>
+        <div class="publish-description-meta"><span>A helpful description makes your work easier to find.</span><strong id="publish-description-count">0 / 280</strong></div>
+        <div class="dialog-actions"><button class="button secondary-button" type="button" id="cancel-publish">Cancel</button><button class="button primary-button" type="submit" id="confirm-publish">Publish publicly</button></div>
+      </form>
+    </dialog>
+
+    <dialog class="deck-preview-dialog" id="deck-preview-dialog" aria-labelledby="deck-preview-title">
+      <div class="deck-preview-shell">
+        <header class="dialog-header">
+          <div><p class="section-label" id="deck-preview-source">Study set preview</p><h2 id="deck-preview-title">Preview</h2><div class="community-rating" id="deck-preview-rating"></div></div>
+          <button class="icon-button" type="button" id="close-deck-preview" aria-label="Close preview">×</button>
+        </header>
+        <nav class="deck-preview-tabs" aria-label="Preview content"><button type="button" class="active" data-preview-tab="cards">Flashcards</button><button type="button" data-preview-tab="questions">Questions</button><button type="button" data-preview-tab="feynman">Feynman</button></nav>
+        <div class="deck-preview-scroll" id="deck-preview-scroll"></div>
+        <div class="deck-preview-actions"><button type="button" class="button primary-button" id="save-previewed-deck">Add to Study</button></div>
+        <section class="community-feedback" id="community-feedback" hidden>
+          <div class="community-feedback-grid">
+            <form id="community-review-form"><h3>Rate this item</h3><fieldset class="rating-picker"><legend>Your rating</legend><label><input type="radio" name="communityRating" value="1" required><span>★</span></label><label><input type="radio" name="communityRating" value="2"><span>★</span></label><label><input type="radio" name="communityRating" value="3"><span>★</span></label><label><input type="radio" name="communityRating" value="4"><span>★</span></label><label><input type="radio" name="communityRating" value="5"><span>★</span></label></fieldset><button type="submit" class="button secondary-button">Submit rating</button></form>
+            <form id="community-report-form"><h3>Report this item</h3><label>Reason<select id="community-report-reason" required><option value="">Choose a reason</option><option value="spam">Spam or misleading</option><option value="copyright">Copyright concern</option><option value="inappropriate">Inappropriate content</option><option value="dangerous">Dangerous misinformation</option><option value="other">Other</option></select></label><textarea id="community-report-details" maxlength="500" placeholder="Explain the problem"></textarea><button type="submit" class="button danger-text-button">Submit report</button></form>
+          </div>
+          <div class="community-review-list" id="community-review-list"></div>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog class="app-prompt-dialog" id="app-prompt-dialog" aria-labelledby="app-prompt-title">
+      <form method="dialog" id="app-prompt-form">
+        <div class="dialog-header"><div><p class="section-label" id="app-prompt-label">Your Study Buddy</p><h2 id="app-prompt-title">Confirm action</h2></div><button class="icon-button" type="button" id="app-prompt-close" aria-label="Close">×</button></div>
+        <p id="app-prompt-message"></p>
+        <label id="app-prompt-input-wrap" hidden><span id="app-prompt-input-label">Value</span><input id="app-prompt-input" autocomplete="off" /></label>
+        <div class="dialog-actions"><button class="button secondary-button" type="button" id="app-prompt-cancel">Cancel</button><button class="button primary-button" type="submit" id="app-prompt-confirm">Continue</button></div>
+      </form>
+    </dialog>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./vocabulary-data.js"></script>
-    <script src="./vanders-data.js"></script>
-    <script src="./vanders-glossary-data.js"></script>
-    <script src="./atkins-data.js"></script>
-    <script src="./raven-data.js"></script>
-    <script src="./raven-glossary-data.js"></script>
-    <script src="./zumdahl-data.js"></script>
-    <script src="./central-science-data.js"></script>
-    <script src="./source-expansions.js"></script>
-    <script src="./atkins-details.js"></script>
-    <script src="./aphug-data.js"></script>
-    <script src="./apworld-data.js"></script>
-    <script src="./apes-data.js"></script>
-    <script src="./apeuro-data.js"></script>
-    <script src="./apgov-data.js"></script>
-    <script src="./appsych-data.js"></script>
-    <script src="./apush-textbook-data.js"></script>
-    <script src="./history-visuals.js"></script>
-    <script src="./apart-data.js"></script>
-    <script src="./apcsp-data.js"></script>
-    <script src="./apbiology-data.js"></script>
-    <script src="./apstats-data.js"></script>
-    <script src="./apchem-data.js"></script>
-    <script src="./science-diagrams.js"></script>
-    <script src="./apcalculus-data.js"></script>
-    <script src="./apprecalculus-data.js"></script>
-    <script src="./apcomparative-government-data.js"></script>
-    <script src="./ap-economics-data.js"></script>
-    <script src="./ap-music-theory-data.js"></script>
-    <script src="./ap-latin-data.js"></script>
-    <script src="./ib-diploma-data.js"></script>
-    <script src="./ib-course-crosswalk.js"></script>
-    <script src="./ib-math-aa-data.js"></script>
-    <script src="./ib-history-americas-data.js"></script>
-    <script src="./ib-visuals.js"></script>
-    <script src="./ap-african-american-studies-data.js"></script>
-    <script src="./ap-cybersecurity-data.js"></script>
-    <script src="./ap-business-personal-finance-data.js"></script>
-    <script src="./ap-new-course-expansions.js"></script>
-    <script src="./formula-enrichments.js"></script>
-    <script src="./geography-locations-data.js"></script>
-    <script src="./us-civics-data.js"></script>
-    <script src="./vendor/ts-fsrs.umd.js"></script>
-    <script src="./anki-selection-storage.js"></script>
-    <script src="./app.js"></script>
-    <script src="./fullscreen.js"></script>
-    <script src="./table-editing.js"></script>
-    <script src="./open-note-controls.js"></script>
-    <script src="./birthday-easter-egg.js"></script>
+    <script src="./app.bundle.js?v=20261025-spacing16"></script>
   </body>
 </html>

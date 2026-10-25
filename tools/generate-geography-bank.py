@@ -29,6 +29,11 @@ TERRITORY_CODES = {
     "TF", "TK", "UM", "VG", "VI", "WF", "YT",
 }
 
+# Natural Earth's public 1:10m data represents a few very small sovereign
+# states with intentionally compact polygons. They are still substantially
+# better study references than omitting the outline altogether.
+COMPACT_SOVEREIGN_OUTLINE_CODES = {"MC", "NR", "VA"}
+
 
 def region_name(country: dict) -> str:
     region = country.get("region") or "Other"
@@ -107,8 +112,15 @@ def projected_paths(rings, box) -> list[str]:
     if not rings:
         return []
     points = [point for ring in rings for point in ring]
-    min_x, max_x = min(p[0] for p in points), max(p[0] for p in points)
-    min_y, max_y = min(p[1] for p in points), max(p[1] for p in points)
+    # Longitude degrees get physically narrower away from the equator. Apply
+    # a local equirectangular correction so country silhouettes retain their
+    # geographic proportions instead of appearing horizontally stretched or
+    # vertically compressed.
+    mean_latitude = sum(point[1] for point in points) / len(points)
+    longitude_scale = max(.12, math.cos(math.radians(mean_latitude)))
+    projected_source = [[x * longitude_scale, y] for x, y in points]
+    min_x, max_x = min(p[0] for p in projected_source), max(p[0] for p in projected_source)
+    min_y, max_y = min(p[1] for p in projected_source), max(p[1] for p in projected_source)
     width, height = max(max_x - min_x, .00001), max(max_y - min_y, .00001)
     box_x, box_y, box_width, box_height = box
     scale = min(box_width / width, box_height / height)
@@ -118,7 +130,7 @@ def projected_paths(rings, box) -> list[str]:
     paths = []
     for ring in rings:
         reduced = simplify(ring, epsilon)
-        projected = [(offset_x + (x - min_x) * scale, offset_y + (max_y - y) * scale) for x, y in reduced]
+        projected = [(offset_x + (x * longitude_scale - min_x) * scale, offset_y + (max_y - y) * scale) for x, y in reduced]
         if len(projected) >= 3:
             paths.append("M" + " ".join(f"{x:.1f},{y:.1f}" for x, y in projected) + "Z")
     return paths
@@ -193,8 +205,9 @@ def main() -> None:
         unique_boundary_points = {tuple(point) for ring in candidate_rings for point in ring}
         # Tiny islands can collapse into triangles in Natural Earth's generalized
         # polygons. Omitting a misleading outline is better than teaching a false shape.
-        svg = outline_svg(candidates, name, code2) if len(unique_boundary_points) >= 12 else ""
-        if svg and len(set(re.findall(r"(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)", svg))) < 12:
+        minimum_points = 6 if code2 in COMPACT_SOVEREIGN_OUTLINE_CODES else 12
+        svg = outline_svg(candidates, name, code2) if len(unique_boundary_points) >= minimum_points else ""
+        if svg and len(set(re.findall(r"(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)", svg))) < minimum_points:
             svg = ""
         if svg:
             (OUTLINE_OUTPUT / f"{code2.lower()}.svg").write_text(svg)

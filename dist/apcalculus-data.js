@@ -205,4 +205,119 @@
       ["Lagrange error bound", "BC: bounds Taylor polynomial error using a maximum higher derivative.", "|R_n(x)|\\le\\frac{M|x-a|^{n+1}}{(n+1)!}", "BC"],
     ], [["How to choose and apply a convergence test for an infinite series", "BC"], ["How to build a Taylor series and bound approximation error", "BC"]]),
   ];
+
+  const question = (prompt, answer, options, difficulty = "Medium", courseLevel = "") => ({
+    type: "mcq", prompt, answer, options: [answer, ...options], difficulty, ...(courseLevel ? { courseLevel } : {}),
+  });
+
+  window.AP_CALCULUS_QUESTIONS_FOR_TOPIC = (topicNumber, topicTitle) => {
+    const unitNumber = Number(String(topicNumber).split(".")[0]);
+    const bcTopic = unitNumber >= 9 || /bc only/i.test(topicTitle);
+    const withLevel = (items) => items.map((item) => bcTopic ? { ...item, courseLevel: "BC" } : item);
+    if (unitNumber === 1) {
+      if (/(Continuity|Discontinuit|Intermediate Value)/i.test(topicTitle)) return withLevel([
+        question("For x ≠ 2, f(x) = (x² − 4)/(x − 2), and f(2) = k. What value of k makes f continuous at x = 2?", "4", ["0", "2", "Does not exist"], "Easy"),
+        question("The function f(x) = x³ + x − 1 is continuous on [0,1], with f(0) < 0 and f(1) > 0. What does the Intermediate Value Theorem guarantee?", "At least one zero lies in (0,1)", ["Exactly one zero lies in (0,1)", "f has a horizontal tangent", "f is differentiable everywhere"]),
+        question("A piecewise function has left-hand limit 3 and right-hand limit 5 at x = 1. Which conclusion is correct?", "The two-sided limit does not exist", ["The limit equals 4", "The limit equals 5", "The function must be continuous"], "Hard"),
+      ]);
+      if (/(Infinite Limits|Asymptote|Limits at Infinity)/i.test(topicTitle)) return withLevel([
+        question("Evaluate lim x→∞ (3x² − 1)/(2x² + 4).", "3/2", ["0", "1", "∞"], "Easy"),
+        question("For f(x) = 1/(x − 2), what is lim x→2⁺ f(x)?", "+∞", ["−∞", "0", "2"]),
+        question("What horizontal asymptote does f(x) = (5x³ + x)/(2x³ − 7) have?", "y = 5/2", ["x = 5/2", "y = 0", "No horizontal asymptote"], "Hard"),
+      ]);
+      return withLevel([
+        question("Evaluate lim x→3 (x² − 9)/(x − 3).", "6", ["0", "3", "Does not exist"], "Easy"),
+        question("Evaluate lim x→0 sin(5x)/x.", "5", ["0", "1", "Does not exist"]),
+        question("If 2 − x² ≤ f(x) ≤ 2 + x² near x = 0, what is lim x→0 f(x)?", "2", ["0", "4", "Cannot be determined"], "Hard"),
+      ]);
+    }
+    if (unitNumber === 2) return withLevel([
+      question("If f(x) = 3x⁴ − 5x² + 7, what is f′(1)?", "2", ["−2", "7", "12"], "Easy"),
+      question("Differentiate f(x) = x²eˣ.", "f′(x) = eˣ(x² + 2x)", ["f′(x) = 2xeˣ", "f′(x) = x²eˣ", "f′(x) = eˣ(x² − 2x)"]),
+      question("Differentiate f(x) = (x² + 1)/x.", "f′(x) = 1 − 1/x²", ["f′(x) = 2", "f′(x) = 1 + 1/x²", "f′(x) = (2x + 1)/x²"], "Hard"),
+      question("Using the limit definition, what is the derivative of f(x) = x² at x = 3?", "6", ["3", "9", "12"], "Hard"),
+    ]);
+    if (unitNumber === 3) {
+      if (/Implicit/i.test(topicTitle)) return withLevel([
+        question("For x² + y² = 25, what is dy/dx at (3,4)?", "−3/4", ["3/4", "−4/3", "4/3"], "Easy"),
+        question("For x³ + y³ = 6xy, which expression equals dy/dx?", "(2y − x²)/(y² − 2x)", ["(x² − 2y)/(y² − 2x)", "(2x − y²)/(x² − 2y)", "3x² + 3y²"]),
+        question("The curve x² + xy + y² = 7 passes through (1,2). What is the slope there?", "−4/5", ["−5/4", "4/5", "5/4"], "Hard"),
+      ]);
+      if (/Inverse/i.test(topicTitle)) return withLevel([
+        question("If f(2) = 5 and f′(2) = 3, what is (f⁻¹)′(5)?", "1/3", ["2/5", "3", "5/2"], "Easy"),
+        question("Differentiate y = arcsin(2x).", "y′ = 2/√(1 − 4x²)", ["y′ = 1/√(1 − 4x²)", "y′ = 2/(1 + 4x²)", "y′ = −2/√(1 − 4x²)"]),
+        question("If g(x) = x³ + x, what is (g⁻¹)′(2)?", "1/4", ["1/2", "2", "4"], "Hard"),
+      ]);
+      return withLevel([
+        question("Differentiate y = sin(x²).", "y′ = 2x cos(x²)", ["y′ = cos(x²)", "y′ = 2x sin(x²)", "y′ = cos(2x)"] , "Easy"),
+        question("Differentiate y = e^(3x² − 1).", "y′ = 6xe^(3x² − 1)", ["y′ = 3e^(3x² − 1)", "y′ = 6xe^(6x)", "y′ = e^(6x)"]),
+        question("If y = x⁴ − 2x³, what is y‴?", "24x − 12", ["12x² − 12x", "24x − 4", "24"], "Hard"),
+      ]);
+    }
+    if (unitNumber === 4) {
+      if (/Related Rates/i.test(topicTitle)) return withLevel([
+        question("A sphere’s radius increases at 2 cm/s. How fast is its volume increasing when r = 3 cm?", "72π cm³/s", ["18π cm³/s", "36π cm³/s", "108π cm³/s"], "Easy"),
+        question("A 10 ft ladder rests against a wall. Its base moves away at 2 ft/s. How fast is the top moving when the base is 6 ft from the wall?", "−1.5 ft/s", ["−2 ft/s", "−2.5 ft/s", "+1.5 ft/s"]),
+        question("Water enters a cone of height 12 m and radius 4 m at 3 m³/min. How fast is the depth changing when the water is 6 m deep?", "3/(4π) m/min", ["1/(12π) m/min", "1/(4π) m/min", "3/(2π) m/min"], "Hard"),
+        question("A spotlight 20 m from a straight wall rotates at 0.10 rad/s. When the beam makes an angle of π/4 with the perpendicular to the wall, how fast is the light spot moving along the wall?", "4.0 m/s", ["1.0 m/s", "2.0 m/s", "8.0 m/s"], "Hard"),
+      ]);
+      return withLevel([
+        question("A particle has position s(t) = t³ − 6t² + 9t. What is its velocity at t = 2?", "−3", ["0", "3", "9"], "Easy"),
+        question("Use linearization at x = 4 to approximate √4.1.", "2.025", ["2.005", "2.05", "2.10"]),
+        question("Evaluate lim x→0 (eˣ − 1)/x.", "1", ["0", "e", "Does not exist"], "Hard"),
+      ]);
+    }
+    if (unitNumber === 5) return withLevel([
+      question("For f(x) = x³ − 3x, where does f have a local maximum?", "x = −1", ["x = 0", "x = 1", "x = 3"], "Easy"),
+      question("For f(x) = x² on [1,3], what value c satisfies the Mean Value Theorem?", "c = 2", ["c = 1", "c = √3", "c = 3"]),
+      question("A rectangle has perimeter 40. What dimensions maximize its area?", "10 by 10", ["5 by 15", "8 by 12", "4 by 16"]),
+      question("For f(x) = x⁴ − 4x², where are the inflection points’ x-coordinates?", "x = ±√(2/3)", ["x = 0", "x = ±1", "x = ±√2"], "Hard"),
+    ]);
+    if (unitNumber === 6) {
+      if (/Integration by Parts/i.test(topicTitle)) return withLevel([
+        question("Evaluate ∫xeˣ dx.", "(x − 1)eˣ + C", ["xeˣ + C", "(x + 1)eˣ + C", "x²eˣ/2 + C"], "Hard", "BC"),
+        question("Evaluate ∫ln x dx.", "x ln x − x + C", ["x ln x + C", "(ln x)²/2 + C", "1/x + C"], "Hard", "BC"),
+        question("Which choice is best for u in ∫x² sin x dx?", "u = x²", ["u = sin x", "u = cos x", "u = x² sin x"], "Medium", "BC"),
+      ]);
+      if (/Partial Fractions|Improper/i.test(topicTitle)) return withLevel([
+        question("Decompose 1/[x(x+1)] into partial fractions.", "1/x − 1/(x+1)", ["1/x + 1/(x+1)", "−1/x + 1/(x+1)", "1/(x+1)"], "Hard", "BC"),
+        question("Does ∫₁^∞ 1/x² dx converge, and if so, to what value?", "It converges to 1", ["It converges to 0", "It converges to 2", "It diverges"], "Hard", "BC"),
+        question("Does ∫₁^∞ 1/x dx converge?", "No, it diverges", ["Yes, to 0", "Yes, to 1", "Yes, to ln 2"], "Hard", "BC"),
+      ]);
+      return withLevel([
+        question("Evaluate ∫₀² 3x² dx.", "8", ["4", "6", "12"], "Easy"),
+        question("Evaluate ∫2x cos(x²) dx.", "sin(x²) + C", ["2 sin(x²) + C", "cos(x²) + C", "x² sin(x²) + C"]),
+        question("Find d/dx [∫₁^(x²) ln(t) dt].", "2x ln(x²)", ["ln(x²)", "x² ln x", "2x/x²"]),
+        question("Use a right Riemann sum with 4 equal subintervals to approximate ∫₀² x² dx.", "3.75", ["1.75", "2.75", "4.00"], "Hard"),
+        question("Let F(x)=∫₀ˣ (t³−3t²+2)dt. At which x-value in (0,3) does F have a local maximum?", "x = 1", ["x = 0", "x = 2", "x = 3"], "Hard"),
+      ]);
+    }
+    if (unitNumber === 7) return withLevel([
+      question("Solve dy/dx = 3x² with y(0) = 2.", "y = x³ + 2", ["y = 3x + 2", "y = x³", "y = 3x² + 2"], "Easy"),
+      question("Solve dy/dx = 2xy with y(0) = 3.", "y = 3e^(x²)", ["y = 3e^(2x)", "y = e^(x²) + 2", "y = 3x²"]),
+      question("Use Euler’s method for y′ = x + y, y(0)=1, with two steps of size 0.5. Estimate y(1).", "2.5", ["2.0", "2.25", "2.75"], "Hard", "BC"),
+      question("For dP/dt = 0.1P(1 − P/1000), what is dP/dt when P = 200?", "16", ["8", "20", "80"], "Hard", "BC"),
+    ]);
+    if (unitNumber === 8) return withLevel([
+      question("What is the average value of f(x)=x² on [0,3]?", "3", ["1", "4.5", "9"], "Easy"),
+      question("Find the area enclosed by y=x and y=x² on [0,1].", "1/6", ["1/3", "1/2", "2/3"]),
+      question("The region under y=√x from x=0 to x=4 is revolved about the x-axis. What is the volume?", "8π", ["4π", "16π/3", "16π"]),
+      question("A particle has velocity v(t)=t²−4t+3. What is its displacement from t=0 to t=4?", "4/3", ["−4/3", "4", "20/3"], "Hard"),
+      question("The base of a solid is the region between y=x² and y=4. Cross sections perpendicular to the y-axis are squares. What integral gives the volume?", "∫₀⁴ 4y dy", ["∫₀² (4−x²)² dx", "∫₀⁴ (4−y²) dy", "∫₋₂² (4−x²) dx"], "Hard"),
+    ]);
+    if (unitNumber === 9) return withLevel([
+      question("For x=t²+1 and y=t³, what is dy/dx at t=2?", "3", ["3/2", "2", "6"], "Easy", "BC"),
+      question("For x=t²+1 and y=t³, what is d²y/dx² at t=2?", "3/8", ["3/4", "3/2", "6"], "Hard", "BC"),
+      question("A particle has x=3t and y=4t. What is its speed?", "5", ["1", "7", "12"], "Medium", "BC"),
+      question("Find the area inside r=2cos θ for −π/2≤θ≤π/2.", "π", ["π/2", "2π", "4π"], "Hard", "BC"),
+    ]);
+    return withLevel([
+      question("Evaluate the geometric series Σ from n=0 to ∞ of 3(1/2)ⁿ.", "6", ["3", "9/2", "∞"], "Easy", "BC"),
+      question("Does Σ 1/n^(3/2) converge?", "Yes, as a p-series with p>1", ["No, because its terms are positive", "No, by the nth-term test", "The test is inconclusive"], "Medium", "BC"),
+      question("For Σ n!/3ⁿ, what does the ratio test show?", "The series diverges", ["The series converges absolutely", "The series converges conditionally", "The ratio test is inconclusive"], "Hard", "BC"),
+      question("What is the third-degree Maclaurin polynomial for eˣ?", "1 + x + x²/2 + x³/6", ["1 + x + x² + x³", "x + x²/2 + x³/3", "1 + x²/2 + x⁴/24"], "Hard", "BC"),
+      question("For Σ[(x−2)/5]ⁿ, what is the interval of convergence?", "(−3,7)", ["[−3,7]", "(−5,5)", "(−∞,∞)"], "Hard", "BC"),
+      question("An alternating series satisfies |aₙ₊₁|<|aₙ| and |a₇|=0.004. What is the greatest guaranteed error when the sum is approximated through a₆?", "0.004", ["0.008", "0.024", "The error cannot be bounded"], "Hard", "BC"),
+    ]);
+  };
 })();

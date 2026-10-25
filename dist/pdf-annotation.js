@@ -106,13 +106,13 @@ function pointOnCanvas(event, canvas) {
 
 function wireAnnotationCanvas(canvas, pageNumber) {
   let current = null;
-  canvas.addEventListener("pointerdown", (event) => {
+    canvas.addEventListener("pointerdown", async (event) => {
     event.preventDefault();
     const point = pointOnCanvas(event, canvas);
     const displayScale = canvas.width / Math.max(1, canvas.getBoundingClientRect().width);
     snapshot();
     if (tool === "text") {
-      const text = window.prompt("Text to add", "");
+      const text = await window.AppDialog.prompt("Enter the text to place on this PDF.", "", { title: "Add PDF text", inputLabel: "Text", confirmLabel: "Add text" });
       if (text) pageItems(pageNumber).push({ type: "text", x: point.x, y: point.y, text, color: colorInput.value, size: Math.max(12, Number(sizeInput.value) * 4) * displayScale });
       drawAnnotations(canvas, pageNumber);
       saveAnnotations();
@@ -230,8 +230,8 @@ document.getElementById("pdf-annotation-undo")?.addEventListener("click", () => 
   saveAnnotations();
 });
 
-document.getElementById("pdf-annotation-clear")?.addEventListener("click", () => {
-  if (!window.confirm("Clear every annotation from this PDF?")) return;
+document.getElementById("pdf-annotation-clear")?.addEventListener("click", async () => {
+  if (!await window.AppDialog.confirm("Clear every annotation from this PDF?", { title: "Clear PDF annotations?", confirmLabel: "Clear annotations", danger: true })) return;
   snapshot();
   annotations = {};
   pagesHost.querySelectorAll(".pdf-page-annotation").forEach((canvas) => drawAnnotations(canvas, Number(canvas.dataset.pdfPage)));

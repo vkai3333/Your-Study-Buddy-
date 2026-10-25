@@ -3,10 +3,16 @@
   const emptyState = document.getElementById("document-table-empty");
   const widthControl = document.getElementById("document-table-border-width");
   const colorControl = document.getElementById("document-table-border-color");
+  const fillControl = document.getElementById("document-table-fill-color");
   if (!controls || !emptyState) return;
 
   let selectedTable = null;
   let selectedCell = null;
+
+  const cssColorToHex = (value, fallback = "#ffffff") => {
+    const parts = String(value || "").match(/\d+/g)?.slice(0, 3).map(Number);
+    return parts?.length === 3 ? `#${parts.map((part) => part.toString(16).padStart(2, "0")).join("")}` : fallback;
+  };
 
   const saveEditor = () => {
     const editor = selectedTable?.closest(".page-document-content");
@@ -27,6 +33,7 @@
       selectedCell = null;
     }
     const active = Boolean(selectedTable?.isConnected);
+    document.querySelectorAll("[data-active-table-cell]").forEach((cell) => cell.removeAttribute("data-active-table-cell"));
     controls.hidden = !active;
     emptyState.hidden = active;
     if (active) {
@@ -35,6 +42,10 @@
       widthControl.value = String(Math.min(6, Math.round(parseFloat(styles?.borderTopWidth) || 1)));
       const color = styles?.borderTopColor?.match(/\d+/g)?.slice(0, 3).map(Number);
       if (color?.length === 3) colorControl.value = `#${color.map((part) => part.toString(16).padStart(2, "0")).join("")}`;
+      if (selectedCell) {
+        selectedCell.dataset.activeTableCell = "true";
+        fillControl.value = cssColorToHex(getComputedStyle(selectedCell).backgroundColor);
+      }
     }
   };
 
@@ -56,6 +67,67 @@
   };
   widthControl.addEventListener("change", applyBorders);
   colorControl.addEventListener("input", applyBorders);
+  fillControl?.addEventListener("input", () => {
+    if (!selectedCell) return;
+    selectedCell.style.backgroundColor = fillControl.value;
+    saveEditor();
+  });
+
+  const mergeCellContent = (target, source) => {
+    const targetHasText = target.textContent.trim() || target.querySelector("img,table,ul,ol");
+    const sourceHasText = source.textContent.trim() || source.querySelector("img,table,ul,ol");
+    if (targetHasText && sourceHasText) target.appendChild(document.createElement("br"));
+    while (source.firstChild) target.appendChild(source.firstChild);
+    if (!target.childNodes.length) target.appendChild(document.createElement("br"));
+  };
+
+  document.getElementById("document-table-merge-right")?.addEventListener("click", () => {
+    if (!selectedCell) return;
+    const neighbor = selectedCell.parentElement?.cells[selectedCell.cellIndex + 1];
+    if (!neighbor || neighbor.rowSpan !== selectedCell.rowSpan) return;
+    mergeCellContent(selectedCell, neighbor);
+    selectedCell.colSpan += neighbor.colSpan || 1;
+    neighbor.remove();
+    saveEditor();
+    readSelection();
+  });
+
+  document.getElementById("document-table-merge-down")?.addEventListener("click", () => {
+    if (!selectedTable || !selectedCell) return;
+    const row = selectedCell.parentElement;
+    const nextRow = selectedTable.rows[row.rowIndex + (selectedCell.rowSpan || 1)];
+    const neighbor = nextRow?.cells[selectedCell.cellIndex];
+    if (!neighbor || neighbor.colSpan !== selectedCell.colSpan) return;
+    mergeCellContent(selectedCell, neighbor);
+    selectedCell.rowSpan += neighbor.rowSpan || 1;
+    neighbor.remove();
+    saveEditor();
+    readSelection();
+  });
+
+  document.getElementById("document-table-split-cell")?.addEventListener("click", () => {
+    if (!selectedTable || !selectedCell) return;
+    const extraColumns = Math.max(0, selectedCell.colSpan - 1);
+    const extraRows = Math.max(0, selectedCell.rowSpan - 1);
+    const columnIndex = selectedCell.cellIndex;
+    const rowIndex = selectedCell.parentElement.rowIndex;
+    selectedCell.colSpan = 1;
+    selectedCell.rowSpan = 1;
+    for (let index = 0; index < extraColumns; index += 1) {
+      const cell = selectedCell.parentElement.insertCell(columnIndex + 1 + index);
+      cell.appendChild(document.createElement("br"));
+    }
+    for (let offset = 1; offset <= extraRows; offset += 1) {
+      const row = selectedTable.rows[rowIndex + offset];
+      if (!row) continue;
+      for (let index = 0; index <= extraColumns; index += 1) {
+        const cell = row.insertCell(Math.min(columnIndex + index, row.cells.length));
+        cell.appendChild(document.createElement("br"));
+      }
+    }
+    saveEditor();
+    readSelection();
+  });
 
   document.getElementById("document-table-add-row")?.addEventListener("click", () => {
     if (!selectedTable) return;
@@ -94,8 +166,8 @@
     saveEditor();
   });
 
-  document.getElementById("document-table-delete")?.addEventListener("click", () => {
-    if (!selectedTable || !window.confirm("Delete this table?")) return;
+  document.getElementById("document-table-delete")?.addEventListener("click", async () => {
+    if (!selectedTable || !await window.AppDialog.confirm("Delete this table?", { title: "Delete table?", confirmLabel: "Delete table", danger: true })) return;
     const editor = selectedTable.closest(".page-document-content");
     selectedTable.remove();
     selectedTable = null;

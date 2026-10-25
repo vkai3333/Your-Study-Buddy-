@@ -195,8 +195,10 @@ The macOS app bundle is written to `build/Your Study Buddy.app` and ad-hoc signe
 
 Personal study sets, notes, backups, and review progress remain on the user's computer unless the user explicitly exports or moves them. Core studying, scheduling, note editing, and generation work offline. Downloading releases and opening externally linked references or media requires an internet connection.
 
+Public policies are available in the application and as standalone pages: [Privacy Policy](dist/privacy.html), [Terms of Use](dist/terms.html), and [Community Guidelines](dist/community-guidelines.html).
+
 ## License
 
-The application code is released under the ISC license. Third-party libraries, referenced source material, and externally sourced media remain subject to their respective licenses or terms.
+The application code is released under the [ISC license](LICENSE). Third-party libraries, referenced source material, and externally sourced media remain subject to their respective licenses or terms.
 
 **Your Study Buddy — one place to write, generate, organize, and review.**

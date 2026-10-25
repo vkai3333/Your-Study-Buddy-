@@ -142,7 +142,15 @@ Malate–aspartate shuttle|Transfers cytosolic NADH reducing equivalents into mi
 Glycerol-3-phosphate shuttle|Transfers cytosolic NADH electrons to mitochondrial FAD, entering the respiratory chain at coenzyme Q with lower ATP yield.`;
   metabolismRows.trim().split("\n").forEach((line) => {
     const [front, back] = line.split("|");
-    const cycleImage = /TCA|citric|electron transport|ATP synthase|beta oxidation|ketogenesis/i.test(front) ? { backImage: "./science-diagrams/biology-mitochondrion.svg", imageCredit: "Kelvinsong / Wikimedia Commons / CC BY-SA 3.0" } : {};
+    const cycleImage = /glycolysis|hexokinase|phosphofructokinase|pyruvate kinase/i.test(front)
+      ? { backImage: "./science-diagrams/biochemistry-glycolysis.svg", imageCredit: "Yikrazuul / Wikimedia Commons / public domain" }
+      : /TCA|citric acid cycle|citrate synthase|aconitase|isocitrate dehydrogenase|succinyl-CoA synthetase|fumarase|malate dehydrogenase/i.test(front)
+        ? { backImage: "./science-diagrams/biochemistry-citric-acid-cycle.svg", imageCredit: "Choij / Wikimedia Commons / public domain" }
+        : /electron transport chain|ATP synthase|oxidative phosphorylation/i.test(front)
+          ? { backImage: "./science-diagrams/biochemistry-electron-transport-chain.svg", imageCredit: "T-Fork / Wikimedia Commons / CC0 1.0" }
+          : /beta oxidation|ketogenesis/i.test(front)
+            ? { backImage: "./science-diagrams/biology-mitochondrion.svg", imageCredit: "Kelvinsong / Wikimedia Commons / CC BY-SA 3.0" }
+            : {};
     upsert(2, front, back, cycleImage);
   });
 

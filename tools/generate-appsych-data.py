@@ -82,6 +82,24 @@ TERM_REPAIRS = {
     "client centered therapy": "client-centered therapy",
 }
 
+# Definitions whose one-digit facts are indistinguishable from the source
+# PDF's injected one-digit layout markers. Keeping the reviewed wording here
+# makes regeneration deterministic and prevents facts from disappearing.
+DEFINITION_OVERRIDES = {
+    "night terrors": "A sleep disorder involving high arousal and an appearance of being terrified. Unlike nightmares, night terrors usually occur during deep NREM-3 sleep and are seldom remembered.",
+    "sensorimotor stage": "In Piaget's theory, the stage from birth to about 2 years of age during which infants understand the world mainly through sensory impressions and motor activities.",
+    "iconic vs. echoic memory": "Iconic memory is a momentary sensory memory of visual stimuli lasting a few tenths of a second. Echoic memory is a momentary sensory memory of auditory stimuli that can last about 3 to 4 seconds.",
+    "fetus": "The developing human organism from about 9 weeks after conception to birth.",
+    "preoperational stage": "In Piaget's theory, the stage from about ages 2 to 6 or 7 during which children learn to use language but do not yet understand concrete logical operations.",
+    "babbling stage": "The stage of speech development beginning at about 4 months when an infant spontaneously produces speech-like sounds that are initially unrelated to the household language.",
+    "concrete operational stage": "In Piaget's theory, the stage from about ages 6 or 7 to 11 during which children develop mental operations that support logical thinking about concrete events.",
+    "embryo": "The developing human organism from about 2 weeks after fertilization through the second month.",
+    "one-word, two-word, and telegraphic speech": "The one-word stage typically spans about ages 1 to 2 and uses single words. The two-word stage begins around age 2 and combines words. Telegraphic speech uses mostly nouns and verbs in brief, sentence-like sequences.",
+    "stranger anxiety": "The fear of unfamiliar people that infants commonly begin displaying at about 8 months of age.",
+    "attention-deficit hyperactivity disorder (adhd)": "A neurodevelopmental disorder involving persistent inattention and/or hyperactivity-impulsivity, with several symptoms present before age 12 and impairment in more than one setting.",
+    "panic disorder": "A disorder involving recurrent, unexpected panic attacks: sudden episodes of intense fear that peak within minutes and can include chest pain, choking sensations, or other frightening symptoms.",
+}
+
 SKIP_TERMS = {
     "sq3r", "myer's psychology for ap* vocabulary [all 14 units]",
     "donald meichenbaum", "extrasensory perception", "near-death experience",
@@ -248,23 +266,41 @@ def clean_line_artifacts(text):
         line = re.sub(r"\s+\d\s*$", "", line.rstrip())
         lines.append(line)
     text = re.sub(r"\s+", " ", " ".join(lines)).strip()
+    # The source PDF inserts one-digit column/page markers between extracted
+    # words. Remove those markers here; meaningful one-digit facts are restored
+    # explicitly below so they cannot be confused with layout debris.
+    text = re.sub(r"(?:\s+[1-9]\.)+\s*$", "", text)
     text = re.sub(r"(?<=\D)\s+[1-9](?=\s|[.,])", " ", text)
     text = re.sub(r"\s+[1-9]\.\s*$", "", text)
     return text
 
 
 def clean_definition(text):
-    text = clean_line_artifacts(text)
+    text = re.sub(r"\s+", " ", clean_line_artifacts(text))
     replacements = {
         "resposne": "response", "fivers": "fibers", "commnicating": "communicating",
         "expendenture": "expenditure", "occurrin": "occurring", "to things": "two things",
         "body'd": "body's", "fo old": "of old", "o things": "of things", "math,": "match,",
         "the close the object": "the closer the object", "Jonson": "Johnson", "combing words": "combining words",
         "twof things": "two things", "occurringg": "occurring", "The slop of": "The slope of",
+        "night terrors occur during Stage sleep": "night terrors occur during deep NREM-3 sleep",
+        "from birth to about years of age": "from birth to about 2 years of age",
+        "recalled within or seconds": "recalled within 3 or 4 seconds",
+        "from weeks after conception to birth": "from 9 weeks after conception to birth",
+        "from about to or years of age": "from about 2 to 6 or 7 years of age",
+        "Beginning at about months": "Beginning at about 4 months",
+        "from about or to 11 years of age": "from about 6 or 7 to 11 years of age",
+        "from about weeks after fertilization": "from about 2 weeks after fertilization",
+        "from about age to ,": "from about age 1 to 2,",
+        "Beginning about age ,": "Beginning about age 2,",
+        "beginning by about months of age": "beginning by about 8 months of age",
+        "marked by the appearance by age of": "marked by symptoms that begin before age 12, including",
+        "marked by unpredictable minutes-long episodes": "marked by sudden episodes lasting several minutes",
     }
     for wrong, right in replacements.items():
         text = text.replace(wrong, right)
-    text = text.strip(" -.;")
+    text = re.sub(r"\s+[1-9]\.\s*$", "", text)
+    text = re.sub(r"\s+", " ", text).strip(" -.;")
     if text:
         text = text[0].upper() + text[1:]
     if text and text[-1] not in ".!?":
@@ -333,6 +369,18 @@ def combine_related_cards(items, unit):
     return [item for item in items if item["term"].casefold() not in consumed] + combined
 
 
+def finalized_definition(term, definition):
+    override = DEFINITION_OVERRIDES.get(term.casefold())
+    if override:
+        return override
+    # Remove source column/page markers that survived inside combined cards.
+    definition = re.sub(r"\s+[1-9]\.(?=\s|$)", "", definition)
+    definition = re.sub(r"\s+", " ", definition).strip()
+    if definition and definition[-1] not in ".!?":
+        definition += "."
+    return definition
+
+
 def build_decks(entries):
     unique = {}
     for entry in entries:
@@ -362,7 +410,7 @@ def build_decks(entries):
             "sourceUrl": SOURCE_URL,
             "cedTitle": CED_TITLE,
             "cedUrl": CED_URL,
-            "cards": [{"id": f"{deck_id}-c{index}", "front": item["term"], "back": item["definition"], "sourceNumber": item["number"]} for index, item in enumerate(items, 1)],
+            "cards": [{"id": f"{deck_id}-c{index}", "front": item["term"], "back": finalized_definition(item["term"], item["definition"]), "sourceNumber": item["number"]} for index, item in enumerate(items, 1)],
             "questions": [],
             "feynmanPrompts": [{"id": f"{deck_id}-f{index}", "prompt": prompt} for index, prompt in enumerate(FEYNMAN_TOPICS[unit], 1)],
         })
@@ -376,6 +424,8 @@ def validate(decks):
     assert all(len(card["back"]) >= 35 and card["back"][-1] in ".!?" for card in cards)
     assert all("?" not in card["front"] for card in cards)
     assert all(not re.search(r"\b(?:unit|part)\s*\d", card["front"], re.I) for card in cards)
+    assert all(not re.search(r"\b(?:Stage|age|about|within|from)\s{2,}", card["back"], re.I) for card in cards)
+    assert all(not re.search(r"\s[1-9]\.(?:\s|$)", card["back"]) for card in cards)
 
 
 def main():

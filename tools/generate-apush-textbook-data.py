@@ -329,6 +329,7 @@ TERM_REPAIRS = {
     "cal i fornia gold rush (beginning in 1849)": "California gold rush (beginning in 1849)",
     "of war hawks (1811–1812)": "war hawks (1811–1812)",
     "dred scott v. stanford (1857)": "Dred Scott v. Sandford (1857)",
+    "shays’s rebellion (1786)": "Shays' Rebellion (1786–1787)",
 }
 
 # Remove glossary minutiae that test isolated names rather than the APUSH

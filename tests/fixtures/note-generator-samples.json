@@ -1,0 +1,42 @@
+[
+  {
+    "id": "openstax-glycolysis",
+    "source": "https://openstax.org/books/biology-2e/pages/7-2-glycolysis",
+    "notes": "## Glycolysis\nGlycolysis is the first stage of glucose breakdown and occurs in the cytosol. One six-carbon glucose becomes two three-carbon pyruvate molecules.\n### Energy investment\n- Two ATP are invested during the early reactions.\n### Energy payoff\n- Four ATP are produced later, for a net gain of two ATP.\n- Two NADH are also produced per glucose.\n### Net products\n- Two pyruvate, two net ATP, and two NADH are produced per glucose."
+  },
+  {
+    "id": "openstax-memory",
+    "source": "https://openstax.org/books/psychology-2e/pages/8-1-how-memory-functions",
+    "notes": "## How Memory Functions\nMemory uses three basic functions: encoding, storage, and retrieval.\n### Encoding\nEncoding inputs and organizes information. Automatic processing needs little conscious effort, while effortful processing requires attention.\n### Storage\nStorage retains encoded information. In the Atkinson-Shiffrin model, attended information moves from sensory memory to short-term memory and rehearsal can help it reach long-term memory.\n### Retrieval\nRetrieval returns stored information to conscious awareness."
+  },
+  {
+    "id": "openstax-related-rates",
+    "source": "https://openstax.org/books/calculus-volume-1/pages/4-1-related-rates",
+    "notes": "## Related Rates\nRelated-rates problems connect two or more quantities that change with time.\n### Solving a Related-Rates Problem\n1. Define the changing variables and known rates.\n2. Write an equation relating the quantities.\n3. Differentiate both sides with respect to time.\n4. Substitute values only after differentiating, then solve for the unknown rate. Substituting too soon can make a changing quantity behave like a constant.\n### Balloon example\nA spherical balloon is filled with air at a rate of 2 cm³/s. How fast is its radius increasing when the radius is 3 cm? Use V = (4/3)πr³."
+  },
+  {
+    "id": "openstax-reaction-yields",
+    "source": "https://openstax.org/books/chemistry-2e/pages/4-4-reaction-yields",
+    "notes": "## Reaction Yields\n### Limiting and excess reactants\nThe limiting reactant is consumed first and determines the maximum amount of product. An excess reactant remains after the limiting reactant is used up. One way to identify the limiting reactant is to calculate how much product each reactant could produce; the reactant that makes less product is limiting.\n### Hydrogen chloride example\nH₂ + Cl₂ → 2HCl. Starting with 3 mol H₂ and 2 mol Cl₂ produces at most 4 mol HCl. Cl₂ is limiting, H₂ is excess, and 1 mol H₂ remains.\n### Yield\nTheoretical yield is the maximum product predicted from stoichiometry. Actual yield is the amount collected in an experiment. Percent yield = (actual yield / theoretical yield) × 100%."
+  },
+  {
+    "id": "openstax-hypothesis-testing",
+    "source": "https://openstax.org/books/introductory-statistics-2e/pages/9-introduction",
+    "notes": "## Hypothesis Testing\nA hypothesis test uses sample evidence to evaluate a claim about a population parameter.\n### Hypotheses\nThe null hypothesis H₀ represents the baseline claim. The alternative hypothesis Hₐ represents the competing claim supported when evidence against H₀ is strong.\n### Decision process\n1. State H₀ and Hₐ.\n2. Choose a significance level α.\n3. Calculate an appropriate test statistic and p-value from the sample.\n4. Reject H₀ when p ≤ α; otherwise fail to reject H₀.\n5. State the conclusion in the context of the original claim.\n### Errors\nA Type I error rejects a true null hypothesis. A Type II error fails to reject a false null hypothesis."
+  },
+  {
+    "id": "openstax-haitian-revolution",
+    "source": "https://openstax.org/books/world-history-volume-2/pages/7-3-revolutions-america-france-and-haiti",
+    "notes": "## Haitian Revolution\n### Background\nSaint-Domingue was a profitable French sugar and coffee colony whose economy depended on enslaved labor and severe racial inequality.\n### Uprising and emancipation\nThe uprising began in 1791 and spread from northern plantations. France abolished slavery in its colonies in 1794 while fighting Britain and Spain.\n### Toussaint Louverture\nToussaint Louverture became the revolution's leading general. He ended slavery across Hispaniola and promoted a 1801 constitution, but Napoleon's forces arrested him in 1802 and deported him to France.\n### Independence and significance\nHaitian forces defeated the French, and Haiti declared independence in 1804. The revolution overthrew colonial rule and created an independent nation led by formerly enslaved people."
+  },
+  {
+    "id": "gutenberg-macbeth",
+    "source": "https://www.gutenberg.org/ebooks/1533",
+    "notes": "## Macbeth\nAuthor: William Shakespeare\nGenre: tragedy\nSetting: medieval Scotland\n### Main Characters\n- Macbeth: A celebrated soldier whose ambition and choices turn him into a tyrant.\n- Lady Macbeth: Macbeth's wife, who urges the first murder but later collapses under guilt.\n- Banquo: Macbeth's friend and a contrast to him because Banquo hears prophecy without murdering for power.\n- Macduff: A Scottish noble who opposes Macbeth and ultimately defeats him.\n### Major Themes\n- Ambition: Desire for power becomes destructive when separated from moral restraint.\n- Guilt: Violence produces psychological consequences that neither Macbeth nor Lady Macbeth can control.\n- Appearance versus reality: Prophecies and deceptive behavior make dangerous ideas seem trustworthy.\n### Central Conflict\nMacbeth vs. moral order: Macbeth tries to secure power through violence while resistance grows against his rule.\n### Resolution\nMacduff kills Macbeth, Malcolm becomes king, and political order begins to return."
+  },
+  {
+    "id": "openstax-supply-demand",
+    "source": "https://openstax.org/books/principles-economics-3e/pages/3-key-concepts-and-summary",
+    "notes": "## Supply, Demand, and Market Equilibrium\n### Demand\nThe law of demand says that, other things equal, a higher price usually lowers quantity demanded. Demand refers to the full price-quantity relationship, while quantity demanded is one point on a demand curve.\n### Supply\nThe law of supply says that, other things equal, a higher price usually raises quantity supplied. Supply refers to the full relationship, while quantity supplied is one point on the curve.\n### Equilibrium\nMarket equilibrium occurs where quantity demanded equals quantity supplied. A price above equilibrium creates a surplus and downward pressure on price. A price below equilibrium creates a shortage and upward pressure on price.\n### Curve shifts\nChanges in income, tastes, related-goods prices, population, or expectations can shift demand. Changes in input costs, technology, natural conditions, taxes, or subsidies can shift supply."
+  }
+]

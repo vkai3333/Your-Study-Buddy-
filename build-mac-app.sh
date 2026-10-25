@@ -19,6 +19,7 @@ cleanup() {
 trap cleanup EXIT
 
 "$SCRIPT_DIR/node_modules/.bin/esbuild" "$SCRIPT_DIR/dist/pdf-annotation.js" --bundle --format=iife --platform=browser --target=safari16 --minify --outfile="$SCRIPT_DIR/dist/pdf-annotation.bundle.js"
+node "$SCRIPT_DIR/tools/build-browser-bundle.mjs"
 
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR/Web" "$ICONSET_DIR" "$MODULE_CACHE"
 
@@ -44,6 +45,11 @@ done
 /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string YourStudyBuddy.png" "$CONTENTS_DIR/Info.plist" 2>/dev/null || true
 /bin/cp "$SCRIPT_DIR/dist/index.html" "$RESOURCES_DIR/Web/index.html"
 /bin/cp "$SCRIPT_DIR/dist/styles.css" "$RESOURCES_DIR/Web/styles.css"
+/bin/cp "$SCRIPT_DIR/dist/legal.css" "$RESOURCES_DIR/Web/legal.css"
+/bin/cp "$SCRIPT_DIR/dist/privacy.html" "$RESOURCES_DIR/Web/privacy.html"
+/bin/cp "$SCRIPT_DIR/dist/terms.html" "$RESOURCES_DIR/Web/terms.html"
+/bin/cp "$SCRIPT_DIR/dist/community-guidelines.html" "$RESOURCES_DIR/Web/community-guidelines.html"
+/bin/cp "$SCRIPT_DIR/LICENSE" "$RESOURCES_DIR/LICENSE.txt"
 /bin/cp "$SCRIPT_DIR/dist/your-study-buddy-icon.png" "$RESOURCES_DIR/Web/your-study-buddy-icon.png"
 /bin/cp "$SCRIPT_DIR/dist/vocabulary-data.js" "$RESOURCES_DIR/Web/vocabulary-data.js"
 /bin/cp "$SCRIPT_DIR/dist/vanders-data.js" "$RESOURCES_DIR/Web/vanders-data.js"
@@ -74,7 +80,9 @@ done
 /bin/cp "$SCRIPT_DIR/dist/apstats-data.js" "$RESOURCES_DIR/Web/apstats-data.js"
 /bin/cp -R "$SCRIPT_DIR/dist/ap-statistics-images" "$RESOURCES_DIR/Web/ap-statistics-images"
 /bin/cp "$SCRIPT_DIR/dist/apchem-data.js" "$RESOURCES_DIR/Web/apchem-data.js"
+/bin/cp "$SCRIPT_DIR/dist/apchem-questions.js" "$RESOURCES_DIR/Web/apchem-questions.js"
 /bin/cp -R "$SCRIPT_DIR/dist/ap-chemistry-images" "$RESOURCES_DIR/Web/ap-chemistry-images"
+/bin/cp "$SCRIPT_DIR/dist/ap-physics-data.js" "$RESOURCES_DIR/Web/ap-physics-data.js"
 /bin/cp "$SCRIPT_DIR/dist/apcalculus-data.js" "$RESOURCES_DIR/Web/apcalculus-data.js"
 /bin/cp "$SCRIPT_DIR/dist/apprecalculus-data.js" "$RESOURCES_DIR/Web/apprecalculus-data.js"
 /bin/cp "$SCRIPT_DIR/dist/apcomparative-government-data.js" "$RESOURCES_DIR/Web/apcomparative-government-data.js"
@@ -97,9 +105,12 @@ done
 /bin/cp "$SCRIPT_DIR/dist/ap-cybersecurity-data.js" "$RESOURCES_DIR/Web/ap-cybersecurity-data.js"
 /bin/cp "$SCRIPT_DIR/dist/ap-business-personal-finance-data.js" "$RESOURCES_DIR/Web/ap-business-personal-finance-data.js"
 /bin/cp "$SCRIPT_DIR/dist/ap-new-course-expansions.js" "$RESOURCES_DIR/Web/ap-new-course-expansions.js"
+/bin/cp "$SCRIPT_DIR/dist/ap-ced-topic-data.js" "$RESOURCES_DIR/Web/ap-ced-topic-data.js"
+/bin/cp "$SCRIPT_DIR/dist/exam-practice-data.js" "$RESOURCES_DIR/Web/exam-practice-data.js"
 /bin/cp "$SCRIPT_DIR/dist/formula-enrichments.js" "$RESOURCES_DIR/Web/formula-enrichments.js"
 /bin/cp "$SCRIPT_DIR/dist/geography-locations-data.js" "$RESOURCES_DIR/Web/geography-locations-data.js"
 /bin/cp "$SCRIPT_DIR/dist/us-civics-data.js" "$RESOURCES_DIR/Web/us-civics-data.js"
+/bin/cp "$SCRIPT_DIR/dist/community-mini-decks-data.js" "$RESOURCES_DIR/Web/community-mini-decks-data.js"
 /bin/mkdir -p "$RESOURCES_DIR/Web/assets"
 /bin/cp -R "$SCRIPT_DIR/dist/assets/geography" "$RESOURCES_DIR/Web/assets/geography"
 /bin/cp -R "$SCRIPT_DIR/dist/assets/us-presidents" "$RESOURCES_DIR/Web/assets/us-presidents"
@@ -110,6 +121,9 @@ done
 /bin/cp "$SCRIPT_DIR/dist/vendor/pdf.mjs" "$RESOURCES_DIR/Web/vendor/pdf.mjs"
 /bin/cp "$SCRIPT_DIR/dist/vendor/pdf.worker.mjs" "$RESOURCES_DIR/Web/vendor/pdf.worker.mjs"
 /bin/cp "$SCRIPT_DIR/dist/anki-selection-storage.js" "$RESOURCES_DIR/Web/anki-selection-storage.js"
+/bin/cp "$SCRIPT_DIR/dist/account-sync.js" "$RESOURCES_DIR/Web/account-sync.js"
+/bin/cp "$SCRIPT_DIR/dist/interface-language.js" "$RESOURCES_DIR/Web/interface-language.js"
+/bin/cp "$SCRIPT_DIR/dist/performance-bootstrap.js" "$RESOURCES_DIR/Web/performance-bootstrap.js"
 /bin/cp "$SCRIPT_DIR/dist/app.js" "$RESOURCES_DIR/Web/app.js"
 /bin/cp "$SCRIPT_DIR/dist/fullscreen.js" "$RESOURCES_DIR/Web/fullscreen.js"
 /bin/cp "$SCRIPT_DIR/dist/table-editing.js" "$RESOURCES_DIR/Web/table-editing.js"
@@ -117,6 +131,7 @@ done
 /bin/cp "$SCRIPT_DIR/dist/pdf-annotation.js" "$RESOURCES_DIR/Web/pdf-annotation.js"
 /bin/cp "$SCRIPT_DIR/dist/pdf-annotation.bundle.js" "$RESOURCES_DIR/Web/pdf-annotation.bundle.js"
 /bin/cp "$SCRIPT_DIR/dist/birthday-easter-egg.js" "$RESOURCES_DIR/Web/birthday-easter-egg.js"
+/bin/cp "$SCRIPT_DIR/dist/app.bundle.js" "$RESOURCES_DIR/Web/app.bundle.js"
 /usr/bin/codesign --force --deep --sign - "$APP_DIR"
 
 if [[ -d "$FINAL_APP" ]]; then

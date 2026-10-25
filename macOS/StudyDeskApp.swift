@@ -36,10 +36,10 @@ private final class StudyWebView: WKWebView {
 
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
-        // Only the narrow header at the top moves the window. Keeping the rest
+        // Only the narrow transparent strip at the top moves the window. Keeping the rest
         // of the interface outside this strip prevents accidental dragging and
         // allows normal text selection everywhere else.
-        if point.y >= bounds.height - 50 {
+        if point.y >= bounds.height - 24 {
             window?.performDrag(with: event)
             return
         }
@@ -195,7 +195,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
                     self.callJavaScript("receiveAnkiPackageImport", payload: try self.readAnkiPackage(at: temporaryURL).merging(["name": name]) { _, new in new }, in: webView)
                 } else {
                     let text = fileExtension == "pdf" ? try self.readPDF(at: temporaryURL) : try self.readPowerPoint(at: temporaryURL)
-                    self.callJavaScript(documentResultHandler, payload: ["name": name, "extension": fileExtension, "text": text], in: webView)
+                    var result: [String: Any] = ["name": name, "extension": fileExtension, "text": text]
+                    if fileExtension == "pptx" { result["data"] = "data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,\(data.base64EncodedString())" }
+                    self.callJavaScript(documentResultHandler, payload: result, in: webView)
                 }
             } catch { self.callJavaScript(fileExtension == "apkg" ? "receiveAnkiPackageImportError" : documentErrorHandler, payload: error.localizedDescription, in: webView) }
         }
@@ -231,7 +233,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
                     } else {
                         text = try String(contentsOf: url, encoding: .utf8)
                     }
-                    self.callJavaScript("receiveNotebookDocumentImport", payload: ["name": url.lastPathComponent, "extension": fileExtension, "text": text], in: webView)
+                    var result: [String: Any] = ["name": url.lastPathComponent, "extension": fileExtension, "text": text]
+                    if fileExtension == "pptx" {
+                        let sourceData = try Data(contentsOf: url)
+                        result["data"] = "data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,\(sourceData.base64EncodedString())"
+                    }
+                    self.callJavaScript("receiveNotebookDocumentImport", payload: result, in: webView)
                 } catch {
                     self.callJavaScript("receiveNotebookDocumentImportError", payload: error.localizedDescription, in: webView)
                 }
@@ -272,7 +279,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
     }
 
     private func exportNote(_ payload: [String: Any]) {
-        let allowedExtensions = ["png", "html", "txt", "pdf"]
+        let allowedExtensions = ["png", "html", "txt", "pdf", "pptx", "ysb"]
         let requestedExtension = (payload["extension"] as? String)?.lowercased() ?? "png"
         let fileExtension = allowedExtensions.contains(requestedExtension) ? requestedExtension : "png"
         let rawName = (payload["name"] as? String) ?? "Note"
@@ -690,13 +697,12 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDe
             return a < b
         }
         guard !slides.isEmpty else { throw PackageImportFailure(message: "No readable slides were found in this PowerPoint.") }
-        var extracted = try slides.compactMap { slide -> String? in
+        let extracted = try slides.enumerated().map { index, slide -> String in
             let data = try runProcess("/usr/bin/unzip", arguments: ["-p", url.path, slide])
             let xml = String(data: data, encoding: .utf8) ?? ""
             let result = try powerpointSlideText(xml)
-            return result.isEmpty ? nil : result
+            return result.isEmpty ? "## Slide \(index + 1)" : result
         }
-        if let start = extracted.firstIndex(where: { $0.range(of: #"^##\s+(?:unit|chapter|topic|module)\s+\d+\b"#, options: [.regularExpression, .caseInsensitive]) != nil }), start >= 3 { extracted = Array(extracted[start...]) }
         guard !extracted.isEmpty else { throw PackageImportFailure(message: "No usable study text was found in this PowerPoint.") }
         return extracted.joined(separator: "\n\n")
     }
