@@ -60,7 +60,7 @@
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",
     "@electron-forge/maker-squirrel": "^8.0.1",
-    "electron": "^44.7.0",
+    "electron": "^44.9.3",
     "esbuild": "^0.28.2"
   },
   "dependencies": {
@@ -68,6 +68,7 @@
     "fzstd": "^0.1.1",
     "pdfjs-dist": "^5.4.296",
     "sql.js": "^1.14.2",
-    "ts-fsrs": "^5.4.2"
+    "ts-fsrs": "^5.4.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

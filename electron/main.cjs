@@ -7,6 +7,14 @@ const initSqlJs = require("sql.js");
 const { decompress } = require("fzstd");
 
 const RELEASES_API = "https://api.github.com/repos/vkai3333/Your-Study-Buddy-/releases?per_page=20";
+const MAX_SPREADSHEET_FILE_BYTES = 15 * 1024 * 1024;
+const MAX_SPREADSHEET_CELLS = 100000;
+
+function limitedWorksheetRows(XLSX, sheet) {
+  const populatedCells = Object.keys(sheet || {}).filter((key) => key[0] !== "!");
+  if (populatedCells.length > MAX_SPREADSHEET_CELLS) throw new Error("This spreadsheet has more than 100,000 populated cells. Split it into smaller files before importing.");
+  return XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "", blankrows: false });
+}
 
 function versionParts(value) {
   return String(value || "").replace(/^v/i, "").split("-")[0].split(".").map((part) => Number.parseInt(part, 10) || 0).slice(0, 3);
@@ -93,7 +101,7 @@ async function chooseStudyFile(window) {
     buttonLabel: "Import",
     properties: ["openFile"],
     filters: [
-      { name: "Study files", extensions: ["apkg", "pdf", "pptx", "txt", "md", "csv", "tsv"] },
+      { name: "Study files", extensions: ["apkg", "xlsx", "xls", "csv", "tsv", "pdf", "pptx", "txt", "md"] },
       { name: "All files", extensions: ["*"] },
     ],
   });
@@ -124,10 +132,20 @@ async function readStudyFile(filePath) {
     const slides = readPowerPointSlides(filePath);
     return { kind: "document", name: path.basename(filePath), extension, slides, text: slides.join("\n\n"), data: `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${fs.readFileSync(filePath).toString("base64")}` };
   }
+  if (["xlsx", "xls"].includes(extension)) {
+    if (fs.statSync(filePath).size > MAX_SPREADSHEET_FILE_BYTES) throw new Error("This spreadsheet is larger than 15 MB. Split it into smaller files before importing.");
+    const XLSX = require("xlsx");
+    const workbook = XLSX.readFile(filePath, { cellDates: false, cellText: true });
+    const sheets = workbook.SheetNames.map((name) => ({
+      name,
+      rows: limitedWorksheetRows(XLSX, workbook.Sheets[name]),
+    }));
+    return { kind: "spreadsheet", name: path.basename(filePath), extension, sheets };
+  }
   if (["txt", "md", "csv", "tsv"].includes(extension)) {
     return { kind: "text", name: path.basename(filePath), extension, text: fs.readFileSync(filePath, "utf8") };
   }
-  throw new Error("Choose an APKG, PDF, PPTX, TXT, Markdown, CSV, or TSV file.");
+  throw new Error("Choose an APKG, XLSX, XLS, CSV, TSV, PDF, PPTX, TXT, or Markdown file.");
 }
 
 async function readPdfText(filePath) {

@@ -1290,11 +1290,11 @@
 		</data>
 		<key>Resources/Web/app.bundle.js</key>
 		<data>
-		Cb1JOSPDKsn519KSb/R1oYZPwCE=
+		Lq23+Yqqp0Ns5Cw4fbn/Lx9QEYU=
 		</data>
 		<key>Resources/Web/app.js</key>
 		<data>
-		5bnog+BoM2osueCvs+9xQWppIHE=
+		Nm/bjO+4vgXwNXk7AM+qeDfjxio=
 		</data>
 		<key>Resources/Web/apprecalculus-data.js</key>
 		<data>
@@ -3104,6 +3104,10 @@
 		<data>
 		6jg7PNRHaEnuYM/4HgZ6wRJws3o=
 		</data>
+		<key>Resources/Web/assets/geography/outlines/territory-fallback.svg</key>
+		<data>
+		RNmkNdXNeY4kbVYwXT6J3d4pex4=
+		</data>
 		<key>Resources/Web/assets/geography/outlines/tf.svg</key>
 		<data>
 		EnMBq2rUYlOvYeI8XCMJPjraebM=
@@ -3834,7 +3838,7 @@
 		</data>
 		<key>Resources/Web/community-mini-decks-data.js</key>
 		<data>
-		1TM4h+XO8+Qjd7rVYvCgIOnP0IY=
+		Kaz5bLtjfdfaaw7mbdc71U8JQhM=
 		</data>
 		<key>Resources/Web/exam-practice-data.js</key>
 		<data>
@@ -4010,11 +4014,11 @@
 		</data>
 		<key>Resources/Web/index.html</key>
 		<data>
-		Fj7cXsUt9Qnmc+jiSBjgMCDkpm0=
+		b3ztPw7YSyokY4JHEX4qXa1OAY0=
 		</data>
 		<key>Resources/Web/interface-language.js</key>
 		<data>
-		nBqo5AHWIM/s240Wsq1JDz8imyg=
+		K88zJM21NomPV5TvpsT/tIH5fwI=
 		</data>
 		<key>Resources/Web/legal.css</key>
 		<data>
@@ -4238,7 +4242,7 @@
 		</data>
 		<key>Resources/Web/styles.css</key>
 		<data>
-		++UyToCTewZoctdYJejM6hchXlk=
+		OjZnp21D4TZsz61Rb524RZCvrpU=
 		</data>
 		<key>Resources/Web/table-editing.js</key>
 		<data>
@@ -6570,14 +6574,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			gtsha3XWM1wWxCdS5QkhRs0ouj9/E6HYq0hGI9jPJLY=
+			OZEjYjX1fa/zLRSuC9NAAJTNoY0L3BXQw6WkU6oGDPk=
 			</data>
 		</dict>
 		<key>Resources/Web/app.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			bQ+Ku15p1xutR5YyXFjM+nb/mOCrXoxdDSMd6TokkXk=
+			tKnmrLojwGcIdGr9zkwVoZwXrWzx56SG1weXcWfgyaY=
 			</data>
 		</dict>
 		<key>Resources/Web/apprecalculus-data.js</key>
@@ -9744,6 +9748,13 @@
 			dk5rHSUbwT3Uw1lOULF3iEdw0trCJzZh+yS6nwqMQrs=
 			</data>
 		</dict>
+		<key>Resources/Web/assets/geography/outlines/territory-fallback.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			p5Q8Y8L60KA//TzyE4wmsA9JIJ0jjAiGLlt+thQL6QM=
+			</data>
+		</dict>
 		<key>Resources/Web/assets/geography/outlines/tf.svg</key>
 		<dict>
 			<key>hash2</key>
@@ -11022,7 +11033,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			6xhjg5vZgsPUs72OOCNhoB7u4c2kKhhtUKpIs3TRTjQ=
+			t+8JHMUdWtvuBDmo7WxDk1ae7NC3vkoL2+8LH19ln1o=
 			</data>
 		</dict>
 		<key>Resources/Web/exam-practice-data.js</key>
@@ -11330,14 +11341,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			dPQ0x8l/olIXnX6Q7pWPF3kf2lLJWrVFP5wTP6qxMgE=
+			LCbZ48H9C3JYdF1d0M+v2LKHYLnQ6uNcXe792BFPjcM=
 			</data>
 		</dict>
 		<key>Resources/Web/interface-language.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			6IAkDWsUsK1yEy5b546078SAAoNjOOgoYGhh3+PaX7A=
+			uEjAgHZDcl58uwM1aNFJig9c7eU86Ky3M7LPu8q3QuU=
 			</data>
 		</dict>
 		<key>Resources/Web/legal.css</key>
@@ -11729,7 +11740,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			qvOtjhZNLucWgnyBcPPWOtk7txWgqz59tuU78w4V3XA=
+			nPqAmZoRnr6tFy+gF3EcUxF7nfEAFRN5SilRaZ2BV3o=
 			</data>
 		</dict>
 		<key>Resources/Web/table-editing.js</key>

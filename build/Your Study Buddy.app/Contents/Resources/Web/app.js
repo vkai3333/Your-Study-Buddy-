@@ -1,6 +1,6 @@
 function defaultCharacteristicFields(template = []) {
   const source = template.length ? template : [
-    { name: "Name", front: true, back: false },
+    { name: "Column 1", front: true, back: false },
     { name: "Column 2", front: false, back: true },
   ];
   return source.slice(0, 15).map((field, index) => ({
@@ -9,6 +9,7 @@ function defaultCharacteristicFields(template = []) {
     value: "",
     front: Boolean(field.front),
     back: Boolean(field.back),
+    visual: Boolean(field.visual),
   }));
 }
 
@@ -67,6 +68,8 @@ const state = {
   geographyBackFields: ["capital"],
   usStateFrontFields: ["state"],
   usStateBackFields: ["capital"],
+  cardFrontColumn: "front",
+  cardBackColumn: "back",
   pendingCustomDeleteId: null,
   pendingBuiltInDeleteId: null,
   pendingDeleteAllStudySets: false,
@@ -104,6 +107,12 @@ const state = {
   cardMakerMode: "basic",
   extraColumnsOnly: false,
   customCharacteristicFields: defaultCharacteristicFields(),
+  customStudyPresets: [],
+  customDefaultStudyTopicIds: [],
+  customDefaultFrontFields: ["Column 1"],
+  customDefaultBackFields: ["Column 2"],
+  customStudyFrontFields: [],
+  customStudyBackFields: [],
   pendingCardImageTarget: null,
   pendingDrawingTarget: null,
   pendingMathTarget: null,
@@ -115,6 +124,7 @@ const state = {
   browseLibraryView: "built-in",
   communityKind: "all",
   communitySort: "relevance",
+  communityPage: 0,
   communityItems: [],
   communityLoading: false,
   communityError: "",
@@ -129,6 +139,7 @@ const state = {
 
 const TEXTBOOKS_PER_PAGE = 8;
 const STUDY_DECKS_PER_PAGE = 12;
+const COMMUNITY_ITEMS_PER_PAGE = 12;
 const STUDY_STREAK_KEY = "your-study-buddy-study-days-v1";
 
 function localStudyDate(date = new Date()) {
@@ -311,6 +322,16 @@ function initializeProfile() {
 
 function hostedGoogleSignInAvailable() {
   return window.location.protocol === "https:";
+}
+
+function hideDesktopOnlySettingsOnWeb() {
+  const isDesktop = Boolean(window.desktopApp || window.webkit?.messageHandlers?.appUpdateCheck);
+  if (isDesktop) return;
+  ["#storage-health-title", "#app-update-title"].forEach((selector) => {
+    const heading = $(selector);
+    const section = heading?.closest(".settings-card");
+    if (section) section.hidden = true;
+  });
 }
 
 function accountSetupComplete(account) {
@@ -672,6 +693,7 @@ window.YSB_ATTACH_IB_EXAM_PRACTICE?.({
   ibess: window.IB_ESS_DECKS,
   ibmathaa: window.IB_MATH_AA_DECKS,
   ibhistamer: window.IB_HISTORY_AMERICAS_DECKS,
+  ibphysics: window.IB_PHYSICS_DECKS,
 });
 const builtInIbBiologyDecks = window.IB_BIOLOGY_DECKS || [];
 const builtInIbChemistryDecks = window.IB_CHEMISTRY_DECKS || [];
@@ -681,6 +703,7 @@ const builtInIbGeographyDecks = window.IB_GEOGRAPHY_DECKS || [];
 const builtInIbEssDecks = window.IB_ESS_DECKS || [];
 const builtInIbMathAaDecks = window.IB_MATH_AA_DECKS || [];
 const builtInIbHistoryAmericasDecks = window.IB_HISTORY_AMERICAS_DECKS || [];
+const builtInIbPhysicsDecks = window.IB_PHYSICS_DECKS || [];
 const builtInMcatReviewDecks = window.MCAT_REVIEW_DECKS || [];
 const builtInUsmleDecks = window.USMLE_DECKS || [];
 const builtInDatDecks = window.DAT_DECKS || [];
@@ -688,10 +711,19 @@ const builtInAfricanAmericanStudiesDecks = window.AP_AFRICAN_AMERICAN_STUDIES_DE
 const builtInCybersecurityDecks = window.AP_CYBERSECURITY_DECKS || [];
 const builtInBusinessPersonalFinanceDecks = window.AP_BUSINESS_PERSONAL_FINANCE_DECKS || [];
 const geographyLocationCountries = window.GEOGRAPHY_LOCATION_COUNTRIES || [];
+// A few tiny, scattered territories are not represented in the bundled
+// Natural Earth boundary source. Keep them visible in study cards with a
+// clearly marked generic island outline instead of leaving an empty image.
+geographyLocationCountries.forEach((country) => {
+  if (country.territory && !country.outline) {
+    country.outline = "./assets/geography/outlines/territory-fallback.svg";
+    country.outlineFallback = true;
+  }
+});
 const usStateBank = window.US_STATE_BANK || [];
 const builtInUsPresidentDecks = window.US_PRESIDENT_DECKS || [];
 const communityMiniCollections = window.COMMUNITY_MINI_COLLECTIONS || [];
-const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks, ...builtInPhysics1Decks, ...builtInPhysics2Decks, ...builtInPhysicsCMechanicsDecks, ...builtInPhysicsCEmDecks, ...builtInCalculusDecks, ...builtInPrecalculusDecks, ...builtInComparativeGovernmentDecks, ...builtInMicroeconomicsDecks, ...builtInMacroeconomicsDecks, ...builtInMusicTheoryDecks, ...builtInLatinDecks, ...builtInEnglishLanguageDecks, ...builtInEnglishLiteratureDecks, ...builtInIbBiologyDecks, ...builtInIbChemistryDecks, ...builtInIbPsychologyDecks, ...builtInIbEconomicsDecks, ...builtInIbGeographyDecks, ...builtInIbEssDecks, ...builtInIbMathAaDecks, ...builtInIbHistoryAmericasDecks, ...builtInMcatReviewDecks, ...builtInUsmleDecks, ...builtInDatDecks, ...builtInAfricanAmericanStudiesDecks, ...builtInCybersecurityDecks, ...builtInBusinessPersonalFinanceDecks, ...builtInUsPresidentDecks];
+const builtInFlashcardDecks = [...builtInHumanGeographyDecks, ...builtInWorldHistoryDecks, ...builtInEnvironmentalScienceDecks, ...builtInEuropeanHistoryDecks, ...builtInGovernmentDecks, ...builtInSatVocabularyDecks, ...builtInPsychologyDecks, ...builtInUsHistoryDecks, ...builtInArtHistoryDecks, ...builtInComputerSciencePrinciplesDecks, ...builtInBiologyDecks, ...builtInStatisticsDecks, ...builtInChemistryDecks, ...builtInPhysics1Decks, ...builtInPhysics2Decks, ...builtInPhysicsCMechanicsDecks, ...builtInPhysicsCEmDecks, ...builtInCalculusDecks, ...builtInPrecalculusDecks, ...builtInComparativeGovernmentDecks, ...builtInMicroeconomicsDecks, ...builtInMacroeconomicsDecks, ...builtInMusicTheoryDecks, ...builtInLatinDecks, ...builtInEnglishLanguageDecks, ...builtInEnglishLiteratureDecks, ...builtInIbBiologyDecks, ...builtInIbChemistryDecks, ...builtInIbPsychologyDecks, ...builtInIbEconomicsDecks, ...builtInIbGeographyDecks, ...builtInIbEssDecks, ...builtInIbMathAaDecks, ...builtInIbHistoryAmericasDecks, ...builtInIbPhysicsDecks, ...builtInMcatReviewDecks, ...builtInUsmleDecks, ...builtInDatDecks, ...builtInAfricanAmericanStudiesDecks, ...builtInCybersecurityDecks, ...builtInBusinessPersonalFinanceDecks, ...builtInUsPresidentDecks];
 const builtInFlashcardCollections = [{
   id: "aphug",
   name: "AP Human Geography",
@@ -950,6 +982,16 @@ const builtInFlashcardCollections = [{
   catalogLabel: "IB HL regional study",
   units: builtInIbHistoryAmericasDecks,
 }, {
+  id: "ibphysics",
+  name: "IB Physics",
+  description: "Current IB Physics SL and HL organized by the five syllabus themes, with dedicated Paper 1A, Paper 1B, and Paper 2 exam-style practice.",
+  unitLabel: "themes",
+  catalogLabel: "IB course",
+  supportsLevelFilter: true,
+  baseLevel: "SL",
+  extensionLevel: "HL",
+  units: builtInIbPhysicsDecks,
+}, {
   id: "mcat",
   name: "MCAT Review",
   description: "Large AAMC-outline review spanning biological and biochemical systems, chemical and physical foundations, psychology and sociology, research methods, and CARS reasoning, with sourced diagrams on card backs.",
@@ -998,6 +1040,8 @@ const geographyExtraColumnTemplate = [
   { name: "Country codes", front: false, back: false },
   { name: "Calling code", front: false, back: false },
   { name: "Borders", front: false, back: false },
+  { name: "Flag", front: false, back: false, visual: true },
+  { name: "Outline", front: false, back: false, visual: true },
 ];
 
 function geographyExtraColumns(country) {
@@ -1015,6 +1059,8 @@ function geographyExtraColumns(country) {
     "Country codes": country.countryCodes,
     "Calling code": country.callingCode,
     Borders: (country.borders || []).join(", "),
+    Flag: country.flag,
+    Outline: country.outline,
   };
 }
 
@@ -1119,12 +1165,13 @@ const lazyBuiltInSources = {
   dat: { scripts: ["mcat-review-data.js", "mcat-biochem-expansion.js", "admissions-exam-data.js"], global: "DAT_DECKS", unitCount: 6, cardCount: 984, feynmanCount: 0 },
 };
 const OFFICIAL_COMMUNITY_COLLECTIONS = [
+  { id: "official:roman-emperors", collectionId: "mini-roman-emperors", baseRating: 4.8, ratingPhase: 3, ratingCount: 12, addCount: 1684, author: { displayName: "archive mode", username: "archive_mode88" } },
   { id: "official:mcat", collectionId: "mcat", baseRating: 4.8, ratingPhase: 0, ratingCount: 38, addCount: 12842, author: { displayName: "orbit", username: "orbitstudies17" } },
   { id: "official:usmle", collectionId: "usmle", baseRating: 4.7, ratingPhase: 2, ratingCount: 31, addCount: 8731, author: { displayName: "moth", username: "notesat2am" } },
   { id: "official:dat", collectionId: "dat", baseRating: 4.6, ratingPhase: 4, ratingCount: 24, addCount: 5376, author: { displayName: "moth", username: "notesat2am" } },
   { id: "official:us-presidents", collectionId: "us-presidents", baseRating: 4.9, ratingPhase: 6, ratingCount: 17, addCount: 4862, author: { displayName: "paper trails", username: "papertrails_73" } },
   { id: "official:cranial-nerves", collectionId: "mini-cranial-nerves", baseRating: 4.9, ratingPhase: 1, ratingCount: 14, addCount: 2347, author: { displayName: "orbit", username: "orbitstudies17" } },
-  { id: "official:spinal-nerves", collectionId: "mini-spinal-nerves", baseRating: 4.7, ratingPhase: 3, ratingCount: 11, addCount: 1819, author: { displayName: "orbit", username: "orbitstudies17" } },
+  { id: "official:vitamins-biochemistry", collectionId: "mini-vitamins-biochemistry", baseRating: 4.8, ratingPhase: 4, ratingCount: 18, addCount: 2871, author: { displayName: "orbit", username: "orbitstudies17" } },
   { id: "official:amino-acids", collectionId: "mini-amino-acids", baseRating: 4.8, ratingPhase: 5, ratingCount: 19, addCount: 3614, author: { displayName: "orbit", username: "orbitstudies17" } },
   { id: "official:cuban-missile-crisis", collectionId: "mini-cuban-missile-crisis", baseRating: 4.8, ratingPhase: 7, ratingCount: 9, addCount: 1428, author: { displayName: "paper trails", username: "papertrails_73" } },
   { id: "official:haitian-revolution", collectionId: "mini-haitian-revolution", baseRating: 4.7, ratingPhase: 0, ratingCount: 8, addCount: 946, author: { displayName: "juno", username: "afterclass404" } },
@@ -2617,6 +2664,14 @@ function openNotebookNote(id) {
         viewport.scrollLeft = savedViewport.scrollLeft || 0;
         viewport.scrollTop = savedViewport.scrollTop || 0;
       });
+    });
+    else if (!savedViewport && note.canvasMode !== "page") window.requestAnimationFrame(() => {
+      const viewport = drawingNoteCanvas()?.parentElement;
+      if (!viewport) return;
+      // Give a new open note a comfortable inset so the canvas does not feel
+      // pinned to the browser's upper-left corner.
+      viewport.scrollLeft = 120;
+      viewport.scrollTop = 80;
     });
   } else if (note.type === "pdf") {
     $("#pdf-note-title").value = note.title || "Imported PDF";
@@ -4547,6 +4602,21 @@ async function saveProfileVisibilityFromSettings() {
   renderGoogleAccount(result.user);
 }
 
+async function saveProfileNameFromSettings(displayName) {
+  if (!hostedGoogleSignInAvailable() || !accountSetupComplete(state.googleAccount)) return;
+  if (displayName === state.googleAccount.displayName) return;
+  const response = await fetch("/api/account/profile/name", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ displayName }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Your account name could not be saved");
+  state.googleAccount = result.user;
+  renderGoogleAccount(result.user);
+}
+
 function selectSettingsTab(tabName) {
   $$('[data-settings-tab]').forEach((button) => {
     const active = button.dataset.settingsTab === tabName;
@@ -5956,9 +6026,20 @@ function customTopicEntries(units = state.customUnits) {
   return normalizedCustomUnits(units).flatMap((unit) => unit.topics.map((topic) => ({ ...topic, unitId: unit.id, unitName: unit.name })));
 }
 
+function customOrganizationEntries(units = state.customUnits) {
+  return normalizedCustomUnits(units).flatMap((unit) => unit.topics.length
+    ? unit.topics.map((topic) => ({ ...topic, unitId: unit.id, unitName: unit.name, kind: "topic" }))
+    : [{ id: unit.id, name: unit.name, unitId: unit.id, unitName: unit.name, kind: "unit" }]);
+}
+
+function customOrganizationAssignment(id = state.activeCustomTopicId) {
+  const entry = customOrganizationEntries().find((candidate) => candidate.id === id);
+  return { customTopicId: entry?.kind === "topic" ? entry.id : "", customUnitId: entry?.unitId || "" };
+}
+
 function customTopicSelectMarkup(selectedId = "") {
-  const options = customTopicEntries().map((topic) => `<option value="${escapeHtml(topic.id)}" ${selectedId === topic.id ? "selected" : ""}>${escapeHtml(topic.unitName)} · ${escapeHtml(topic.name)}</option>`).join("");
-  return `<option value="" ${selectedId ? "" : "selected"}>General (no subtopic)</option>${options}`;
+  const options = customOrganizationEntries().map((entry) => `<option value="${escapeHtml(entry.id)}" ${selectedId === entry.id ? "selected" : ""}>${escapeHtml(entry.kind === "unit" ? entry.name : `${entry.unitName} · ${entry.name}`)}</option>`).join("");
+  return `<option value="" ${selectedId ? "" : "selected"}>General (no section)</option>${options}`;
 }
 
 function renderCustomDraftViewControls() {
@@ -6005,23 +6086,25 @@ function customDraftVisibleRecords() {
   return state.customDraft.map((card, index) => ({ card, index })).filter(({ card }) => {
     if (state.draftViewTopicId) return card.customTopicId === state.draftViewTopicId;
     if (state.draftViewUnitId === CUSTOM_GENERAL_TOPIC_ID) return !card.customTopicId;
-    if (state.draftViewUnitId) return unitTopicIds.has(card.customTopicId);
+    if (state.draftViewUnitId) return card.customUnitId === state.draftViewUnitId || unitTopicIds.has(card.customTopicId);
     return true;
   });
 }
 
 function injectDraftTopicSelectors(container, items) {
-  if (!container || !customTopicEntries().length) return;
+  if (!container || !customOrganizationEntries().length) return;
   [...container.children].forEach((row, fallbackIndex) => {
     const indexedValue = row.dataset.draftCard ?? row.dataset.questionDraft ?? row.dataset.feynmanDraft;
     const index = indexedValue === undefined ? fallbackIndex : Number(indexedValue);
     if (!items[index]) return;
     const label = document.createElement("label");
     label.className = "draft-topic-field";
-    label.innerHTML = `Subtopic<select>${customTopicSelectMarkup(items[index].customTopicId || "")}</select>`;
+    label.innerHTML = `Section<select>${customTopicSelectMarkup(items[index].customTopicId || items[index].customUnitId || "")}</select>`;
     label.querySelector("select").addEventListener("change", (event) => {
-      items[index].customTopicId = event.target.value;
-      const topic = customTopicEntries().find((entry) => entry.id === event.target.value);
+      const entry = customOrganizationEntries().find((candidate) => candidate.id === event.target.value);
+      items[index].customTopicId = entry?.kind === "topic" ? entry.id : "";
+      items[index].customUnitId = entry?.unitId || "";
+      const topic = entry?.kind === "topic" ? entry : null;
       if (state.editingBuiltInCollectionId && topic) items[index].builtInUnitId = topic.builtInUnitId || topic.unitId;
       if (container.id === "draft-card-list") renderCustomDraft();
     });
@@ -6038,7 +6121,7 @@ function renderCustomUnitBuilder() {
   const builderCopy = $("#custom-topic-builder-heading")?.parentElement?.querySelector("p:last-child");
   if (builderCopy) builderCopy.textContent = lockedCourseStructure
     ? "Course subdivisions are built in. Use the selector above each item to move it."
-    : "Organize your set like an AP course. New material is added to the selected subtopic.";
+    : "Units can contain cards directly or be divided into subtopics. New material is added to the selected section.";
   list.classList.toggle("locked-course-structure", lockedCourseStructure);
   $("#add-custom-unit").hidden = lockedCourseStructure;
   list.innerHTML = state.customUnits.map((unit, unitIndex) => {
@@ -6047,12 +6130,12 @@ function renderCustomUnitBuilder() {
       : `<input value="${escapeHtml(unit.name)}" data-custom-unit-name="${escapeHtml(unit.id)}" aria-label="Unit ${unitIndex + 1} name"><button type="button" data-add-custom-topic="${escapeHtml(unit.id)}">+ Subtopic</button><button type="button" class="danger-text-button" data-remove-custom-unit="${escapeHtml(unit.id)}">Remove</button>`;
     const topics = lockedCourseStructure
       ? unit.topics.map((topic) => `<div class="custom-subtopic-structure"><span>Subtopic</span><strong>${escapeHtml(topic.name)}</strong></div>`).join("")
-      : unit.topics.map((topic) => `<label><span>Subtopic</span><input value="${escapeHtml(topic.name)}" data-custom-topic-name="${escapeHtml(topic.id)}"><button type="button" class="remove-draft-card" data-remove-custom-topic="${escapeHtml(topic.id)}" aria-label="Remove ${escapeHtml(topic.name)}">×</button></label>`).join("") || '<p>Add a subtopic such as “1.1 Scientific foundations.”</p>';
+      : unit.topics.map((topic) => `<label><span>Subtopic</span><input value="${escapeHtml(topic.name)}" data-custom-topic-name="${escapeHtml(topic.id)}"><button type="button" class="remove-draft-card" data-remove-custom-topic="${escapeHtml(topic.id)}" aria-label="Remove ${escapeHtml(topic.name)}">×</button></label>`).join("") || '<p>No subtopics. Cards can belong directly to this unit.</p>';
     return `<section class="custom-unit-editor" data-custom-unit="${escapeHtml(unit.id)}"><div class="custom-unit-editor-heading">${heading}</div><div class="custom-subtopic-list">${topics}</div></section>`;
   }).join("") || '<div class="custom-topic-empty"><strong>No units yet</strong><span>Add a unit when you want to organize this set into sections.</span></div>';
   const active = $("#active-custom-topic");
   active.innerHTML = customTopicSelectMarkup(state.activeCustomTopicId);
-  if (state.activeCustomTopicId && !customTopicEntries().some((topic) => topic.id === state.activeCustomTopicId)) state.activeCustomTopicId = "";
+  if (state.activeCustomTopicId && !customOrganizationEntries().some((entry) => entry.id === state.activeCustomTopicId)) state.activeCustomTopicId = "";
   active.value = state.activeCustomTopicId;
   active.onchange = () => { state.activeCustomTopicId = active.value; };
   renderCustomDraftViewControls();
@@ -6083,9 +6166,11 @@ function renderCustomUnitBuilder() {
     const unit = state.customUnits.find((item) => item.id === button.dataset.removeCustomUnit);
     if (!unit || !window.confirm(`Remove “${unit.name}” and move its material to General?`)) return;
     unit.topics.forEach((topic) => removeCustomTopic(topic.id, false));
+    [state.customDraft, state.customQuestionDraft, state.customFeynmanDraft].forEach((items) => items.forEach((item) => { if (item.customUnitId === unit.id) item.customUnitId = ""; }));
     state.customUnits = state.customUnits.filter((item) => item.id !== unit.id);
     renderCustomUnitBuilder(); renderCustomDraft(); renderCustomQuestionDraft(); renderCustomFeynmanDraft();
   }));
+  renderStudyDefaultsBuilder();
 }
 
 function removeCustomTopic(topicId, shouldRender = true) {
@@ -6097,7 +6182,17 @@ function removeCustomTopic(topicId, shouldRender = true) {
 }
 
 function loadCustomDecks() {
-  return loadLocalArray(CUSTOM_DECKS_KEY, (deck) => deck && Array.isArray(deck.cards));
+  const decks = loadLocalArray(CUSTOM_DECKS_KEY, (deck) => deck && Array.isArray(deck.cards));
+  let upgraded = false;
+  decks.forEach((deck) => {
+    const fieldNames = new Set((deck.characteristicTemplate || []).map((field) => field.name));
+    if (!fieldNames.has("Country") || !fieldNames.has("Capital")) return;
+    const before = JSON.stringify({ characteristicTemplate: deck.characteristicTemplate, cards: deck.cards, studyPresets: deck.studyPresets, defaultStudySettings: deck.defaultStudySettings });
+    hydrateCountryStudyConfiguration(deck);
+    if (before !== JSON.stringify({ characteristicTemplate: deck.characteristicTemplate, cards: deck.cards, studyPresets: deck.studyPresets, defaultStudySettings: deck.defaultStudySettings })) upgraded = true;
+  });
+  if (upgraded) localStorage.setItem(CUSTOM_DECKS_KEY, JSON.stringify(decks));
+  return decks;
 }
 
 function isReadOnlyStudySet(deck) {
@@ -6847,6 +6942,7 @@ function cardImageForTarget(target) {
   }
   if (target.kind === "manual-question") return state.manualQuestionImage;
   if (target.kind === "question-draft") return state.customQuestionDraft[target.index]?.image || "";
+  if (target.kind === "characteristic") return state.customDraft[target.index]?.characteristics?.[target.field] || "";
   return "";
 }
 
@@ -6869,6 +6965,13 @@ function applyCardImage(target, dataUrl) {
     if (target.side === "front") state.manualFrontImage = dataUrl;
     else state.manualBackImage = dataUrl;
     renderManualImagePreview(target.side);
+    return;
+  }
+  if (target.kind === "characteristic") {
+    const card = state.customDraft[target.index];
+    if (!card) return;
+    card.characteristics = { ...(card.characteristics || {}), [target.field]: dataUrl };
+    renderCustomDraft();
     return;
   }
   const card = state.customDraft[target.index];
@@ -6904,6 +7007,7 @@ function confirmImageRemoval(button, removeImage) {
 
 function cardTextArea(target) {
   if (!target) return null;
+  if (target.kind === "characteristic") return $(`[data-extra-column-cell="${target.index}:${CSS.escape(target.field)}"]`);
   if (target.kind === "manual") return $(`#manual-card-${target.side}`);
   if (target.kind === "manual-question") return $(`#manual-question-${target.side === "question" ? "prompt" : "answer"}`);
   if (target.kind === "question-draft") return $(`[data-question-${target.side === "question" ? "prompt" : "answer"}="${target.index}"]`);
@@ -9055,7 +9159,7 @@ function hasAnyStudyItem() {
 
 function characteristicTemplate() {
   if (state.cardMakerMode !== "characteristics") return [];
-  return state.customCharacteristicFields.map(({ name, front, back }) => ({ name: name.trim(), front, back }));
+  return state.customCharacteristicFields.map(({ name, front, back, visual }) => ({ name: name.trim(), front, back, visual: Boolean(visual) }));
 }
 
 function setCardMakerMode(mode) {
@@ -9066,48 +9170,174 @@ function setCardMakerMode(mode) {
   $("#basic-card-maker").hidden = state.cardMakerMode !== "basic";
   $("#characteristic-card-maker").hidden = state.cardMakerMode !== "characteristics";
   if (state.cardMakerMode === "characteristics") renderCharacteristicCardMaker();
+  renderStudyDefaultsBuilder();
   renderCustomDraft();
 }
 
+function editableStudyColumns() {
+  return state.cardMakerMode === "characteristics"
+    ? state.customCharacteristicFields.filter((field) => field.name.trim()).map((field) => field.name.trim())
+    : ["Front", "Back"];
+}
+
+function studySetupLabel(frontFields, backFields) {
+  return `${frontFields.join(" + ") || "Front"} → ${backFields.join(" + ") || "Back"}`;
+}
+
+function renderStudyDefaultsBuilder() {
+  const sectionTarget = $("#default-study-sections");
+  if (!sectionTarget) return;
+  const organization = customOrganizationEntries(state.customUnits);
+  const sections = organization.length ? organization.map((entry) => ({ id: entry.id, label: entry.kind === "unit" ? entry.name : entry.name })) : [{ id: CUSTOM_GENERAL_TOPIC_ID, label: "General" }];
+  if (!state.customDefaultStudyTopicIds.length) state.customDefaultStudyTopicIds = sections.map((section) => section.id);
+  const validSectionIds = new Set(sections.map((section) => section.id));
+  state.customDefaultStudyTopicIds = state.customDefaultStudyTopicIds.filter((id) => validSectionIds.has(id));
+  if (!state.customDefaultStudyTopicIds.length) state.customDefaultStudyTopicIds = sections.map((section) => section.id);
+  sectionTarget.innerHTML = sections.map((section) => `<label class="study-default-choice"><input type="checkbox" data-default-study-section="${escapeHtml(section.id)}" ${state.customDefaultStudyTopicIds.includes(section.id) ? "checked" : ""}><span>${escapeHtml(section.label)}</span></label>`).join("");
+  const columns = editableStudyColumns();
+  const fallbackFront = columns[0];
+  const fallbackBack = columns[1] || columns[0];
+  state.customDefaultFrontFields = state.customDefaultFrontFields.filter((name) => columns.includes(name));
+  state.customDefaultBackFields = state.customDefaultBackFields.filter((name) => columns.includes(name));
+  if (!state.customDefaultFrontFields.length) state.customDefaultFrontFields = [fallbackFront];
+  if (!state.customDefaultBackFields.length) state.customDefaultBackFields = [fallbackBack];
+  const renderFields = (side, selected) => {
+    $(`#default-study-${side}`).innerHTML = columns.map((name) => `<label class="study-default-choice"><input type="checkbox" data-default-study-${side}="${escapeHtml(name)}" ${selected.includes(name) ? "checked" : ""}><span>${escapeHtml(name)}</span></label>`).join("");
+  };
+  renderFields("front", state.customDefaultFrontFields);
+  renderFields("back", state.customDefaultBackFields);
+  $$('[data-default-study-section]').forEach((input) => input.onchange = () => {
+    const chosen = $$('[data-default-study-section]:checked').map((item) => item.dataset.defaultStudySection);
+    if (!chosen.length) { input.checked = true; showToast("Keep at least one default section selected."); return; }
+    state.customDefaultStudyTopicIds = chosen;
+  });
+  ["front", "back"].forEach((side) => $$(`[data-default-study-${side}]`).forEach((input) => input.onchange = () => {
+    const chosen = $$(`[data-default-study-${side}]:checked`).map((item) => item.dataset[`defaultStudy${side[0].toUpperCase()}${side.slice(1)}`]);
+    if (!chosen.length) { input.checked = true; showToast(`Keep at least one default ${side} column selected.`); return; }
+    if (side === "front") state.customDefaultFrontFields = chosen;
+    else state.customDefaultBackFields = chosen;
+  }));
+  $("#study-preset-list").innerHTML = state.customStudyPresets.map((preset) => `<span class="study-preset-chip"><span>${escapeHtml(preset.label)}</span><button type="button" data-remove-study-preset="${escapeHtml(preset.id)}" aria-label="Double-click to remove ${escapeHtml(preset.label)}" title="Double-click to remove">×</button></span>`).join("");
+  $$('[data-remove-study-preset]').forEach((button) => button.ondblclick = () => {
+    state.customStudyPresets = state.customStudyPresets.filter((preset) => preset.id !== button.dataset.removeStudyPreset);
+    renderStudyDefaultsBuilder();
+  });
+}
+
+function addRecommendedStudySetup() {
+  const frontFields = [...state.customDefaultFrontFields];
+  const backFields = [...state.customDefaultBackFields];
+  const label = studySetupLabel(frontFields, backFields);
+  if (state.customStudyPresets.some((preset) => preset.label === label)) { showToast("That recommended setup already exists."); return; }
+  state.customStudyPresets.push({ id: makeLocalId("study-preset"), label, frontFields, backFields });
+  renderStudyDefaultsBuilder();
+}
+
 function renderCharacteristicCardMaker() {
-  const fields = state.customCharacteristicFields;
-  $("#characteristic-field-count").textContent = `${fields.length} of 15 columns`;
-  $("#add-characteristic-field").disabled = fields.length >= 15;
-  $("#characteristic-field-list").innerHTML = fields.map((field, index) => `<div class="characteristic-field-row" data-characteristic-row="${field.id}"><input type="text" maxlength="40" value="${escapeHtml(field.name)}" data-characteristic-name="${field.id}" aria-label="Extra column ${index + 1} name"><input type="text" value="${escapeHtml(field.value)}" data-characteristic-value="${field.id}" aria-label="${escapeHtml(field.name || `Extra column ${index + 1}`)} value" placeholder="Enter information"><label class="characteristic-side-toggle" title="Show on front"><input type="checkbox" data-characteristic-front="${field.id}" ${field.front ? "checked" : ""} aria-label="Show ${escapeHtml(field.name)} on front"></label><label class="characteristic-side-toggle" title="Show on back"><input type="checkbox" data-characteristic-back="${field.id}" ${field.back ? "checked" : ""} aria-label="Show ${escapeHtml(field.name)} on back"></label><button type="button" class="remove-characteristic-field" data-remove-characteristic="${field.id}" aria-label="Remove ${escapeHtml(field.name)}" ${fields.length === 1 ? "disabled" : ""}>×</button></div>`).join("");
-  $$('[data-characteristic-name]').forEach((input) => input.addEventListener("input", () => {
-    const field = fields.find((item) => item.id === input.dataset.characteristicName);
-    if (field) {
-      const previousName = field.name;
-      field.name = input.value;
-      state.customDraft.forEach((card) => {
-        if (!card.characteristics || previousName === input.value || !(previousName in card.characteristics)) return;
-        card.characteristics[input.value] = card.characteristics[previousName];
-        delete card.characteristics[previousName];
-      });
+  const count = $("#characteristic-field-count");
+  if (count) count.textContent = `${state.customCharacteristicFields.length} of 15 columns`;
+  renderCustomDraft();
+}
+
+function ensureCharacteristicCardRows() {
+  const columns = state.customCharacteristicFields.filter((field) => field.name.trim());
+  state.customDraft.forEach((card) => {
+    if (!card.characteristics) {
+      card.characteristics = {};
+      if (columns[0]) card.characteristics[columns[0].name] = card.front || "";
+      if (columns[1]) card.characteristics[columns[1].name] = card.back || "";
     }
-  }));
-  $$('[data-characteristic-value]').forEach((input) => input.addEventListener("input", () => {
-    const field = fields.find((item) => item.id === input.dataset.characteristicValue);
-    if (field) field.value = input.value;
-  }));
-  $$('[data-characteristic-front]').forEach((input) => input.addEventListener("change", () => {
-    const field = fields.find((item) => item.id === input.dataset.characteristicFront);
-    if (field) field.front = input.checked;
-  }));
-  $$('[data-characteristic-back]').forEach((input) => input.addEventListener("change", () => {
-    const field = fields.find((item) => item.id === input.dataset.characteristicBack);
-    if (field) field.back = input.checked;
-  }));
-  $$('[data-remove-characteristic]').forEach((button) => button.addEventListener("click", () => {
-    if (fields.length === 1) return;
-    state.customCharacteristicFields = fields.filter((field) => field.id !== button.dataset.removeCharacteristic);
-    if (state.customCharacteristicFields.length <= 2) {
-      convertExtraColumnsToBasic();
-      return;
-    }
-    renderCharacteristicCardMaker();
+    columns.forEach((field) => {
+      if (!(field.name in card.characteristics)) card.characteristics[field.name] = "";
+    });
+    card.characteristicCard = true;
+  });
+}
+
+function addCharacteristicField() {
+  if (state.customCharacteristicFields.length >= 15) return;
+  const number = state.customCharacteristicFields.length + 1;
+  const field = { id: makeLocalId("characteristic"), name: `Column ${number}`, value: "", front: false, back: false };
+  state.customCharacteristicFields.push(field);
+  state.extraColumnsOnly = state.customCharacteristicFields.length > 2;
+  ensureCharacteristicCardRows();
+  renderStudyDefaultsBuilder();
+  renderCustomDraft();
+  window.requestAnimationFrame(() => beginCharacteristicHeaderRename(field.id));
+}
+
+function renameCharacteristicField(fieldId, nextName) {
+  const field = state.customCharacteristicFields.find((item) => item.id === fieldId);
+  const cleaned = String(nextName || "").trim().slice(0, 40);
+  if (!field || !cleaned || cleaned === field.name) { renderCustomDraft(); return; }
+  if (state.customCharacteristicFields.some((item) => item !== field && item.name.trim().toLowerCase() === cleaned.toLowerCase())) {
+    showToast("Column names must be unique.");
     renderCustomDraft();
-  }));
+    return;
+  }
+  const previous = field.name;
+  field.name = cleaned;
+  state.customDraft.forEach((card) => {
+    if (!card.characteristics || !(previous in card.characteristics)) return;
+    card.characteristics[cleaned] = card.characteristics[previous];
+    delete card.characteristics[previous];
+  });
+  state.customStudyPresets = state.customStudyPresets.map((preset) => ({ ...preset, frontFields: preset.frontFields.map((name) => name === previous ? cleaned : name), backFields: preset.backFields.map((name) => name === previous ? cleaned : name) }));
+  state.customDefaultFrontFields = state.customDefaultFrontFields.map((name) => name === previous ? cleaned : name);
+  state.customDefaultBackFields = state.customDefaultBackFields.map((name) => name === previous ? cleaned : name);
+  renderStudyDefaultsBuilder();
+  renderCustomDraft();
+}
+
+function beginCharacteristicHeaderRename(fieldId) {
+  const label = $(`[data-extra-column-heading="${fieldId}"]`);
+  const field = state.customCharacteristicFields.find((item) => item.id === fieldId);
+  if (!label || !field) return;
+  const header = label.closest("th");
+  header.innerHTML = `<span class="extra-column-header"><input type="text" maxlength="40" value="${escapeHtml(field.name)}" data-extra-column-rename="${field.id}" aria-label="Rename ${escapeHtml(field.name)} column"><button type="button" class="extra-column-remove" data-remove-extra-column="${field.id}" aria-label="Double-click to remove ${escapeHtml(field.name)} column" title="Double-click to remove column">×</button></span>`;
+  const input = $('[data-extra-column-rename]', header);
+  const finish = () => renameCharacteristicField(field.id, input.value);
+  input.addEventListener("blur", finish, { once: true });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") { event.preventDefault(); input.blur(); }
+    if (event.key === "Escape") { event.preventDefault(); input.value = field.name; input.blur(); }
+  });
+  input.focus();
+  input.select();
+}
+
+function removeCharacteristicField(fieldId) {
+  if (state.customCharacteristicFields.length <= 2) { showToast("A flashcard set needs at least two columns."); return; }
+  const field = state.customCharacteristicFields.find((item) => item.id === fieldId);
+  state.customCharacteristicFields = state.customCharacteristicFields.filter((item) => item.id !== fieldId);
+  state.customDraft.forEach((card) => { if (card.characteristics && field) delete card.characteristics[field.name]; });
+  state.extraColumnsOnly = state.customCharacteristicFields.length > 2;
+  state.customStudyPresets = state.customStudyPresets.map((preset) => ({ ...preset, frontFields: preset.frontFields.filter((name) => name !== field?.name), backFields: preset.backFields.filter((name) => name !== field?.name) })).filter((preset) => preset.frontFields.length && preset.backFields.length);
+  renderStudyDefaultsBuilder();
+  renderCustomDraft();
+}
+
+function addBlankCharacteristicCard() {
+  const columns = state.customCharacteristicFields.filter((field) => field.name.trim());
+  state.customDraft.push({
+    id: makeLocalId("card"),
+    front: "",
+    back: "",
+    ...customOrganizationAssignment(),
+    manual: true,
+    characteristicCard: true,
+    characteristics: Object.fromEntries(columns.map((field) => [field.name, ""])),
+  });
+  renderCustomDraft();
+  window.requestAnimationFrame(() => $$('[data-extra-column-card]').at(-columns.length)?.focus());
+}
+
+function characteristicDraftCell(field, card, index) {
+  const value = card.characteristics?.[field.name] || "";
+  const input = `<textarea data-extra-column-card="${index}" data-extra-column-name="${escapeHtml(field.name)}" data-extra-column-cell="${index}:${escapeHtml(field.name)}" aria-label="${escapeHtml(field.name)} for item ${index + 1}" placeholder="Enter text, math, code, or an image URL">${escapeHtml(value)}</textarea>`;
+  const image = value && /^(?:https?:|data:|\.\/)/i.test(value) ? `<img src="${escapeHtml(value)}" alt="${escapeHtml(field.name)} preview for item ${index + 1}">` : "";
+  const actions = `<details class="extra-column-insert"><summary>Insert</summary><span class="extra-column-insert-menu"><button type="button" data-choose-extra-image="${index}" data-extra-field="${escapeHtml(field.name)}">Image</button><button type="button" data-draw-extra="${index}" data-extra-field="${escapeHtml(field.name)}">Draw</button><button type="button" data-math-extra="${index}" data-extra-field="${escapeHtml(field.name)}">Math</button><button type="button" data-code-extra="${index}" data-extra-field="${escapeHtml(field.name)}">Code</button></span></details>`;
+  return `<td><div class="extra-column-cell-editor">${image}${input}${actions}</div></td>`;
 }
 
 function convertExtraColumnsToBasic() {
@@ -9145,7 +9375,7 @@ function addCharacteristicCard() {
     id: makeLocalId("card"),
     front: characteristicSideText(frontFields),
     back: characteristicSideText(backFields),
-    customTopicId: state.activeCustomTopicId || "",
+    ...customOrganizationAssignment(),
     manual: true,
     characteristicCard: true,
     characteristics: Object.fromEntries(namedFields.filter((field) => field.value.trim()).map((field) => [field.name.trim(), field.value.trim()])),
@@ -9158,11 +9388,20 @@ function addCharacteristicCard() {
 }
 
 function renderExtraColumnDraft(list, visibleRecords = state.customDraft.map((card, index) => ({ card, index }))) {
+  ensureCharacteristicCardRows();
   const columns = state.customCharacteristicFields.filter((field) => field.name.trim());
   list.classList.add("extra-column-draft-list");
-  list.innerHTML = visibleRecords.length
-    ? `<div class="extra-column-table-wrap"><table class="extra-column-table"><thead><tr><th>#</th>${columns.map((field) => `<th>${escapeHtml(field.name)}</th>`).join("")}<th></th></tr></thead><tbody>${visibleRecords.map(({ card, index }) => `<tr data-draft-card="${index}"><td>${index + 1}</td>${columns.map((field) => `<td><input type="text" value="${escapeHtml(card.characteristics?.[field.name] || "")}" data-extra-column-card="${index}" data-extra-column-name="${escapeHtml(field.name)}" aria-label="${escapeHtml(field.name)} for item ${index + 1}"></td>`).join("")}<td><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove item ${index + 1}">×</button></td></tr>`).join("")}</tbody></table></div>`
-    : '<div class="draft-filter-empty"><strong>No flashcards in this view</strong><span>Choose another unit or subtopic to continue editing.</span></div>';
+  const rows = visibleRecords.map(({ card, index }) => `<tr data-draft-card="${index}"><td>${index + 1}</td>${columns.map((field) => characteristicDraftCell(field, card, index)).join("")}<td><button type="button" class="remove-draft-card" data-remove-draft="${index}" aria-label="Remove item ${index + 1}">×</button></td></tr>`).join("");
+  list.innerHTML = `<div class="extra-column-draft-toolbar"><p>Double-click a column name to rename it or its × to remove it.</p><div class="extra-column-draft-actions"><button type="button" id="add-extra-column-row">+ Add row</button></div></div><div class="extra-column-table-wrap"><table class="extra-column-table"><thead><tr><th>#</th>${columns.map((field) => `<th><span class="extra-column-header"><span class="extra-column-header-name" data-extra-column-heading="${field.id}" title="Double-click to rename">${escapeHtml(field.name)}</span><button type="button" class="extra-column-remove" data-remove-extra-column="${field.id}" aria-label="Double-click to remove ${escapeHtml(field.name)} column" title="Double-click to remove column">×</button></span></th>`).join("")}<th class="extra-column-add-heading"><button type="button" id="add-extra-column-heading" aria-label="Add column" title="Add column" ${columns.length >= 15 ? "disabled" : ""}>+</button></th><th></th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="${columns.length + 3}"><button type="button" class="extra-column-add-row" id="add-extra-column-footer-row">+ Add row</button></td></tr></tfoot></table></div>`;
+  $$('[data-extra-column-heading]', list).forEach((heading) => heading.addEventListener("dblclick", () => beginCharacteristicHeaderRename(heading.dataset.extraColumnHeading)));
+  $$('[data-remove-extra-column]', list).forEach((button) => button.addEventListener("dblclick", () => removeCharacteristicField(button.dataset.removeExtraColumn)));
+  $("#add-extra-column-heading")?.addEventListener("click", addCharacteristicField);
+  $("#add-extra-column-row")?.addEventListener("click", addBlankCharacteristicCard);
+  $("#add-extra-column-footer-row")?.addEventListener("click", addBlankCharacteristicCard);
+  $$('details.extra-column-insert', list).forEach((details) => details.addEventListener("toggle", () => {
+    if (!details.open) return;
+    $$('details.extra-column-insert[open]', list).forEach((other) => { if (other !== details) other.open = false; });
+  }));
   $$('[data-extra-column-card]', list).forEach((input) => input.addEventListener("input", () => {
     const card = state.customDraft[Number(input.dataset.extraColumnCard)];
     if (!card) return;
@@ -9172,7 +9411,23 @@ function renderExtraColumnDraft(list, visibleRecords = state.customDraft.map((ca
     const backFields = columns.filter((field) => field.back).map((field) => ({ ...field, value: card.characteristics[field.name] || "" }));
     card.front = characteristicSideText(frontFields);
     card.back = characteristicSideText(backFields);
+    const visualCell = input.closest(".extra-column-cell-editor");
+    const preview = visualCell?.querySelector("img");
+    if (preview) preview.src = input.value;
+    else if (visualCell && input.value.trim()) {
+      const image = document.createElement("img");
+      image.src = input.value.trim();
+      image.alt = `${input.dataset.extraColumnName} preview`;
+      visualCell.querySelector(".extra-column-visual-empty")?.replaceWith(image);
+    }
   }));
+  $$('[data-choose-extra-image]', list).forEach((button) => button.addEventListener("click", () => {
+    state.pendingCardImageTarget = { kind: "characteristic", index: Number(button.dataset.chooseExtraImage), field: button.dataset.extraField };
+    $("#flashcard-image-file").click();
+  }));
+  $$('[data-draw-extra]', list).forEach((button) => button.addEventListener("click", () => openDrawingTool({ kind: "characteristic", side: button.dataset.extraField, index: Number(button.dataset.drawExtra), field: button.dataset.extraField })));
+  $$('[data-math-extra]', list).forEach((button) => button.addEventListener("click", () => openMathTool({ kind: "characteristic", side: button.dataset.extraField, index: Number(button.dataset.mathExtra), field: button.dataset.extraField })));
+  $$('[data-code-extra]', list).forEach((button) => button.addEventListener("click", () => openCodeTool({ kind: "characteristic", side: button.dataset.extraField, index: Number(button.dataset.codeExtra), field: button.dataset.extraField })));
   $$('[data-remove-draft]', list).forEach((button) => button.addEventListener("click", () => {
     state.customDraft.splice(Number(button.dataset.removeDraft), 1);
     renderCustomDraft();
@@ -9189,7 +9444,7 @@ function renderCustomDraft() {
   $("#draft-view-count").textContent = `${visibleRecords.length.toLocaleString()} shown`;
   empty.hidden = state.customDraft.length > 0;
   updateCustomSaveButtons();
-  if (state.cardMakerMode === "characteristics" && state.customDraft.some((card) => card.characteristicCard || card.characteristics)) {
+  if (state.cardMakerMode === "characteristics") {
     renderExtraColumnDraft(list, visibleRecords);
     return;
   }
@@ -9232,6 +9487,10 @@ function resetCustomDraft() {
   state.customQuestionDraft = [];
   state.customFeynmanDraft = [];
   state.customUnits = [];
+  state.customStudyPresets = [];
+  state.customDefaultStudyTopicIds = [];
+  state.customDefaultFrontFields = ["Column 1"];
+  state.customDefaultBackFields = ["Column 2"];
   state.activeCustomTopicId = "";
   state.draftViewUnitId = "";
   state.draftViewTopicId = "";
@@ -9258,7 +9517,7 @@ function resetCustomDraft() {
   setCardMakerMode("basic");
   $("#manual-feynman-topic").value = "";
   $("#anki-notes-file").value = "";
-  $("#anki-import-status").textContent = "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
+  $("#anki-import-status").textContent = "Supports APKG, XLSX, XLS, CSV, TSV, PDF, PPTX, and UTF-8 TXT files.";
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Generate and save study set";
   renderCustomDraft();
@@ -9477,17 +9736,22 @@ function renderCommunityLibrary() {
   const list = $("#community-library-list");
   if (!list) return;
   const items = sortedCommunityItems(state.communityItems);
+  const pageCount = Math.max(1, Math.ceil(items.length / COMMUNITY_ITEMS_PER_PAGE));
+  state.communityPage = Math.min(Math.max(0, state.communityPage), pageCount - 1);
+  const pageItems = items.slice(state.communityPage * COMMUNITY_ITEMS_PER_PAGE, (state.communityPage + 1) * COMMUNITY_ITEMS_PER_PAGE);
   $("#community-sort").value = state.communitySort;
   $$('[data-community-kind]').forEach((button) => button.classList.toggle("active", button.dataset.communityKind === state.communityKind));
   if (state.communityLoading) {
+    renderLibraryPagination("#community-library-pagination", 0, 0, COMMUNITY_ITEMS_PER_PAGE, () => {});
     list.innerHTML = '<div class="custom-deck-empty">Loading published study material…</div>';
     return;
   }
   if (state.communityError) {
+    renderLibraryPagination("#community-library-pagination", 0, 0, COMMUNITY_ITEMS_PER_PAGE, () => {});
     list.innerHTML = `<div class="custom-deck-empty">${escapeHtml(state.communityError)}</div>`;
     return;
   }
-  list.innerHTML = items.map((item) => {
+  list.innerHTML = pageItems.map((item) => {
     const counts = item.counts || {};
     const details = item.kind === "note"
       ? escapeHtml(item.summary || "Shared note")
@@ -9497,9 +9761,14 @@ function renderCommunityLibrary() {
     const saveLabel = saved ? (item.kind === "note" ? "Saved" : "Added") : (item.kind === "note" ? "Save note" : "Add to Study");
     const authorName = escapeHtml(item.author?.displayName || "Student");
     const authorUsername = escapeHtml(item.author?.username || "student");
-    const sourceLabel = item.official ? `${communityContentLabel(item.kind)} · Starter collection` : communityContentLabel(item.kind);
+    const sourceLabel = communityContentLabel(item.kind);
     return `<article class="custom-deck-item community-item-card ${item.official ? "community-starter-card" : ""}"><div class="built-in-deck-label">${sourceLabel}</div><h3>${escapeHtml(item.title)}</h3>${ratingMarkup(item)}<p>${details}</p><div class="community-card-meta"><div class="community-author"><span>by</span><button type="button" data-open-community-profile="${authorUsername}" aria-label="View ${authorName}'s profile"><strong>${authorName}</strong><span>@${authorUsername}</span></button></div><span class="community-add-count">${addCount.toLocaleString()} ${addCount === 1 ? "save" : "saves"}</span></div><div class="community-card-actions"><button type="button" class="button secondary-button" data-preview-community-item="${escapeHtml(item.id)}">Preview</button><button type="button" class="button primary-button ${saved ? "community-added-button" : ""}" data-save-community-item="${escapeHtml(item.id)}" ${saved ? "disabled" : ""}>${saveLabel}</button></div></article>`;
   }).join("") || '<div class="custom-deck-empty">No published items match this search yet.</div>';
+  renderLibraryPagination("#community-library-pagination", state.communityPage, items.length, COMMUNITY_ITEMS_PER_PAGE, (page) => {
+    state.communityPage = page;
+    renderCommunityLibrary();
+    $("#browse-community")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   $$('[data-save-community-item]', list).forEach((button) => button.addEventListener("click", () => saveCommunityItem(button.dataset.saveCommunityItem)));
   $$('[data-preview-community-item]', list).forEach((button) => button.addEventListener("click", () => previewCommunityItem(button.dataset.previewCommunityItem)));
   $$('[data-open-community-profile]', list).forEach((button) => button.addEventListener("click", () => openCommunityProfile(button.dataset.openCommunityProfile)));
@@ -9723,7 +9992,9 @@ function importedCommunityStudySet(payload, title, communityItemId = "") {
     sourceNotesHtml: "",
     sourceImport: null,
     generatorVersion: NOTES_GENERATOR_VERSION,
-    characteristicTemplate: [],
+    characteristicTemplate: JSON.parse(JSON.stringify(payload.characteristicTemplate || [])),
+    studyPresets: JSON.parse(JSON.stringify(payload.studyPresets || [])),
+    defaultStudySettings: JSON.parse(JSON.stringify(payload.defaultStudySettings || {})),
     updatedAt: Date.now(),
   };
   decks.unshift(deck);
@@ -10055,6 +10326,9 @@ function publicStudySetPayload(deck) {
     cards: (deck.cards || []).map(({ importedSchedule, importedReviews, sourceDeckId, ...card }) => card),
     questions: (deck.questions || []).map(({ sourceDeckId, ...question }) => question),
     feynmanPrompts: (deck.feynmanPrompts || []).map(({ sourceDeckId, ...prompt }) => prompt),
+    characteristicTemplate: JSON.parse(JSON.stringify(deck.characteristicTemplate || [])),
+    studyPresets: JSON.parse(JSON.stringify(deck.studyPresets || [])),
+    defaultStudySettings: JSON.parse(JSON.stringify(deck.defaultStudySettings || {})),
   };
 }
 
@@ -10362,30 +10636,27 @@ function builtInEditorSubdivisionStructure(collection) {
   if (!collection) return { units: [], topicByItem: new Map() };
   const topicByItem = new Map();
   if (isIbCourseCollection(collection)) {
-    const topics = collection.units.map((unit, unitIndex) => {
-      const topic = { id: `${unit.id}-subdivision`, name: unit.shortName || unit.name || `Subdivision ${unitIndex + 1}`, builtInUnitId: unit.id };
-      [...(unit.cards || []), ...(unit.questions || []), ...(unit.feynmanPrompts || [])].forEach((item) => topicByItem.set(item, topic.id));
-      return topic;
+    const units = collection.units.map((unit, unitIndex) => {
+      return { id: unit.id, name: unit.shortName || unit.name || `Unit ${unitIndex + 1}`, topics: [] };
     });
-    return { units: normalizedCustomUnits([{ id: `${collection.id}-subdivisions`, name: `${collection.name} course subdivisions`, topics }]), topicByItem };
+    return { units: normalizedCustomUnits(units), topicByItem };
   }
   if (!isApCourseCollection(collection)) {
     const units = collection.units.map((unit, unitIndex) => {
-      const topic = { id: `${unit.id}-subdivision`, name: unit.shortName || unit.name || `Section ${unitIndex + 1}`, builtInUnitId: unit.id };
-      [...(unit.cards || []), ...(unit.questions || []), ...(unit.feynmanPrompts || [])].forEach((item) => topicByItem.set(item, topic.id));
-      return { id: unit.id, name: unit.shortName || unit.name || `Section ${unitIndex + 1}`, topics: [topic] };
+      return { id: unit.id, name: unit.shortName || unit.name || `Section ${unitIndex + 1}`, topics: [] };
     });
     return { units: normalizedCustomUnits(units), topicByItem };
   }
   const units = collection.units.map((unit, unitIndex) => {
     const sourceTopics = apSubtopicsForUnit(collection, unit);
-    sourceTopics.forEach((topic) => {
+    const hasRealSubtopics = sourceTopics.length > 1 || sourceTopics.some((topic) => topic.id !== unit.id);
+    (hasRealSubtopics ? sourceTopics : []).forEach((topic) => {
       [...(topic.cards || []), ...(topic.questions || []), ...(topic.feynmanPrompts || [])].forEach((item) => topicByItem.set(item, topic.id));
     });
     return {
       id: unit.id,
       name: unit.shortName || unit.name || `Unit ${unitIndex + 1}`,
-      topics: sourceTopics.map((topic) => ({ id: topic.id, name: topic.label || topic.name || `Subtopic ${unitIndex + 1}`, builtInUnitId: unit.id })),
+      topics: hasRealSubtopics ? sourceTopics.map((topic) => ({ id: topic.id, name: topic.label || topic.name || `Subtopic ${unitIndex + 1}`, builtInUnitId: unit.id })) : [],
     };
   });
   return { units: normalizedCustomUnits(units), topicByItem };
@@ -10477,10 +10748,11 @@ function findStudyDeck(deckId) {
   }
   const personalDeck = loadCustomDecks().find((deck) => deck.id === deckId);
   if (personalDeck) {
-    const hasTopics = customTopicEntries(personalDeck.units).length > 0;
-    if (!hasTopics || state.selectedCustomDeckId !== deckId) return personalDeck;
+    hydrateCountryStudyConfiguration(personalDeck);
+    const hasSections = customOrganizationEntries(personalDeck.units).length > 0;
+    if (!hasSections || state.selectedCustomDeckId !== deckId) return personalDeck;
     const selected = new Set(state.selectedCustomTopicIds);
-    const included = (item) => selected.has(item.customTopicId || CUSTOM_GENERAL_TOPIC_ID);
+    const included = (item) => selected.has(item.customTopicId || item.customUnitId || CUSTOM_GENERAL_TOPIC_ID);
     return { ...personalDeck, cards: personalDeck.cards.filter(included), questions: (personalDeck.questions || []).filter(included), feynmanPrompts: (personalDeck.feynmanPrompts || []).filter(included) };
   }
   const collection = getBuiltInCollection(deckId);
@@ -10504,11 +10776,56 @@ function copyableBuiltInStudySet(collection) {
   return {
     name: collection.name,
     units: subdivisionStructure.units,
-    cards: collection.units.flatMap((unit) => (unit.cards || []).map((card) => ({ ...card, customTopicId: assignedTopicId(card, unit) }))),
-    questions: collection.units.flatMap((unit) => (unit.questions || []).map((question) => ({ ...question, customTopicId: assignedTopicId(question, unit) }))),
-    feynmanPrompts: collection.units.flatMap((unit) => (unit.feynmanPrompts || []).map((prompt) => ({ ...prompt, customTopicId: assignedTopicId(prompt, unit) }))),
+    cards: collection.units.flatMap((unit) => (unit.cards || []).map((card) => ({ ...card, characteristics: card.characteristics ? { ...card.characteristics } : undefined, customUnitId: unit.id, customTopicId: assignedTopicId(card, unit) }))),
+    questions: collection.units.flatMap((unit) => (unit.questions || []).map((question) => ({ ...question, customUnitId: unit.id, customTopicId: assignedTopicId(question, unit) }))),
+    feynmanPrompts: collection.units.flatMap((unit) => (unit.feynmanPrompts || []).map((prompt) => ({ ...prompt, customUnitId: unit.id, customTopicId: assignedTopicId(prompt, unit) }))),
     characteristicTemplate: collection.characteristicTemplate || [],
+    studyPresets: collection.geographyBank ? [
+      { id: "country-capital", label: "Country → Capital", frontFields: ["Country"], backFields: ["Capital"] },
+      { id: "capital-country", label: "Capital → Country", frontFields: ["Capital"], backFields: ["Country"] },
+      { id: "country-details", label: "Country → Capital + Currency", frontFields: ["Country"], backFields: ["Capital", "Currency"] },
+      { id: "flag-country", label: "Flag → Country", frontFields: ["Flag"], backFields: ["Country"] },
+      { id: "outline-country", label: "Outline → Country", frontFields: ["Outline"], backFields: ["Country"] },
+    ] : collection.studyPresets || [],
+    defaultStudySettings: collection.defaultStudySettings || {
+      topicIds: [],
+      frontFields: collection.geographyBank ? ["Country"] : ["Front"],
+      backFields: collection.geographyBank ? ["Capital"] : ["Back"],
+    },
   };
+}
+
+function hydrateCountryStudyConfiguration(deck) {
+  const names = new Set((deck?.characteristicTemplate || []).map((field) => field.name));
+  const looksLikeCountryDeck = names.has("Country") && names.has("Capital") && (deck.cards || []).some((card) => card.characteristics?.Country);
+  if (!looksLikeCountryDeck) return deck;
+  if (!names.has("Flag")) deck.characteristicTemplate.push({ name: "Flag", front: false, back: false, visual: true });
+  if (!names.has("Outline")) deck.characteristicTemplate.push({ name: "Outline", front: false, back: false, visual: true });
+  deck.characteristicTemplate = deck.characteristicTemplate.map((field) => /^(Flag|Outline)$/.test(field.name) ? { ...field, visual: true } : field);
+  const featured = ["Country", "Capital", "Flag", "Outline"];
+  deck.characteristicTemplate.sort((left, right) => {
+    const leftIndex = featured.indexOf(left.name);
+    const rightIndex = featured.indexOf(right.name);
+    return (leftIndex < 0 ? featured.length : leftIndex) - (rightIndex < 0 ? featured.length : rightIndex);
+  });
+  const countriesByName = new Map(geographyLocationCountries.map((country) => [String(country.country).trim().toLowerCase(), country]));
+  deck.cards.forEach((card) => {
+    const country = countriesByName.get(String(card.characteristics?.Country || "").trim().toLowerCase());
+    if (!country) return;
+    card.characteristics.Flag ||= country.flag || "";
+    card.characteristics.Outline ||= country.outline || "";
+  });
+  const presets = [
+    { id: "country-capital", label: "Country → Capital", frontFields: ["Country"], backFields: ["Capital"] },
+    { id: "capital-country", label: "Capital → Country", frontFields: ["Capital"], backFields: ["Country"] },
+    { id: "country-details", label: "Country → Capital + Currency", frontFields: ["Country"], backFields: ["Capital", "Currency"] },
+    { id: "flag-country", label: "Flag → Country", frontFields: ["Flag"], backFields: ["Country"] },
+    { id: "outline-country", label: "Outline → Country", frontFields: ["Outline"], backFields: ["Country"] },
+  ];
+  const existingPresetIds = new Set((deck.studyPresets || []).map((preset) => preset.id));
+  deck.studyPresets = [...(deck.studyPresets || []), ...presets.filter((preset) => !existingPresetIds.has(preset.id))];
+  deck.defaultStudySettings ||= { topicIds: [], frontFields: ["Country"], backFields: ["Capital"] };
+  return deck;
 }
 
 function duplicateStudySet(deckId) {
@@ -10537,6 +10854,8 @@ function duplicateStudySet(deckId) {
     sourceImport: null,
     generatorVersion: personal?.generatorVersion || NOTES_GENERATOR_VERSION,
     characteristicTemplate: JSON.parse(JSON.stringify(source.characteristicTemplate || [])),
+    studyPresets: JSON.parse(JSON.stringify(source.studyPresets || [])),
+    defaultStudySettings: JSON.parse(JSON.stringify(source.defaultStudySettings || {})),
     updatedAt: Date.now(),
   };
   decks.unshift(duplicate);
@@ -10564,7 +10883,7 @@ function saveCustomDeck({ resetAfterSave = true, notify = true } = {}) {
   if (isReadOnlyStudySet(existingDeck)) { showToast("Make a copy before editing this community set."); return null; }
   const visibleSourceNotes = notesPlainText();
   const visibleSourceNotesHtml = notesRichHtml();
-  const deck = { id: state.editingCustomDeckId || makeLocalId("deck"), name, cards, questions, feynmanPrompts, units: normalizedCustomUnits(state.customUnits), characteristicTemplate: characteristicTemplate(), sourceNotes: state.notesHiddenAfterUpdate && !visibleSourceNotes ? existingDeck?.sourceNotes || "" : visibleSourceNotes, sourceNotesHtml: state.notesHiddenAfterUpdate && !visibleSourceNotesHtml ? existingDeck?.sourceNotesHtml || "" : visibleSourceNotesHtml, sourceImport: state.customImportSource, generatorVersion: NOTES_GENERATOR_VERSION, updatedAt: Date.now() };
+  const deck = { id: state.editingCustomDeckId || makeLocalId("deck"), name, cards, questions, feynmanPrompts, units: normalizedCustomUnits(state.customUnits), characteristicTemplate: characteristicTemplate(), studyPresets: JSON.parse(JSON.stringify(state.customStudyPresets)), defaultStudySettings: { topicIds: [...state.customDefaultStudyTopicIds], frontFields: [...state.customDefaultFrontFields], backFields: [...state.customDefaultBackFields] }, sourceNotes: state.notesHiddenAfterUpdate && !visibleSourceNotes ? existingDeck?.sourceNotes || "" : visibleSourceNotes, sourceNotesHtml: state.notesHiddenAfterUpdate && !visibleSourceNotesHtml ? existingDeck?.sourceNotesHtml || "" : visibleSourceNotesHtml, sourceImport: state.customImportSource, generatorVersion: NOTES_GENERATOR_VERSION, updatedAt: Date.now() };
   if (existingIndex >= 0) decks.splice(existingIndex, 1, deck); else decks.unshift(deck);
   if (!storeCustomDecks(decks)) return null;
   state.editingCustomDeckId = deck.id;
@@ -10620,6 +10939,8 @@ function saveGeneratedCustomDeckInPlace() {
     feynmanPrompts: state.customFeynmanDraft.map((item) => ({ ...item })),
     units: normalizedCustomUnits(state.customUnits),
     characteristicTemplate: characteristicTemplate(),
+    studyPresets: JSON.parse(JSON.stringify(state.customStudyPresets)),
+    defaultStudySettings: { topicIds: [...state.customDefaultStudyTopicIds], frontFields: [...state.customDefaultFrontFields], backFields: [...state.customDefaultBackFields] },
     sourceNotes: notesPlainText(),
     sourceNotesHtml: notesRichHtml(),
     sourceImport: state.customImportSource,
@@ -10650,16 +10971,21 @@ function saveGeneratedCustomDeckInPlace() {
 function editCustomDeck(deckId) {
   const deck = loadCustomDecks().find((item) => item.id === deckId);
   if (!deck) return;
+  hydrateCountryStudyConfiguration(deck);
   if (isReadOnlyStudySet(deck)) { showToast("Make a copy before editing this community set."); return; }
   state.editingBuiltInCollectionId = null;
   state.editingCustomDeckId = deck.id;
   state.appendNotesToExistingSet = false;
   state.notesHiddenAfterUpdate = true;
-  state.customDraft = deck.cards.map((card) => ({ ...card }));
+  state.customDraft = deck.cards.map((card) => ({ ...card, characteristics: card.characteristics ? { ...card.characteristics } : undefined }));
   state.customQuestionDraft = (deck.questions || []).map((question) => ({ ...question }));
   state.customFeynmanDraft = (deck.feynmanPrompts || []).map((item) => ({ ...item }));
   state.customUnits = normalizedCustomUnits(deck.units);
-  state.activeCustomTopicId = customTopicEntries(state.customUnits)[0]?.id || "";
+  state.customStudyPresets = JSON.parse(JSON.stringify(deck.studyPresets || []));
+  state.customDefaultStudyTopicIds = [...(deck.defaultStudySettings?.topicIds || [])];
+  state.customDefaultFrontFields = [...(deck.defaultStudySettings?.frontFields || ["Column 1"] )];
+  state.customDefaultBackFields = [...(deck.defaultStudySettings?.backFields || ["Column 2"] )];
+  state.activeCustomTopicId = customOrganizationEntries(state.customUnits)[0]?.id || "";
   state.draftViewUnitId = "";
   state.draftViewTopicId = "";
   state.customImportSource = deck.sourceImport || null;
@@ -10667,7 +10993,7 @@ function editCustomDeck(deckId) {
   state.customCharacteristicFields = defaultCharacteristicFields(deck.characteristicTemplate || []);
   $("#custom-deck-name").value = deck.name;
   setNotesContent();
-  $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name} · flashcards only` : "Supports APKG, UTF-8 TXT, CSV, and TSV files.";
+  $("#anki-import-status").textContent = state.customImportSource ? `Imported from ${state.customImportSource.name} · flashcards only` : "Supports APKG, XLSX, XLS, CSV, TSV, PDF, PPTX, and UTF-8 TXT files.";
   $("#generate-note-cards").disabled = false;
   $("#generate-note-cards").textContent = "Update set";
   renderCustomDraft();
@@ -10692,7 +11018,7 @@ async function editBuiltInCollection(collectionId) {
   const subdivisionStructure = builtInEditorSubdivisionStructure(collection);
   state.customUnits = subdivisionStructure.units;
   const validTopicIds = new Set(customTopicEntries(state.customUnits).map((topic) => topic.id));
-  state.activeCustomTopicId = customTopicEntries(state.customUnits)[0]?.id || "";
+  state.activeCustomTopicId = customOrganizationEntries(state.customUnits)[0]?.id || "";
   state.draftViewUnitId = "";
   state.draftViewTopicId = "";
   const assignedTopicId = (item, unit) => validTopicIds.has(item.customTopicId)
@@ -10894,11 +11220,25 @@ async function openCustomStudyOptions(deckId) {
   }
   state.selectedBuiltInCollectionId = collection?.id || null;
   const personalDeck = loadCustomDecks().find((item) => item.id === deckId);
+  if (personalDeck) hydrateCountryStudyConfiguration(personalDeck);
   if (personalDeck && state.selectedCustomDeckId !== deckId) {
-    state.selectedCustomTopicIds = [CUSTOM_GENERAL_TOPIC_ID, ...customTopicEntries(personalDeck.units).map((topic) => topic.id)];
+    const assignedGeneral = [...(personalDeck.cards || []), ...(personalDeck.questions || []), ...(personalDeck.feynmanPrompts || [])].some((item) => !item.customTopicId && !item.customUnitId);
+    const availableTopicIds = [...(assignedGeneral ? [CUSTOM_GENERAL_TOPIC_ID] : []), ...customOrganizationEntries(personalDeck.units).map((entry) => entry.id)];
+    const savedTopicIds = personalDeck.defaultStudySettings?.topicIds || [];
+    state.selectedCustomTopicIds = savedTopicIds.filter((id) => availableTopicIds.includes(id));
+    if (!state.selectedCustomTopicIds.length) state.selectedCustomTopicIds = availableTopicIds;
+    const characteristicColumns = (personalDeck.characteristicTemplate || []).map((field) => field.name);
+    state.customStudyFrontFields = (personalDeck.defaultStudySettings?.frontFields || []).filter((name) => characteristicColumns.includes(name));
+    state.customStudyBackFields = (personalDeck.defaultStudySettings?.backFields || []).filter((name) => characteristicColumns.includes(name));
   }
   const deck = findStudyDeck(deckId);
   if (!deck) return;
+  if (state.selectedCustomDeckId !== deckId) {
+    const defaultFront = personalDeck?.defaultStudySettings?.frontFields?.[0];
+    const defaultBack = personalDeck?.defaultStudySettings?.backFields?.[0];
+    state.cardFrontColumn = defaultFront === "Back" ? "back" : "front";
+    state.cardBackColumn = defaultBack === "Front" ? "front" : "back";
+  }
   if (!$("#flashcards").hidden) state.customStudyReturnView = "flashcards";
   else if (!$("#create").hidden) state.customStudyReturnView = "create";
   else if (!$("#notes-page").hidden) state.customStudyReturnView = "notes";
@@ -10910,33 +11250,152 @@ async function openCustomStudyOptions(deckId) {
   renderCustomTopicPicker(personalDeck || null);
   renderGeographyFieldPicker(collection);
   renderUsStateFieldPicker(collection);
+  renderCardColumnPicker(deck, collection);
   refreshCustomStudyOptions();
   $("#custom-study-options-view").hidden = false;
   $("#custom-review-view").hidden = true;
   showAppView("custom-study");
 }
 
+function cardWithSelectedColumns(card) {
+  if (card.characteristics && (state.customStudyFrontFields.length || state.customStudyBackFields.length)) {
+    const sideFromFields = (names) => {
+      const values = names.map((name) => ({ name, value: String(card.characteristics?.[name] || "").trim() })).filter((item) => item.value);
+      const visual = values.find((item) => /^(flag|outline|image|diagram|photo)$/i.test(item.name) && /^(?:https?:|data:|\.\/)/i.test(item.value));
+      const textValues = values.filter((item) => item !== visual);
+      return { text: textValues.map((item) => textValues.length === 1 ? item.value : `${item.name}: ${item.value}`).join("\n\n"), image: visual?.value || "" };
+    };
+    const front = sideFromFields(state.customStudyFrontFields);
+    const back = sideFromFields(state.customStudyBackFields);
+    return { ...card, front: front.text, back: back.text, frontImage: front.image, backImage: back.image };
+  }
+  const side = (column) => column === "back"
+    ? { text: card.back, image: card.backImage }
+    : { text: card.front, image: card.frontImage };
+  const front = side(state.cardFrontColumn);
+  const back = side(state.cardBackColumn);
+  return {
+    ...card,
+    front: front.text,
+    back: back.text,
+    frontImage: front.image,
+    backImage: back.image,
+  };
+}
+
+function renderCardColumnPicker(deck, collection) {
+  const picker = $("#card-column-picker");
+  const usesSpecialFields = Boolean(collection?.geographyBank || collection?.usStateBank);
+  picker.hidden = usesSpecialFields || !(deck?.cards || []).length;
+  if (picker.hidden) return;
+  const controls = $(".card-column-controls, .card-characteristic-side-grid", picker);
+  let presetBar = $(".deck-study-presets", picker);
+  const characteristicColumns = (deck.characteristicTemplate || []).map((field) => field.name).filter(Boolean);
+  if (characteristicColumns.length) {
+    state.customStudyFrontFields = state.customStudyFrontFields.filter((name) => characteristicColumns.includes(name));
+    state.customStudyBackFields = state.customStudyBackFields.filter((name) => characteristicColumns.includes(name));
+    if (!state.customStudyFrontFields.length) state.customStudyFrontFields = [characteristicColumns[0]];
+    if (!state.customStudyBackFields.length) state.customStudyBackFields = [characteristicColumns[1] || characteristicColumns[0]];
+    controls.className = "geography-side-grid card-characteristic-side-grid";
+    const fieldset = (side, selected) => `<fieldset><legend>${side === "front" ? "Front of card" : "Back of card"}</legend><div>${characteristicColumns.map((name) => `<label class="geography-field-choice"><input type="checkbox" data-study-characteristic-${side}="${escapeHtml(name)}" ${selected.includes(name) ? "checked" : ""}><span>${escapeHtml(name)}</span></label>`).join("")}</div></fieldset>`;
+    controls.innerHTML = `${fieldset("front", state.customStudyFrontFields)}${fieldset("back", state.customStudyBackFields)}`;
+    if (!presetBar) {
+      presetBar = document.createElement("div");
+      presetBar.className = "geography-presets deck-study-presets";
+      controls.before(presetBar);
+    }
+    const presets = Array.isArray(deck.studyPresets) ? deck.studyPresets : [];
+    presetBar.innerHTML = presets.map((preset) => `<button type="button" data-deck-study-preset="${escapeHtml(preset.id)}">${escapeHtml(preset.label)}</button>`).join("");
+    presetBar.hidden = !presets.length;
+    ["front", "back"].forEach((side) => $$(`[data-study-characteristic-${side}]`, controls).forEach((input) => input.onchange = () => {
+      const key = `studyCharacteristic${side[0].toUpperCase()}${side.slice(1)}`;
+      const chosen = $$(`[data-study-characteristic-${side}]:checked`, controls).map((item) => item.dataset[key]);
+      if (!chosen.length) { input.checked = true; showToast(`Keep at least one ${side} column selected.`); return; }
+      if (side === "front") state.customStudyFrontFields = chosen;
+      else state.customStudyBackFields = chosen;
+      $("#card-column-summary").textContent = studySetupLabel(state.customStudyFrontFields, state.customStudyBackFields);
+      refreshCustomStudyOptions();
+    }));
+    $$('[data-deck-study-preset]', presetBar).forEach((button) => button.onclick = () => {
+      const preset = presets.find((item) => item.id === button.dataset.deckStudyPreset);
+      if (!preset) return;
+      state.customStudyFrontFields = preset.frontFields.filter((name) => characteristicColumns.includes(name));
+      state.customStudyBackFields = preset.backFields.filter((name) => characteristicColumns.includes(name));
+      renderCardColumnPicker(deck, collection);
+      refreshCustomStudyOptions();
+    });
+    $("#card-column-summary").textContent = studySetupLabel(state.customStudyFrontFields, state.customStudyBackFields);
+    return;
+  }
+  controls.className = "card-column-controls";
+  controls.innerHTML = `<label><span>Front of card</span><select id="card-front-column"><option value="front">Column 1</option><option value="back">Column 2</option></select></label><button type="button" id="swap-card-columns" aria-label="Swap front and back columns">⇄ <span>Swap</span></button><label><span>Back of card</span><select id="card-back-column"><option value="front">Column 1</option><option value="back">Column 2</option></select></label>`;
+  const basicPresets = Array.isArray(deck.studyPresets) ? deck.studyPresets : [];
+  if (!presetBar && basicPresets.length) {
+    presetBar = document.createElement("div");
+    presetBar.className = "geography-presets deck-study-presets";
+    controls.before(presetBar);
+  }
+  if (presetBar) {
+    presetBar.innerHTML = basicPresets.map((preset) => `<button type="button" data-basic-study-preset="${escapeHtml(preset.id)}">${escapeHtml(preset.label)}</button>`).join("");
+    presetBar.hidden = !basicPresets.length;
+    $$('[data-basic-study-preset]', presetBar).forEach((button) => button.onclick = () => {
+      const preset = basicPresets.find((item) => item.id === button.dataset.basicStudyPreset);
+      if (!preset) return;
+      state.cardFrontColumn = preset.frontFields[0] === "Back" ? "back" : "front";
+      state.cardBackColumn = preset.backFields[0] === "Front" ? "front" : "back";
+      renderCardColumnPicker(deck, collection);
+      refreshCustomStudyOptions();
+    });
+  }
+  const frontSelect = $("#card-front-column");
+  const backSelect = $("#card-back-column");
+  frontSelect.value = state.cardFrontColumn;
+  backSelect.value = state.cardBackColumn;
+  const update = (changedSide) => {
+    state.cardFrontColumn = frontSelect.value;
+    state.cardBackColumn = backSelect.value;
+    if (state.cardFrontColumn === state.cardBackColumn) {
+      if (changedSide === "front") state.cardBackColumn = state.cardFrontColumn === "front" ? "back" : "front";
+      else state.cardFrontColumn = state.cardBackColumn === "front" ? "back" : "front";
+    }
+    renderCardColumnPicker(deck, collection);
+    refreshCustomStudyOptions();
+  };
+  frontSelect.onchange = () => update("front");
+  backSelect.onchange = () => update("back");
+  $("#swap-card-columns").onclick = () => {
+    [state.cardFrontColumn, state.cardBackColumn] = [state.cardBackColumn, state.cardFrontColumn];
+    renderCardColumnPicker(deck, collection);
+    refreshCustomStudyOptions();
+  };
+  $("#card-column-summary").textContent = `${state.cardFrontColumn === "front" ? "Column 1" : "Column 2"} → ${state.cardBackColumn === "front" ? "Column 1" : "Column 2"}`;
+}
+
 function renderCustomTopicPicker(deck) {
   const picker = $("#custom-topic-picker");
   const units = normalizedCustomUnits(deck?.units);
   const topics = customTopicEntries(units);
-  picker.hidden = !deck || !topics.length;
+  const organization = customOrganizationEntries(units);
+  picker.hidden = !deck || !organization.length;
   if (picker.hidden) return;
   const selected = new Set(state.selectedCustomTopicIds);
-  const unassignedCount = [...(deck.cards || []), ...(deck.questions || []), ...(deck.feynmanPrompts || [])].filter((item) => !item.customTopicId).length;
+  const allItems = [...(deck.cards || []), ...(deck.questions || []), ...(deck.feynmanPrompts || [])];
+  const unassignedCount = allItems.filter((item) => !item.customTopicId && !item.customUnitId).length;
   const general = unassignedCount ? `<label class="built-in-topic-choice"><input type="checkbox" data-custom-study-topic value="${CUSTOM_GENERAL_TOPIC_ID}" ${selected.has(CUSTOM_GENERAL_TOPIC_ID) ? "checked" : ""}><span><strong>General</strong><small>${unassignedCount} unassigned items</small></span></label>` : "";
   $("#custom-topic-grid").innerHTML = `${general}${units.map((unit) => {
     const unitTopics = unit.topics;
+    const directUnit = !unitTopics.length;
     const selectedCount = unitTopics.filter((topic) => selected.has(topic.id)).length;
     const topicMarkup = unitTopics.map((topic) => {
       const items = [...(deck.cards || []), ...(deck.questions || []), ...(deck.feynmanPrompts || [])].filter((item) => item.customTopicId === topic.id);
       return `<label class="built-in-topic-choice"><input type="checkbox" data-custom-study-topic value="${escapeHtml(topic.id)}" ${selected.has(topic.id) ? "checked" : ""}><span><strong title="${escapeHtml(topic.name)}">${escapeHtml(topic.name)}</strong><small>${items.length} study items</small></span></label>`;
     }).join("");
-    return `<section class="built-in-unit-group"><label class="built-in-unit-choice"><input type="checkbox" data-custom-study-unit value="${escapeHtml(unit.id)}" ${selectedCount === unitTopics.length ? "checked" : ""}><span><strong>${escapeHtml(unit.name)}</strong><small>${unitTopics.length} subtopics</small></span></label><div class="built-in-topic-grid">${topicMarkup}</div></section>`;
+    const directCount = directUnit ? allItems.filter((item) => item.customUnitId === unit.id && !item.customTopicId).length : 0;
+    return `<section class="built-in-unit-group${directUnit ? " direct-unit-group" : ""}"><label class="built-in-unit-choice"><input type="checkbox" data-custom-study-unit value="${escapeHtml(unit.id)}" ${directUnit ? (selected.has(unit.id) ? "checked" : "") : (selectedCount === unitTopics.length ? "checked" : "")}><span><strong>${escapeHtml(unit.name)}</strong><small>${directUnit ? `${directCount} study items` : `${unitTopics.length} subtopics`}</small></span></label>${directUnit ? "" : `<div class="built-in-topic-grid">${topicMarkup}</div>`}</section>`;
   }).join("")}`;
   $$('[data-custom-study-unit]', picker).forEach((input) => {
     const unit = units.find((item) => item.id === input.value);
-    const ids = unit?.topics.map((topic) => topic.id) || [];
+    const ids = unit?.topics.length ? unit.topics.map((topic) => topic.id) : [unit?.id].filter(Boolean);
     const count = ids.filter((id) => selected.has(id)).length;
     input.indeterminate = count > 0 && count < ids.length;
     input.onchange = () => {
@@ -10948,7 +11407,7 @@ function renderCustomTopicPicker(deck) {
     state.selectedCustomTopicIds = input.checked ? [...new Set([...state.selectedCustomTopicIds, input.value])] : state.selectedCustomTopicIds.filter((id) => id !== input.value);
     renderCustomTopicPicker(deck); refreshCustomStudyOptions();
   });
-  const allIds = [CUSTOM_GENERAL_TOPIC_ID, ...topics.map((topic) => topic.id)].filter((id) => id !== CUSTOM_GENERAL_TOPIC_ID || unassignedCount);
+  const allIds = [CUSTOM_GENERAL_TOPIC_ID, ...organization.map((entry) => entry.id)].filter((id) => id !== CUSTOM_GENERAL_TOPIC_ID || unassignedCount);
   const allSelected = allIds.every((id) => selected.has(id));
   $("#toggle-all-custom-topics").textContent = allSelected ? "Clear all" : "Select all";
   $("#toggle-all-custom-topics").onclick = () => {
@@ -11218,6 +11677,7 @@ function refreshCustomStudyOptions() {
   if (!deck) return;
   const regularQuestions = (deck.questions || []).filter((question) => question.type !== "essay");
   const essayQuestions = (deck.questions || []).filter((question) => question.type === "essay");
+  const selectedQuestions = questionsForPracticeMode(deck, state.customQuestionModeSelector);
   $("#custom-study-title").textContent = deck.name;
   const removed = removedAnkiCardKeys();
   const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
@@ -11232,12 +11692,12 @@ function refreshCustomStudyOptions() {
   $("#custom-anki-daily-review").textContent = reviewCount;
   $("#start-custom-flashcards").disabled = factBankMissingSide || !deck.cards.length;
   $('[data-custom-study-mode="anki"]').disabled = Boolean(frozen) || factBankMissingSide || !dueCount;
-  $("#start-custom-questions").disabled = state.customQuestionModeSelector === "essay" ? !essayQuestions.length : !regularQuestions.length;
+  $("#start-custom-questions").disabled = !selectedQuestions.length;
   $('[data-custom-study-mode="feynman"]').disabled = !(deck.feynmanPrompts || []).length;
   $("#start-custom-questions").closest(".custom-study-option-card").hidden = false;
   $('[data-custom-study-mode="feynman"]').closest(".custom-study-option-card").hidden = false;
   configureCustomReviewCount("#custom-regular-count", deck.cards.length);
-  configureCustomReviewCount("#custom-questions-count", regularQuestions.length);
+  configureCustomReviewCount("#custom-questions-count", selectedQuestions.length || regularQuestions.length);
   const selectedPromptStillExists = essayQuestions.some((question) => question.id === state.customEssayPromptId);
   if (!selectedPromptStillExists) state.customEssayPromptId = "";
   renderEssayPromptPicker();
@@ -11286,21 +11746,39 @@ const CUSTOM_QUESTION_MODES = [
   { id: "essay", label: "Essay", detail: "Prompt and writing space" },
 ];
 
+function questionModesForDeck(deck) {
+  const questions = deck?.questions || [];
+  const modes = [CUSTOM_QUESTION_MODES[0]];
+  if (questions.some((question) => question.type === "essay")) modes.push(CUSTOM_QUESTION_MODES[1]);
+  return modes;
+}
+
+function questionsForPracticeMode(deck, mode = state.customQuestionModeSelector) {
+  const questions = deck?.questions || [];
+  if (mode === "essay") return questions.filter((question) => question.type === "essay");
+  return questions.filter((question) => question.type !== "essay");
+}
+
 function renderCustomQuestionModeSelector() {
-  const selectedIndex = Math.max(0, CUSTOM_QUESTION_MODES.findIndex((mode) => mode.id === state.customQuestionModeSelector));
-  const selected = CUSTOM_QUESTION_MODES[selectedIndex];
+  const deck = state.selectedCustomDeckId ? findStudyDeck(state.selectedCustomDeckId) : null;
+  const modes = questionModesForDeck(deck);
+  if (!modes.some((mode) => mode.id === state.customQuestionModeSelector)) state.customQuestionModeSelector = modes[0]?.id || "normal";
+  const selectedIndex = Math.max(0, modes.findIndex((mode) => mode.id === state.customQuestionModeSelector));
+  const selected = modes[selectedIndex];
   $("#selected-custom-question-mode").innerHTML = `<strong>${selected.label}</strong><small>${selected.detail}</small>`;
-  $$(".question-mode-dots i").forEach((dot, index) => dot.classList.toggle("active", index === selectedIndex));
+  $(".question-mode-dots").innerHTML = modes.map((_, index) => `<i class="${index === selectedIndex ? "active" : ""}"></i>`).join("");
   $("#custom-question-count-picker").hidden = selected.id === "essay";
   $("#essay-start-options").hidden = selected.id !== "essay";
-  const deck = state.selectedCustomDeckId ? findStudyDeck(state.selectedCustomDeckId) : null;
-  const available = deck ? (deck.questions || []).some((question) => selected.id === "essay" ? question.type === "essay" : question.type !== "essay") : false;
+  const available = questionsForPracticeMode(deck, selected.id).length > 0;
   $("#start-custom-questions").disabled = !available;
+  if (selected.id !== "essay") configureCustomReviewCount("#custom-questions-count", questionsForPracticeMode(deck, selected.id).length);
 }
 
 function cycleQuestionPracticeMode(direction) {
-  const current = Math.max(0, CUSTOM_QUESTION_MODES.findIndex((mode) => mode.id === state.customQuestionModeSelector));
-  state.customQuestionModeSelector = CUSTOM_QUESTION_MODES[(current + direction + CUSTOM_QUESTION_MODES.length) % CUSTOM_QUESTION_MODES.length].id;
+  const deck = state.selectedCustomDeckId ? findStudyDeck(state.selectedCustomDeckId) : null;
+  const modes = questionModesForDeck(deck);
+  const current = Math.max(0, modes.findIndex((mode) => mode.id === state.customQuestionModeSelector));
+  state.customQuestionModeSelector = modes[(current + direction + modes.length) % modes.length].id;
   renderCustomQuestionModeSelector();
 }
 
@@ -11316,7 +11794,7 @@ function startCustomReview(mode) {
     const selected = state.customEssayPromptId ? essays.find((question) => question.id === state.customEssayPromptId) : shuffleInPlace([...essays])[0];
     state.customReviewCards = selected ? [{ ...selected, front: selected.prompt, back: selected.answer }] : [];
   } else if (mode === "questions") {
-    const questions = (deck.questions || []).map((question) => {
+    const questions = questionsForPracticeMode(deck).map((question) => {
       const normalized = typedQuestionAsCloze(question);
       return { ...normalized, front: normalized.prompt, back: normalized.answer };
     }).filter((question) => question.type !== "essay");
@@ -11326,13 +11804,13 @@ function startCustomReview(mode) {
   } else if (mode === "anki") {
     const scope = `deck:${deck.id}`;
     const removed = removedAnkiCardKeys();
-    const candidates = deck.cards.map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
+    const candidates = deck.cards.map(cardWithSelectedColumns).map((card) => prepareAnkiSessionCard(card, customAnkiKey(card.sourceDeckId || deck.id, card.id))).filter((card) => !removed.has(card.scheduleKey));
     const plan = dailyAnkiPlan(candidates, scope);
     activateAnkiDeck(deck.id, "deck");
     state.customReviewCards = plan.queue;
     markDailyNewCardsStarted(scope, plan.newCards);
   } else {
-    const cards = deck.cards.map((card) => ({ ...card }));
+    const cards = deck.cards.map(cardWithSelectedColumns);
     state.customReviewCards = shuffleInPlace(cards).slice(0, customReviewCount(mode, cards.length));
   }
   if (!state.customReviewCards.length) { showToast("Nothing is available for that study mode yet."); return; }
@@ -11820,8 +12298,11 @@ function renderCustomQuestionPractice() {
     const choices = isChoice ? `<div class="custom-question-choices${isMultipleSelect ? " multiple-select" : ""}">${options.map((option, optionIndex) => `<button type="button" data-scroll-question-choice="${index}" data-question-option-index="${optionIndex}" aria-pressed="false"><span>${String.fromCharCode(65 + optionIndex)}</span>${escapeHtml(option)}</button>`).join("")}</div>` : "";
     const response = isChoice ? "" : `<label class="custom-question-response">Your answer<input type="text" data-scroll-question-response="${index}" placeholder="Type the missing word or phrase…" autocomplete="off"></label>`;
     const checkButton = !isChoice || isMultipleSelect ? `<button type="button" class="button secondary-button custom-question-check" data-check-scroll-question="${index}">Check answer</button>` : "";
+    const practiceLabel = question.examPaper
+      ? `IB Paper ${question.examPaper}${question.marks ? ` · ${question.marks} ${question.marks === 1 ? "mark" : "marks"}` : ""}`
+      : questionTypeLabel(question.type);
     return `<article class="custom-question-item" data-scroll-question-index="${index}">
-      <div class="custom-question-item-head"><span class="custom-question-number">${index + 1}</span><span class="custom-question-type">${escapeHtml(questionTypeLabel(question.type))}</span></div>
+      <div class="custom-question-item-head"><span class="custom-question-number">${index + 1}</span><span class="custom-question-type">${escapeHtml(practiceLabel)}</span></div>
       ${question.stimulus ? `<div class="custom-question-stimulus">${escapeHtml(question.stimulus)}</div>` : ""}
       ${customQuestionImageHtml(question, index)}
       <h3>${studyTextHtml(question.prompt)}</h3>
@@ -11999,6 +12480,13 @@ $$('.mobile-nav a[href="#courses"], .mobile-nav a[href="#dashboard"], .mobile-na
   event.preventDefault();
   showAppView(item.getAttribute("href").slice(1));
 }));
+$$('[data-mobile-account]').forEach((button) => button.addEventListener("click", () => {
+  $("#open-account-dialog")?.click();
+}));
+$$('[data-mobile-settings]').forEach((button) => button.addEventListener("click", () => {
+  showAppView("settings");
+  renderStorageHealth();
+}));
 $$('[data-browse-library-view]').forEach((button) => button.addEventListener("click", () => setBrowseLibraryView(button.dataset.browseLibraryView)));
 function positionInlinePalette(palette, control) {
   palette.classList.remove("opens-below");
@@ -12071,6 +12559,7 @@ function runStartupStep(name, callback) {
 }
 
 runStartupStep("Theme", applyTheme);
+runStartupStep("Desktop-only settings", hideDesktopOnlySettingsOnWeb);
 runStartupStep("Interface preferences", applyInterfacePreferences);
 runStartupStep("Date greeting", setDateGreeting);
 runStartupStep("Profile", initializeProfile);
@@ -12130,7 +12619,197 @@ $(".search-field input")?.addEventListener("input", (event) => {
 });
 
 function importDeckName(fileName) {
-  return fileName.replace(/\.(apkg|pdf|pptx|txt|md|csv|tsv)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported study set";
+  return fileName.replace(/\.(apkg|pdf|pptx|txt|md|csv|tsv|xlsx|xls)$/i, "").replace(/\.anki$/i, "").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim() || "Imported study set";
+}
+
+let pendingSpreadsheetImport = null;
+let spreadsheetReaderPromise = null;
+const MAX_SPREADSHEET_FILE_BYTES = 15 * 1024 * 1024;
+const MAX_SPREADSHEET_CELLS = 100000;
+const MAX_SPREADSHEET_CARDS = 5000;
+const MAX_SPREADSHEET_TEXT = 2000000;
+
+function spreadsheetUi(key, fallback) {
+  return window.StudyLanguage?.text(document.documentElement.dataset.language || "en", key) || fallback || key;
+}
+
+function localizedSpreadsheetError(error) {
+  const message = String(error?.message || error || "");
+  if (/larger than 15 MB/i.test(message)) return spreadsheetUi("spreadsheetFileLimit", message);
+  if (/more than 100,000 populated cells/i.test(message)) return spreadsheetUi("spreadsheetCellLimit", message);
+  if (/too much text/i.test(message)) return spreadsheetUi("spreadsheetTextLimit", message);
+  return spreadsheetUi("spreadsheetImportError", "This spreadsheet could not be imported.");
+}
+
+function ensureSpreadsheetReaderLoaded() {
+  if (window.XLSX?.read) return Promise.resolve(window.XLSX);
+  if (spreadsheetReaderPromise) return spreadsheetReaderPromise;
+  spreadsheetReaderPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "./vendor/xlsx.full.min.js";
+    script.onload = () => window.XLSX?.read ? resolve(window.XLSX) : reject(new Error(spreadsheetUi("spreadsheetReaderError", "The spreadsheet reader could not start.")));
+    script.onerror = () => reject(new Error(spreadsheetUi("spreadsheetReaderError", "The spreadsheet reader could not start.")));
+    document.head.appendChild(script);
+  }).catch((error) => { spreadsheetReaderPromise = null; throw error; });
+  return spreadsheetReaderPromise;
+}
+
+function validateSpreadsheetRows(rows) {
+  let populated = 0, characters = 0;
+  for (const row of rows || []) for (const value of Array.isArray(row) ? row : [row]) {
+    const text = spreadsheetText(value);
+    if (!text) continue;
+    populated += 1;
+    characters += text.length;
+    if (populated > MAX_SPREADSHEET_CELLS) throw new Error(spreadsheetUi("spreadsheetCellLimit", "This spreadsheet has more than 100,000 populated cells. Split it into smaller files before importing."));
+    if (characters > MAX_SPREADSHEET_TEXT) throw new Error(spreadsheetUi("spreadsheetTextLimit", "This spreadsheet contains too much text. Split it into smaller files before importing."));
+  }
+  return rows;
+}
+
+function spreadsheetText(value) {
+  return String(value ?? "").replace(/\r\n?/g, "\n").trim();
+}
+
+function trimSpreadsheetMatrix(sourceRows) {
+  const rows = (sourceRows || []).map((row) => (Array.isArray(row) ? row : [row]).map(spreadsheetText)).filter((row) => row.some(Boolean));
+  const populatedColumns = [];
+  const width = rows.reduce((largest, row) => Math.max(largest, row.length), 0);
+  for (let column = 0; column < width; column += 1) {
+    if (rows.some((row) => spreadsheetText(row[column]))) populatedColumns.push(column);
+  }
+  return rows.map((row) => populatedColumns.map((column) => spreadsheetText(row[column])));
+}
+
+function transposeSpreadsheetMatrix(rows) {
+  const width = rows.reduce((largest, row) => Math.max(largest, row.length), 0);
+  return Array.from({ length: width }, (_, column) => rows.map((row) => spreadsheetText(row[column])));
+}
+
+function uniqueSpreadsheetHeaders(values, count) {
+  const used = new Set();
+  return Array.from({ length: count }, (_, index) => {
+    const base = spreadsheetText(values?.[index]) || `Field ${index + 1}`;
+    let name = base.slice(0, 40), suffix = 2;
+    while (used.has(name.toLocaleLowerCase())) name = `${base.slice(0, 34)} ${suffix++}`.slice(0, 40);
+    used.add(name.toLocaleLowerCase());
+    return name;
+  });
+}
+
+function preparedSpreadsheetImport() {
+  if (!pendingSpreadsheetImport) return { headers: [], records: [], ignored: 0 };
+  const selectedName = $("#spreadsheet-sheet")?.value || pendingSpreadsheetImport.sheets[0]?.name;
+  const sheet = pendingSpreadsheetImport.sheets.find((item) => item.name === selectedName) || pendingSpreadsheetImport.sheets[0];
+  let records = trimSpreadsheetMatrix(sheet?.rows || []);
+  const orientation = $('[name="spreadsheetOrientation"]:checked')?.value || "rows";
+  if (orientation === "columns") records = transposeSpreadsheetMatrix(records);
+  records = trimSpreadsheetMatrix(records);
+  const hasHeaders = Boolean($("#spreadsheet-has-headers")?.checked);
+  const headerSource = hasHeaders ? records.shift() || [] : [];
+  const fieldCount = Math.min(15, records.reduce((largest, row) => Math.max(largest, row.length), headerSource.length));
+  const headers = uniqueSpreadsheetHeaders(headerSource, fieldCount);
+  const beforeFiltering = records.length;
+  records = records.map((row) => headers.map((_, index) => spreadsheetText(row[index]))).filter((row) => row.filter(Boolean).length >= 2);
+  const overLimit = Math.max(0, records.length - MAX_SPREADSHEET_CARDS);
+  records = records.slice(0, MAX_SPREADSHEET_CARDS);
+  return { headers, records, ignored: beforeFiltering - records.length - overLimit, overLimit, orientation };
+}
+
+function renderSpreadsheetImportPreview() {
+  const prepared = preparedSpreadsheetImport();
+  const direction = prepared.orientation === "columns" ? "columns" : "rows";
+  $("#spreadsheet-header-copy").textContent = direction === "rows" ? spreadsheetUi("spreadsheetFirstRow", "First row contains field names") : spreadsheetUi("spreadsheetFirstColumn", "First column contains field names");
+  const frontSelect = $("#spreadsheet-front-field"), backSelect = $("#spreadsheet-back-field");
+  const previousFront = frontSelect.value, previousBack = backSelect.value;
+  const fieldOptions = prepared.headers.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+  frontSelect.innerHTML = fieldOptions; backSelect.innerHTML = fieldOptions;
+  frontSelect.value = prepared.headers.includes(previousFront) ? previousFront : prepared.headers[0] || "";
+  backSelect.value = prepared.headers.includes(previousBack) && previousBack !== frontSelect.value ? previousBack : prepared.headers[1] || prepared.headers[0] || "";
+  const skipped = prepared.ignored ? ` · ${prepared.ignored} ${spreadsheetUi("spreadsheetIncompleteSkipped", "incomplete records skipped")}` : "";
+  const capped = prepared.overLimit ? ` · ${prepared.overLimit} ${spreadsheetUi("spreadsheetOverLimit", "records over the 5,000-card limit skipped")}` : "";
+  $("#spreadsheet-import-summary").textContent = `${prepared.records.length.toLocaleString()} ${spreadsheetUi("spreadsheetFlashcards", "flashcards")} · ${prepared.headers.length} ${spreadsheetUi("spreadsheetFields", "populated fields")}${skipped}${capped}`;
+  const header = prepared.headers.map((name) => `<th>${escapeHtml(name)}</th>`).join("");
+  const body = prepared.records.slice(0, 8).map((record) => `<tr>${record.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`).join("");
+  $("#spreadsheet-import-preview").innerHTML = prepared.headers.length ? `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>` : `<p>${escapeHtml(spreadsheetUi("spreadsheetNoCells", "No populated cells found."))}</p>`;
+}
+
+function openSpreadsheetImport(payload) {
+  const sheets = (payload?.sheets || []).filter((sheet) => trimSpreadsheetMatrix(sheet.rows).length);
+  if (!sheets.length) throw new Error("No populated spreadsheet cells were found.");
+  pendingSpreadsheetImport = { ...payload, sheets };
+  const select = $("#spreadsheet-sheet");
+  select.innerHTML = sheets.map((sheet) => `<option value="${escapeHtml(sheet.name)}">${escapeHtml(sheet.name)}</option>`).join("");
+  $("#spreadsheet-sheet-field").hidden = sheets.length < 2;
+  $('[name="spreadsheetOrientation"][value="rows"]').checked = true;
+  $("#spreadsheet-has-headers").checked = true;
+  renderSpreadsheetImportPreview();
+  $("#spreadsheet-import-dialog").showModal();
+}
+
+function spreadsheetPayloadFromDelimited(fileName, sourceText) {
+  const extension = fileName.split(".").pop().toLowerCase();
+  const normalized = String(sourceText || "").replace(/^\uFEFF/, "");
+  const separator = extension === "tsv" ? "\t" : detectAnkiSeparator(normalized.split(/\r?\n/).filter((line) => line.trim()).slice(0, 20), extension);
+  const rows = validateSpreadsheetRows(parseSeparatedRecords(normalized, separator));
+  return { name: fileName, extension, sheets: [{ name: spreadsheetUi("spreadsheetSheetOne", "Sheet 1"), rows }] };
+}
+
+function limitedWorksheetRows(XLSX, sheet) {
+  const populatedCells = Object.keys(sheet || {}).filter((key) => key[0] !== "!");
+  if (populatedCells.length > MAX_SPREADSHEET_CELLS) throw new Error(spreadsheetUi("spreadsheetCellLimit", "This spreadsheet has more than 100,000 populated cells. Split it into smaller files before importing."));
+  return validateSpreadsheetRows(XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "", blankrows: false }));
+}
+
+async function spreadsheetPayloadFromFile(file) {
+  const extension = file.name.split(".").pop().toLowerCase();
+  if (file.size > MAX_SPREADSHEET_FILE_BYTES) throw new Error(spreadsheetUi("spreadsheetFileLimit", "This spreadsheet is larger than 15 MB. Split it into smaller files before importing."));
+  if (["csv", "tsv"].includes(extension)) return spreadsheetPayloadFromDelimited(file.name, await file.text());
+  const XLSX = await ensureSpreadsheetReaderLoaded();
+  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false, cellText: true });
+  return {
+    name: file.name,
+    extension,
+    sheets: workbook.SheetNames.map((name) => ({ name, rows: limitedWorksheetRows(XLSX, workbook.Sheets[name]) })),
+  };
+}
+
+function importPreparedSpreadsheet() {
+  const prepared = preparedSpreadsheetImport();
+  if (prepared.headers.length < 2 || !prepared.records.length) { showToast(spreadsheetUi("spreadsheetNeedTwo", "Choose a sheet with at least two populated fields per flashcard.")); return; }
+  const frontField = $("#spreadsheet-front-field").value, backField = $("#spreadsheet-back-field").value;
+  if (!frontField || !backField || frontField === backField) { showToast(spreadsheetUi("spreadsheetDifferentSides", "Choose different fields for the front and back.")); return; }
+  const frontIndex = prepared.headers.indexOf(frontField), backIndex = prepared.headers.indexOf(backField);
+  const importRecords = prepared.records.filter((record) => record[frontIndex] && record[backIndex]);
+  if (!importRecords.length) { showToast(spreadsheetUi("spreadsheetNoMappedCards", "No records contain both selected front and back fields.")); return; }
+  const hasCurrentWork = state.customDraft.length || state.customQuestionDraft.length || state.customFeynmanDraft.length || state.editingCustomDeckId || state.editingBuiltInCollectionId;
+  if (hasCurrentWork && !window.confirm(spreadsheetUi("spreadsheetReplaceConfirm", "Import this spreadsheet as a new flashcard set? Your current draft will be replaced."))) return;
+  const payload = pendingSpreadsheetImport;
+  state.editingCustomDeckId = null;
+  state.editingBuiltInCollectionId = null;
+  state.customCharacteristicFields = prepared.headers.map((name, index) => ({ id: makeLocalId("characteristic"), name, value: "", front: index === frontIndex, back: index === backIndex, visual: false }));
+  state.customDefaultFrontFields = [frontField];
+  state.customDefaultBackFields = [backField];
+  state.customStudyPresets = [];
+  state.extraColumnsOnly = prepared.headers.length > 2;
+  state.customDraft = importRecords.map((record) => {
+    return { id: makeLocalId("card"), front: record[frontIndex], back: record[backIndex], characteristicCard: true, imported: true, characteristics: Object.fromEntries(prepared.headers.map((name, index) => [name, record[index] || ""])) };
+  });
+  state.customQuestionDraft = [];
+  state.customFeynmanDraft = [];
+  state.customUnits = [];
+  state.customImportSource = { name: payload.name, type: payload.extension, importedAt: Date.now() };
+  $("#custom-deck-name").value = importDeckName(payload.name);
+  setNotesContent();
+  setCardMakerMode("characteristics");
+  renderCustomDraft(); renderCustomQuestionDraft(); renderCustomFeynmanDraft(); renderCustomUnitBuilder();
+  const deck = saveGeneratedCustomDeckInPlace();
+  if (!deck) { showToast(spreadsheetUi("spreadsheetStorageError", "This spreadsheet does not fit in this device’s available study storage.")); return; }
+  $("#spreadsheet-import-dialog").close();
+  pendingSpreadsheetImport = null;
+  $("#anki-notes-file").value = "";
+  $("#anki-import-status").textContent = `${spreadsheetUi("spreadsheetImported", "Imported")} ${deck.cards.length} ${spreadsheetUi("spreadsheetFlashcards", "flashcards")} · ${prepared.headers.length} ${spreadsheetUi("spreadsheetFields", "fields")} · ${payload.name}`;
+  showToast(`${deck.name}: ${deck.cards.length} ${spreadsheetUi("spreadsheetFlashcards", "flashcards")}.`);
 }
 
 function loadImportedDocument(payload) {
@@ -12202,10 +12881,16 @@ function saveImportedFlashcards({ fileName, type, cards, skipped = 0 }) {
 async function importAnkiNotesFile(file) {
   const status = $("#anki-import-status");
   const extension = file.name.split(".").pop().toLowerCase();
-  if (!["txt", "csv", "tsv"].includes(extension)) {
+  if (["xlsx", "xls", "csv", "tsv"].includes(extension)) {
+    status.textContent = `${spreadsheetUi("spreadsheetReading", "Reading")} ${file.name}…`;
+    try { openSpreadsheetImport(await spreadsheetPayloadFromFile(file)); }
+    catch (error) { status.textContent = localizedSpreadsheetError(error); showToast(status.textContent); }
+    return;
+  }
+  if (extension !== "txt") {
     if (extension === "apkg") status.textContent = "The desktop app is opening this APKG package locally…";
     else {
-      status.textContent = ["pdf", "pptx"].includes(extension) ? "PDF and PowerPoint extraction is available in the Mac and Windows desktop apps." : "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
+      status.textContent = ["pdf", "pptx"].includes(extension) ? "PDF and PowerPoint extraction is available in the Mac and Windows desktop apps." : "Choose an APKG, spreadsheet, PDF, PPTX, or TXT file.";
       showToast("That file type is not supported.");
     }
     return;
@@ -12301,7 +12986,9 @@ function handleStudyFileResult(result) {
     if (result.kind === "apkg") {
       const parsed = cardsFromAnkiPackageNotes(result.payload.notes);
       saveImportedFlashcards({ fileName: result.payload.name, type: "apkg", cards: parsed.cards, skipped: parsed.skipped });
-    } else if (result.kind === "text") {
+    } else if (result.kind === "spreadsheet") openSpreadsheetImport(result);
+    else if (result.kind === "text" && ["csv", "tsv"].includes(result.extension)) openSpreadsheetImport(spreadsheetPayloadFromDelimited(result.name, result.text));
+    else if (result.kind === "text") {
       const parsed = parseAnkiNotes(result.name, result.text);
       saveImportedFlashcards({ fileName: result.name, type: result.extension, cards: parsed.cards });
     } else if (result.kind === "document") loadImportedDocument(result);
@@ -12313,10 +13000,11 @@ function handleStudyFileResult(result) {
 
 async function importDroppedStudyFile(file) {
   const extension = String(file?.name || "").split(".").pop().toLowerCase();
-  if (!file || !["apkg", "pdf", "pptx", "txt", "csv", "tsv"].includes(extension)) { showToast("Drop an APKG, PDF, PPTX, TXT, CSV, or TSV file."); return; }
-  $("#anki-import-status").textContent = `Reading ${file.name}…`;
+  if (!file || !["apkg", "xlsx", "xls", "csv", "tsv", "pdf", "pptx", "txt"].includes(extension)) { showToast("Drop an APKG, spreadsheet, PDF, PPTX, or TXT file."); return; }
+  $("#anki-import-status").textContent = `${spreadsheetUi("spreadsheetReading", "Reading")} ${file.name}…`;
+  if (["xlsx", "xls", "csv", "tsv"].includes(extension)) { try { openSpreadsheetImport(await spreadsheetPayloadFromFile(file)); } catch (error) { const message = localizedSpreadsheetError(error); $("#anki-import-status").textContent = message; showToast(message); } return; }
   if (window.desktopApp?.readDroppedStudyFile) { handleStudyFileResult(await window.desktopApp.readDroppedStudyFile(file)); return; }
-  if (["txt", "csv", "tsv"].includes(extension)) { await importAnkiNotesFile(file); return; }
+  if (extension === "txt") { await importAnkiNotesFile(file); return; }
   if (window.webkit?.messageHandlers?.studyDroppedFile) {
     const reader = new FileReader();
     reader.onerror = () => window.receiveDocumentImportError("The dropped file could not be read.");
@@ -12330,7 +13018,7 @@ async function importDroppedStudyFile(file) {
 $("#choose-anki-notes").addEventListener("click", async () => {
   if (!window.desktopApp?.chooseStudyFile) { $("#anki-notes-file").click(); return; }
   const status = $("#anki-import-status");
-  status.textContent = "Choose an APKG, PDF, PPTX, TXT, CSV, or TSV file.";
+  status.textContent = "Choose an APKG, spreadsheet, PDF, PPTX, or TXT file.";
   const result = await window.desktopApp.chooseStudyFile();
   handleStudyFileResult(result);
 });
@@ -12354,7 +13042,7 @@ function appendUniqueStudyItems(existing, incoming, keyForItem) {
 }
 
 function assignActiveCustomTopic(items) {
-  return items.map((item) => ({ ...item, customTopicId: item.customTopicId || state.activeCustomTopicId || "" }));
+  return items.map((item) => ({ ...item, ...(item.customTopicId || item.customUnitId ? {} : customOrganizationAssignment()) }));
 }
 
 $("#notes-input").addEventListener("paste", (event) => {
@@ -12388,14 +13076,22 @@ $("#notes-input").addEventListener("input", () => {
   if (notesPlainText()) state.notesHiddenAfterUpdate = false;
 });
 $("#anki-notes-file").addEventListener("change", async (event) => {
-  const file = event.currentTarget.files?.[0];
+  const fileInput = event.currentTarget;
+  const file = fileInput.files?.[0];
   if (!file) return;
   const extension = String(file.name || "").split(".").pop().toLowerCase();
+  if (["xlsx", "xls", "csv", "tsv"].includes(extension)) {
+    $("#anki-import-status").textContent = `${spreadsheetUi("spreadsheetReading", "Reading")} ${file.name}…`;
+    try { openSpreadsheetImport(await spreadsheetPayloadFromFile(file)); }
+    catch (error) { const message = localizedSpreadsheetError(error); $("#anki-import-status").textContent = message; showToast(message); }
+    fileInput.value = "";
+    return;
+  }
   if (["apkg", "pdf", "pptx"].includes(extension)) {
     $("#anki-import-status").textContent = `Reading ${file.name}…`;
     if (window.desktopApp?.readDroppedStudyFile) {
       handleStudyFileResult(await window.desktopApp.readDroppedStudyFile(file));
-      event.currentTarget.value = "";
+      fileInput.value = "";
       return;
     }
     if (window.webkit?.messageHandlers?.studyDroppedFile) {
@@ -12408,6 +13104,13 @@ $("#anki-notes-file").addEventListener("change", async (event) => {
   }
   await importAnkiNotesFile(file);
 });
+
+$("#spreadsheet-sheet").addEventListener("change", renderSpreadsheetImportPreview);
+$$('[name="spreadsheetOrientation"]').forEach((input) => input.addEventListener("change", renderSpreadsheetImportPreview));
+$("#spreadsheet-has-headers").addEventListener("change", renderSpreadsheetImportPreview);
+$("#close-spreadsheet-import").addEventListener("click", () => { $("#spreadsheet-import-dialog").close(); pendingSpreadsheetImport = null; });
+$("#cancel-spreadsheet-import").addEventListener("click", () => { $("#spreadsheet-import-dialog").close(); pendingSpreadsheetImport = null; });
+$("#spreadsheet-import-form").addEventListener("submit", (event) => { event.preventDefault(); importPreparedSpreadsheet(); });
 
 $("#generate-note-cards").addEventListener("click", () => {
   if (state.editingBuiltInCollectionId) {
@@ -12482,6 +13185,7 @@ $("#generate-note-cards").addEventListener("click", () => {
 });
 $$("[data-create-tab]").forEach((button) => button.addEventListener("click", () => selectCreateContentTab(button.dataset.createTab)));
 $$("[data-card-maker-mode]").forEach((button) => button.addEventListener("click", () => setCardMakerMode(button.dataset.cardMakerMode)));
+$("#add-study-preset").addEventListener("click", addRecommendedStudySetup);
 $("#add-custom-unit").addEventListener("click", () => {
   const unitNumber = state.customUnits.length + 1;
   const unit = { id: makeLocalId("unit"), name: `Unit ${unitNumber}`, topics: [] };
@@ -12491,25 +13195,11 @@ $("#add-custom-unit").addEventListener("click", () => {
   state.activeCustomTopicId = topic.id;
   renderCustomUnitBuilder();
 });
-$("#add-characteristic-field").addEventListener("click", () => {
-  if (state.customCharacteristicFields.length >= 15) return;
-  const number = state.customCharacteristicFields.length + 1;
-  const field = { id: makeLocalId("characteristic"), name: "Column " + number, value: "", front: false, back: true };
-  state.customCharacteristicFields.push(field);
-  if (state.customCharacteristicFields.length > 2) {
-    state.extraColumnsOnly = true;
-    const basicModeButton = $('[data-card-maker-mode="basic"]');
-    if (basicModeButton) basicModeButton.hidden = true;
-  }
-  renderCharacteristicCardMaker();
-  document.querySelector('[data-characteristic-name="' + field.id + '"]')?.select();
-});
-$("#add-characteristic-card").addEventListener("click", addCharacteristicCard);
 $("#add-manual-card").addEventListener("click", () => {
   const front = $("#manual-card-front").value.trim();
   const back = $("#manual-card-back").value.trim();
   if ((!front && !state.manualFrontImage) || (!back && !state.manualBackImage)) { showToast("Add text or an image to both sides of the card."); return; }
-  state.customDraft.push({ id: makeLocalId("card"), front, back, frontImage: state.manualFrontImage, backImage: state.manualBackImage, customTopicId: state.activeCustomTopicId || "", manual: true });
+  state.customDraft.push({ id: makeLocalId("card"), front, back, frontImage: state.manualFrontImage, backImage: state.manualBackImage, ...customOrganizationAssignment(), manual: true });
   $("#manual-card-front").value = "";
   $("#manual-card-back").value = "";
   renderManualDefinitionSuggestions();
@@ -12748,7 +13438,7 @@ $("#add-manual-question").addEventListener("click", () => {
   if (!answer) { showToast(choiceQuestion ? "Mark at least one answer choice as correct." : "Complete the answer."); return; }
   const stimulus = $("#manual-question-stimulus").value.trim();
   const essayDetails = type === "essay" ? { essayType: $("#manual-essay-type").value, recommendedMinutes: Math.max(1, Math.min(180, Number($("#manual-essay-minutes").value) || 40)), sources: essaySourcesFromText($("#manual-question-sources").value) } : {};
-  state.customQuestionDraft.push({ id: makeLocalId("question"), type, prompt, answer, options, stimulus, ...essayDetails, image: state.manualQuestionImage, imageSourceUrl: "", customTopicId: state.activeCustomTopicId || "", source: "Manually created" });
+  state.customQuestionDraft.push({ id: makeLocalId("question"), type, prompt, answer, options, stimulus, ...essayDetails, image: state.manualQuestionImage, imageSourceUrl: "", ...customOrganizationAssignment(), source: "Manually created" });
   $("#manual-question-prompt").value = "";
   $("#manual-question-answer").value = "";
   $("#manual-question-options").value = "";
@@ -12799,7 +13489,7 @@ function addManualFeynmanTopic() {
   const input = $("#manual-feynman-topic");
   const prompt = input.value.trim().replace(/[.!]+$/, "");
   if (!prompt) { input.focus(); showToast("Type a Feynman topic first."); return; }
-  state.customFeynmanDraft.push({ id: makeLocalId("feynman"), prompt, customTopicId: state.activeCustomTopicId || "", manual: true });
+  state.customFeynmanDraft.push({ id: makeLocalId("feynman"), prompt, ...customOrganizationAssignment(), manual: true });
   input.value = "";
   renderCustomFeynmanDraft();
   input.focus();
@@ -12842,13 +13532,15 @@ $("#create-study-folder").addEventListener("click", createStudyFolder);
 $("#return-all-built-in-decks").addEventListener("click", returnAllBuiltInDecks);
 $("#my-study-sets-search").addEventListener("input", debounce(renderCustomDecks));
 $("#built-in-study-search").addEventListener("input", debounce(() => { state.studyCatalogPage = 0; renderBuiltInDecks(); }));
-$("#community-search").addEventListener("input", debounce(loadCommunityLibrary, 350));
+$("#community-search").addEventListener("input", debounce(() => { state.communityPage = 0; loadCommunityLibrary(); }, 350));
 $("#community-sort").addEventListener("change", (event) => {
   state.communitySort = event.currentTarget.value;
+  state.communityPage = 0;
   renderCommunityLibrary();
 });
 $$('[data-community-kind]').forEach((button) => button.addEventListener("click", () => {
   state.communityKind = button.dataset.communityKind;
+  state.communityPage = 0;
   loadCommunityLibrary();
 }));
 $("#refresh-my-public-library").addEventListener("click", loadMyPublicLibrary);
@@ -13025,6 +13717,7 @@ $("#settings-form").addEventListener("submit", async (event) => {
   applyProfile(profile);
   celebrateBirthday(profile);
   try {
+    await saveProfileNameFromSettings(profileName);
     await saveProfileVisibilityFromSettings();
     populateSettingsForm();
     showToast("Profile and settings saved.");

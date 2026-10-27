@@ -178,7 +178,16 @@ async function accountAsset(request, env, id) {
 async function ensureUserSchema(env) {
   if (!env.DB) return false;
   if (!schemaPromise) {
-    schemaPromise = env.DB.exec(`
+    // Production D1 schema is applied through migrations. Avoid replaying a
+    // large multi-statement CREATE block at request time; D1 can reject that
+    // block as an incomplete statement on some runtime versions.
+    schemaPromise = env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'").first().then((row) => {
+      if (!row?.name) throw new Error("Account database schema is not migrated");
+    }).catch((error) => {
+      schemaPromise = null;
+      throw error;
+    });
+    /* schemaPromise = env.DB.exec(`
       CREATE TABLE IF NOT EXISTS users (
         google_sub TEXT PRIMARY KEY,
         email TEXT NOT NULL,
@@ -276,7 +285,7 @@ async function ensureUserSchema(env) {
     }).catch((error) => {
       schemaPromise = null;
       throw error;
-    });
+    }); */
   }
   await schemaPromise;
   return true;
@@ -471,6 +480,26 @@ async function updateProfilePrivacy(request, env) {
   await env.DB.prepare("UPDATE users SET profile_public = ?, updated_at = ? WHERE google_sub = ?")
     .bind(body.profilePublic ? 1 : 0, Date.now(), user.id).run();
   return json({ user: { ...user, profilePublic: body.profilePublic } });
+}
+
+async function updateProfileDisplayName(request, env) {
+  if (!allowedMutation(request)) return json({ error: "Origin not allowed" }, { status: 403 });
+  if (!(request.headers.get("Content-Type") || "").includes("application/json")) return json({ error: "JSON required" }, { status: 415 });
+  let user;
+  try { user = await sessionAccount(request, env); }
+  catch (_) { return json({ error: "Please log in again." }, { status: 401 }); }
+  if (!user?.username) return json({ error: "Finish creating your profile first." }, { status: 403 });
+  const body = await request.json().catch(() => null);
+  const displayName = normalizeDisplayName(body?.displayName);
+  const validationError = displayNameError(displayName);
+  if (validationError) return json({ error: validationError }, { status: 400 });
+  await env.DB.prepare("UPDATE users SET display_name = ?, updated_at = ? WHERE google_sub = ?")
+    .bind(displayName, Date.now(), user.id).run();
+  await env.DB.prepare("UPDATE published_items SET author_display_name = ?, updated_at = ? WHERE author_sub = ?")
+    .bind(displayName, Date.now(), user.id).run();
+  await env.DB.prepare("UPDATE published_ratings SET reviewer_display_name = ?, updated_at = ? WHERE user_sub = ?")
+    .bind(displayName, Date.now(), user.id).run();
+  return json({ user: { ...user, name: displayName, displayName } });
 }
 
 async function progressAccount(request, env) {
@@ -933,6 +962,7 @@ export default {
       if (url.pathname === "/api/auth/logout" && request.method === "POST") return await signOut(request, env);
       if (url.pathname === "/api/account/username/check" && request.method === "GET") return await checkUsername(request, env);
       if (url.pathname === "/api/account/profile" && request.method === "POST") return await createProfile(request, env);
+      if (url.pathname === "/api/account/profile/name" && request.method === "POST") return await updateProfileDisplayName(request, env);
       if (url.pathname === "/api/account/profile/privacy" && request.method === "POST") return await updateProfilePrivacy(request, env);
       if (url.pathname === "/api/account/progress" && request.method === "GET") return await getSyncedProgress(request, env);
       if (url.pathname === "/api/account/progress" && request.method === "PUT") return await saveSyncedProgress(request, env);

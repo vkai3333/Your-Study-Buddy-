@@ -470,6 +470,18 @@ test("flashcard study offers classic, scroll, and retryable matching modes", () 
   assert.match(styles, /\.custom-matching-bank > \.custom-matching-tile\.expanded \{[^}]*grid-column: 1 \/ -1/);
 });
 
+test("every ordinary flashcard deck can map its two columns to front and back", () => {
+  const html = fs.readFileSync(path.join(dist, "index.html"), "utf8");
+  assert.match(html, /id="card-column-picker"/);
+  assert.match(html, /id="card-front-column"[\s\S]*?<option value="front">Column 1<\/option>[\s\S]*?<option value="back">Column 2<\/option>/);
+  assert.match(html, /id="card-back-column"[\s\S]*?<option value="front">Column 1<\/option>[\s\S]*?<option value="back" selected>Column 2<\/option>/);
+  assert.match(html, /id="swap-card-columns"/);
+  assert.match(app, /function cardWithSelectedColumns\(card\)/);
+  assert.match(app, /deck\.cards\.map\(cardWithSelectedColumns\)/);
+  assert.match(app, /renderCardColumnPicker\(deck, collection\)/);
+  assert.match(app, /usesSpecialFields = Boolean\(collection\?\.geographyBank \|\| collection\?\.usStateBank\)/);
+});
+
 test("AP topic picker uses compact three-column topics with full hover names", () => {
   assert.match(styles, /\.built-in-topic-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(styles, /\.built-in-topic-choice strong \{[^}]*-webkit-line-clamp: 2/);
@@ -484,7 +496,8 @@ test("personal study sets support editable units and subtopics", () => {
   assert.match(app, /function normalizedCustomUnits\(units\)/);
   assert.match(app, /function renderCustomUnitBuilder\(\)/);
   assert.match(app, /function renderCustomTopicPicker\(deck\)/);
-  assert.match(app, /customTopicId: state\.activeCustomTopicId \|\| ""/);
+  assert.match(app, /function customOrganizationAssignment\(id = state\.activeCustomTopicId\)/);
+  assert.match(app, /customUnitId: entry\?\.unitId \|\| ""/);
   assert.match(app, /units: normalizedCustomUnits\(state\.customUnits\)/);
   assert.match(app, /cards: personalDeck\.cards\.filter\(included\)/);
   assert.match(app, /injectDraftTopicSelectors\(list, state\.customDraft\)/);
@@ -495,6 +508,34 @@ test("personal study sets support editable units and subtopics", () => {
   assert.match(app, /state\.draftViewTopicId/);
   assert.match(app, /visibleRecords\.map\(\(\{ card, index \}\)/);
   assert.match(styles, /\.draft-view-filters \{[^}]*grid-template-columns:/);
+});
+
+test("extra-column drafts are edited directly as expandable tables", () => {
+  const html = fs.readFileSync(path.join(dist, "index.html"), "utf8");
+  assert.doesNotMatch(html, /<span>Front<\/span><span>Back<\/span>/);
+  assert.doesNotMatch(html, /id="add-characteristic-field"/);
+  assert.match(app, /function ensureCharacteristicCardRows\(\)/);
+  assert.doesNotMatch(app, /function addRecommendedCharacteristicFields\(\)/);
+  assert.match(app, /function beginCharacteristicHeaderRename\(fieldId\)/);
+  assert.match(app, /data-extra-column-heading/);
+  assert.match(app, /id="add-extra-column-heading"/);
+  assert.doesNotMatch(app, /id="add-recommended-characteristic-fields"/);
+  assert.match(app, /data-remove-extra-column[^\n]+addEventListener\("dblclick"/);
+  assert.match(app, /if \(!\(field\.name in card\.characteristics\)\) card\.characteristics\[field\.name\] = ""/);
+});
+
+test("deck owners can save recommended study configurations and default sections and sides", () => {
+  const html = fs.readFileSync(path.join(dist, "index.html"), "utf8");
+  assert.match(html, /id="study-defaults-builder"/);
+  assert.match(html, /id="default-study-sections"/);
+  assert.match(html, /id="default-study-front"/);
+  assert.match(html, /id="default-study-back"/);
+  assert.match(html, /id="add-study-preset"/);
+  assert.match(app, /function addRecommendedStudySetup\(\)/);
+  assert.match(app, /studyPresets: JSON\.parse\(JSON\.stringify\(state\.customStudyPresets\)\)/);
+  assert.match(app, /defaultStudySettings: \{ topicIds:/);
+  assert.match(app, /data-deck-study-preset/);
+  assert.match(app, /savedTopicIds = personalDeck\.defaultStudySettings\?\.topicIds/);
 });
 
 test("built-in and community originals are locked while copies preserve editable subdivisions", () => {
@@ -602,8 +643,8 @@ test("large standalone study banks use summary-first loading", () => {
   assert.match(app, /const lazyBuiltInSources =/);
   assert.match(app, /async function ensureBuiltInCollectionLoaded\(/);
   assert.match(app, /requestAnimationFrame\(\(\) => window\.setTimeout\(hydrateAddedCollections/);
-  assert.match(html, /<script src="\.\/app\.bundle\.js\?v=20261025-spacing16"><\/script>/);
-  assert.equal((html.match(/<script\s+src=/g) || []).length, 1, "the startup shell should make one JavaScript request");
+  assert.match(html, /<script src="\.\/app\.bundle\.js\?v=20261026-spreadsheet2"><\/script>/);
+  assert.equal((html.match(/<script\s+src=/g) || []).length, 1, "the startup shell should load only its application bundle");
 });
 
 test("Create workspace gives the question editor the full available width", () => {
@@ -672,7 +713,7 @@ test("Community exam summaries match their complete dependency-aware banks", () 
   }
 });
 
-test("Community mini decks are focused, subdivided, and stay below 40 cards", () => {
+test("Community decks are subdivided and focused mini decks stay below 40 cards", () => {
   const context = vm.createContext({ window: {} });
   vm.runInContext(fs.readFileSync(path.join(dist, "community-mini-decks-data.js"), "utf8"), context);
   const collections = context.window.COMMUNITY_MINI_COLLECTIONS;
@@ -684,12 +725,69 @@ test("Community mini decks are focused, subdivided, and stay below 40 cards", ()
     ids.add(collection.id);
     assert.ok(collection.units.length >= 2, `${collection.name} should preserve useful subdivisions`);
     const cards = collection.units.flatMap((unit) => unit.cards || []);
-    assert.ok(cards.length > 0 && cards.length < 40, `${collection.name} must contain 1–39 cards`);
+    assert.ok(cards.length > 0, `${collection.name} must contain cards`);
+    if (collection.id !== "mini-roman-emperors") {
+      assert.ok(cards.length < 40, `${collection.name} must contain 1–39 cards`);
+    }
     assert.equal(new Set(cards.map((card) => card.id)).size, cards.length, `${collection.name} contains duplicate card ids`);
     assert.ok(cards.every((card) => String(card.front || "").trim() && String(card.back || "").trim()), `${collection.name} contains an empty card`);
   }
   assert.match(fs.readFileSync(path.join(root, "tools", "browser-bundle-sources.json"), "utf8"), /community-mini-decks-data\.js/);
   for (const collection of collections) assert.match(app, new RegExp(`collectionId: "${collection.id}"`));
+  assert.doesNotMatch(app, /collectionId: "mini-spinal-nerves"/);
+  assert.doesNotMatch(fs.readFileSync(path.join(dist, "community-mini-decks-data.js"), "utf8"), /id: "mini-spinal-nerves"/);
+  assert.match(app, /const COMMUNITY_ITEMS_PER_PAGE = 12;/);
+  assert.match(app, /items\.slice\(state\.communityPage \* COMMUNITY_ITEMS_PER_PAGE/);
+});
+
+test("Roman emperors community deck is complete, chronological, illustrated, and periodized", () => {
+  const context = vm.createContext({ window: {} });
+  vm.runInContext(fs.readFileSync(path.join(dist, "community-mini-decks-data.js"), "utf8"), context);
+  const collection = context.window.COMMUNITY_MINI_COLLECTIONS.find((item) => item.id === "mini-roman-emperors");
+  assert.ok(collection, "Roman emperors collection is missing");
+  assert.equal(collection.units.length, 7);
+  const cards = collection.units.flatMap((unit) => unit.cards || []);
+  assert.ok(cards.length >= 85, `expected comprehensive coverage, found ${cards.length} cards`);
+  for (const emperor of ["Augustus", "Nero", "Trajan", "Marcus Aurelius", "Diocletian", "Constantine I", "Theodosius I", "Romulus Augustulus"]) {
+    assert.ok(cards.some((card) => card.front === emperor), `${emperor} is missing`);
+  }
+  assert.ok(cards.every((card) => card.backImage && card.imageCredit === "Wikimedia Commons"));
+});
+
+test("Vitamins community deck covers core vitamins with sourced biochemical structures", () => {
+  const context = vm.createContext({ window: {} });
+  vm.runInContext(fs.readFileSync(path.join(dist, "community-mini-decks-data.js"), "utf8"), context);
+  const collection = context.window.COMMUNITY_MINI_COLLECTIONS.find((item) => item.id === "mini-vitamins-biochemistry");
+  assert.ok(collection, "vitamins community deck is missing");
+  const cards = collection.units.flatMap((unit) => unit.cards || []);
+  assert.ok(cards.length >= 14 && cards.length < 40);
+  for (const vitamin of ["Vitamin A", "Vitamin D", "Vitamin E", "Vitamin K", "Vitamin B1", "Vitamin B12", "Vitamin C"]) {
+    assert.ok(cards.some((card) => card.front.startsWith(vitamin)), `${vitamin} is missing`);
+  }
+  const illustrated = cards.filter((card) => card.backImage);
+  assert.ok(illustrated.length >= 10);
+  assert.ok(illustrated.every((card) => /pubchem\.ncbi\.nlm\.nih\.gov/.test(card.backImage) && /PubChem/.test(card.imageCredit)));
+});
+
+test("IB Physics is a curated SL and HL course with current-paper practice inside Questions", () => {
+  const context = vm.createContext({ window: {} });
+  vm.runInContext(fs.readFileSync(path.join(dist, "ib-physics-data.js"), "utf8"), context);
+  const units = context.window.IB_PHYSICS_DECKS;
+  assert.equal(units.length, 5);
+  const cards = units.flatMap((unit) => unit.cards || []);
+  const questions = units.flatMap((unit) => unit.questions || []);
+  assert.equal(cards.length, 30);
+  assert.equal(questions.length, 45);
+  assert.ok(cards.some((card) => card.courseLevel === "HL"));
+  assert.ok(questions.some((question) => question.courseLevel === "HL"));
+  for (const paper of ["1A", "1B", "2"]) assert.ok(questions.filter((question) => question.examPaper === paper).length >= 10);
+  assert.ok(questions.every((question) => question.source.includes("Original IB-style practice")));
+  assert.match(app, /id: "ibphysics"/);
+  assert.match(app, /question\.examPaper/);
+  assert.doesNotMatch(app, /id: "ib_p1a"/);
+  assert.doesNotMatch(app, /id: "ib_p1b"/);
+  assert.doesNotMatch(app, /id: "ib_p2"/);
+  assert.doesNotMatch(app, /official:ib-physics-foundations/);
 });
 
 test("Amino-acid community deck contains all 20 standard amino acids with sourced structures", () => {
@@ -1394,6 +1492,58 @@ test("country outlines include microstates and preserve geographic proportions",
     assert.equal(countries.find((country) => country.id === code)?.outline, `./assets/geography/outlines/${code}.svg`);
   }
   assert.equal(countries.filter((country) => !country.territory && !country.outline).length, 0);
+  assert.match(app, /territory-fallback\.svg/);
+  assert.match(app, /country\.outlineFallback = true/);
   assert.match(generator, /longitude_scale = max\(\.12, math\.cos\(math\.radians\(mean_latitude\)\)\)/);
   assert.match(generator, /COMPACT_SOVEREIGN_OUTLINE_CODES = \{"MC", "NR", "VA"\}/);
+});
+
+test("country deck copies keep visual columns and recommended study setups in the editor", () => {
+  assert.match(app, /\{ name: "Flag", front: false, back: false, visual: true \}/);
+  assert.match(app, /\{ name: "Outline", front: false, back: false, visual: true \}/);
+  assert.match(app, /Flag: country\.flag/);
+  assert.match(app, /Outline: country\.outline/);
+  assert.match(app, /function hydrateCountryStudyConfiguration\(deck\)/);
+  assert.match(app, /hydrateCountryStudyConfiguration\(personalDeck\)/);
+  assert.match(app, /label: "Flag → Country"/);
+  assert.match(app, /label: "Outline → Country"/);
+  assert.match(app, /function characteristicDraftCell\(field, card, index\)/);
+  assert.match(app, /customUnitId: unit\.id/);
+  assert.match(app, /topics: \[\]/);
+  assert.match(app, /directUnit \? `\$\{directCount\} study items`/);
+  assert.match(app, /characteristics: card\.characteristics \? \{ \.\.\.card\.characteristics \} : undefined/);
+  assert.match(styles, /\.extra-column-visual-cell/);
+});
+
+test("spreadsheet imports support row and column flashcards while ignoring empty cells", () => {
+  const electron = fs.readFileSync(path.join(root, "electron", "main.cjs"), "utf8");
+  const bundleSources = fs.readFileSync(path.join(root, "tools", "browser-bundle-sources.json"), "utf8");
+  const language = fs.readFileSync(path.join(root, "dist", "interface-language.js"), "utf8");
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  assert.match(html, /id="spreadsheet-import-dialog"/);
+  assert.match(html, /One card per row/);
+  assert.match(html, /One card per column/);
+  assert.match(html, /\.xlsx,\.xls/);
+  assert.doesNotMatch(html, /<script src="\.\/vendor\/xlsx\.full\.min\.js"><\/script>/);
+  assert.doesNotMatch(bundleSources, /xlsx\.full\.min\.js/);
+  assert.match(app, /function ensureSpreadsheetReaderLoaded\(\)/);
+  assert.match(app, /script\.src = "\.\/vendor\/xlsx\.full\.min\.js"/);
+  assert.match(app, /function trimSpreadsheetMatrix\(sourceRows\)/);
+  assert.match(app, /row\.some\(Boolean\)/);
+  assert.match(app, /row\.filter\(Boolean\)\.length >= 2/);
+  assert.match(app, /function transposeSpreadsheetMatrix\(rows\)/);
+  assert.match(app, /Math\.min\(15,/);
+  assert.match(app, /MAX_SPREADSHEET_FILE_BYTES = 15 \* 1024 \* 1024/);
+  assert.match(app, /MAX_SPREADSHEET_CARDS = 5000/);
+  assert.match(app, /MAX_SPREADSHEET_CELLS = 100000/);
+  assert.match(app, /function importPreparedSpreadsheet\(\)/);
+  assert.match(app, /spreadsheet-front-field/);
+  assert.match(app, /spreadsheet-back-field/);
+  assert.match(electron, /XLSX\.utils\.sheet_to_json/);
+  assert.match(electron, /const XLSX = require\("xlsx"\)/);
+  assert.match(language, /"Spreadsheet import": "Importación de hoja de cálculo"/);
+  assert.match(language, /"Spreadsheet import": "Importation de feuille de calcul"/);
+  assert.match(packageJson.dependencies.xlsx, /xlsx-0\.20\.3/);
+  assert.match(packageJson.devDependencies.electron, /44\.9\.3/);
+  assert.match(styles, /\.spreadsheet-import-preview/);
 });

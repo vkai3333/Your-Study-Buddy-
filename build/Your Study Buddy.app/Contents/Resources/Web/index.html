@@ -127,6 +127,7 @@
           </section>
           <section class="flashcards-library browse-library-panel community-library" id="browse-community" hidden>
             <div class="community-library-toolbar"><div class="community-library-heading"><h2>Community library</h2><p class="deck-source-copy">Explore curated starter collections and study material published by students.</p></div><div class="community-library-actions"><div class="community-kind-filter" role="group" aria-label="Community content type"><button type="button" class="active" data-community-kind="all">All</button><button type="button" data-community-kind="study_set">Study sets</button><button type="button" data-community-kind="note">Notes</button></div><label class="community-sort-control"><span>Sort by</span><select id="community-sort"><option value="relevance">Relevance</option><option value="rating">Rating</option><option value="new">Newest</option><option value="adds">Most saved</option></select></label><label class="textbook-search study-deck-search"><span class="sr-only">Search community library</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="search" id="community-search" placeholder="Search sets, notes, or creators" autocomplete="off"></label></div></div>
+            <nav class="library-pagination" id="community-library-pagination" aria-label="Community library pages"></nav>
             <div id="community-library-list" class="custom-deck-list flashcards-deck-grid"><div class="custom-deck-empty">Open Community to load published items.</div></div>
           </section>
           <section class="flashcards-library browse-library-panel my-public-library" id="browse-my-public" hidden>
@@ -174,16 +175,29 @@
                 </label>
               </section>
 
+              <section class="custom-topic-builder study-defaults-builder" id="study-defaults-builder" aria-labelledby="study-defaults-heading">
+                <div class="custom-topic-builder-heading">
+                  <div><p class="section-label">Study setup</p><h2 id="study-defaults-heading">Defaults and recommended setups</h2><p>Choose what is selected when this set opens. Save useful front-and-back combinations as recommended setup buttons.</p></div>
+                  <button class="button secondary-button" type="button" id="add-study-preset">+ Recommended setup</button>
+                </div>
+                <div class="study-defaults-grid">
+                  <fieldset><legend>Default sections</legend><div id="default-study-sections"></div></fieldset>
+                  <fieldset><legend>Default front</legend><div id="default-study-front"></div></fieldset>
+                  <fieldset><legend>Default back</legend><div id="default-study-back"></div></fieldset>
+                </div>
+                <div class="study-preset-list" id="study-preset-list"></div>
+              </section>
+
               <section class="create-notes-workspace">
               <div class="create-method-panel">
                 <section class="anki-note-import" id="study-file-drop-zone" aria-labelledby="anki-note-import-heading">
                   <div>
                     <p class="section-label">Anki-compatible import</p>
                     <h2 id="anki-note-import-heading">Import notes</h2>
-                    <p>Choose an Anki deck, notes export, PDF, or PowerPoint. Documents are extracted into the notes editor so you can review them before generating a study set.</p>
-                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Drag and drop a file here, or choose one. Supports APKG, PDF, PPTX, UTF-8 TXT, CSV, and TSV.</p>
+                    <p>Choose an Anki deck, spreadsheet, notes export, PDF, or PowerPoint. For spreadsheets, you choose whether rows or columns become flashcards.</p>
+                    <p class="anki-import-status" id="anki-import-status" aria-live="polite">Drag and drop a file here, or choose one. Supports APKG, XLSX, XLS, CSV, TSV, PDF, PPTX, and UTF-8 TXT.</p>
                   </div>
-                  <input id="anki-notes-file" type="file" accept=".apkg,.pdf,.pptx,.txt,.csv,.tsv,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
+                  <input id="anki-notes-file" type="file" accept=".apkg,.pdf,.pptx,.txt,.csv,.tsv,.xlsx,.xls,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/zip,text/plain,text/csv,text/tab-separated-values" hidden>
                   <button class="button secondary-button" type="button" id="choose-anki-notes">Choose file</button>
                 </section>
                 <div class="create-field">
@@ -218,11 +232,8 @@
                   <button class="button secondary-button create-action" type="button" id="add-manual-card">Add card to this set</button>
                   </div>
                   <div class="characteristic-card-maker" id="characteristic-card-maker" hidden>
-                    <div class="characteristic-maker-heading"><p>Name the reusable columns, enter one item's information, and choose which columns appear on each side.</p><span id="characteristic-field-count">2 of 15 columns</span></div>
-                    <div class="characteristic-column-headings" aria-hidden="true"><span>Column</span><span>Information for this item</span><span>Front</span><span>Back</span><span></span></div>
-                    <div id="characteristic-field-list"></div>
-                    <div class="characteristic-maker-actions"><button class="button secondary-button" type="button" id="add-characteristic-field">+ Add column</button><button class="button primary-button" type="button" id="add-characteristic-card">Add item to this set</button></div>
-                    <p class="flashcard-paste-hint">The field names and front/back choices stay in place for the next item. Values clear after each card is added.</p>
+                    <span id="characteristic-field-count" hidden>2 of 15 columns</span>
+                    <div id="characteristic-field-list" hidden></div>
                   </div>
                 </section>
 
@@ -501,6 +512,17 @@
               </div>
               <p class="geography-field-help">You can combine any fields and reverse them. Studying stays unavailable until both sides contain at least one field. State flag and state outline are visual choices, so only one can appear on each side. Population figures are official U.S. Census Bureau Vintage 2025 estimates. Flags are public-domain state flag SVGs; outlines are sourced from US-State-SVGs.</p>
             </section>
+            <section class="geography-field-picker card-column-picker" id="card-column-picker" hidden>
+              <div class="geography-field-heading">
+                <div><p class="section-label">Build the cards</p><h3>Choose the front and back columns</h3></div>
+                <p id="card-column-summary">Column 1 → Column 2</p>
+              </div>
+              <div class="card-column-controls">
+                <label><span>Front of card</span><select id="card-front-column"><option value="front">Column 1</option><option value="back">Column 2</option></select></label>
+                <button type="button" id="swap-card-columns" aria-label="Swap front and back columns">⇄ <span>Swap</span></button>
+                <label><span>Back of card</span><select id="card-back-column"><option value="front">Column 1</option><option value="back" selected>Column 2</option></select></label>
+              </div>
+            </section>
             <div class="custom-study-options">
               <div class="custom-study-option-card custom-count-option flashcard-study-option">
                 <button type="button" class="custom-study-option-main" id="start-custom-flashcards"><span>Flashcards</span><strong>Flashcards</strong><small>Start with the selected review style.</small></button>
@@ -536,7 +558,7 @@
                       <div id="selected-custom-question-mode" aria-live="polite"><strong>Regular</strong><small>Question worksheet</small></div>
                       <button type="button" id="next-custom-question-mode" aria-label="Next question mode">&#8250;</button>
                     </div>
-                    <div class="flashcard-mode-dots question-mode-dots" aria-hidden="true"><i class="active"></i><i></i></div>
+                    <div class="flashcard-mode-dots question-mode-dots" aria-hidden="true"><i class="active"></i></div>
                   </div>
                   <div class="essay-start-options" id="essay-start-options" hidden>
                     <div class="essay-prompt-picker" id="essay-prompt-picker">
@@ -738,11 +760,10 @@
             <section class="settings-card" aria-labelledby="privacy-legal-title">
               <div class="settings-card-heading"><div><p class="section-label">Privacy and safety</p><h3 id="privacy-legal-title">Your rights and account</h3></div><p>Review how data and Community content are handled, or permanently remove your online account.</p></div>
               <div class="legal-link-grid">
-                <button type="button" class="button secondary-button" data-legal-document="privacy">Privacy</button>
                 <button type="button" class="button secondary-button" data-legal-document="terms">Terms</button>
+                <button type="button" class="button secondary-button" data-legal-document="privacy">Privacy</button>
                 <button type="button" class="button secondary-button" data-legal-document="community">Community Guidelines</button>
                 <button type="button" class="button secondary-button" data-legal-document="copyright">Copyright and reports</button>
-                <button type="button" class="button secondary-button" data-legal-document="deletion">Data deletion</button>
               </div>
               <div class="danger-zone"><div><strong>Delete online account</strong><span>Removes your Google-linked profile, synced progress, ratings, reports, and publications. Local device data is not deleted.</span></div><button type="button" class="button danger-button" id="delete-online-account">Delete account</button></div>
               <p class="settings-export-status" id="account-deletion-status" aria-live="polite"></p>
@@ -796,10 +817,9 @@
           <div class="primary-column">
             <section class="card active-anki-card" aria-labelledby="active-anki-heading">
               <div class="card-header">
-                <div><p class="section-label">Daily review</p><h2 id="active-anki-heading">Active Anki decks</h2></div>
+                <div><h2 id="active-anki-heading">Active Anki decks</h2></div>
                 <span class="active-anki-total" id="active-anki-total">0 due</span>
               </div>
-              <p class="active-anki-intro">Decks appear here after you start their Anki mode. Finished decks stay visible for the day so you can track your progress.</p>
               <div class="active-anki-batch" id="active-anki-batch" hidden>
                 <label><input type="checkbox" id="active-anki-select-all"> <span>Select all due decks</span></label>
                 <span id="active-anki-selection-summary">0 decks selected</span>
@@ -810,9 +830,8 @@
 
             <section class="card freestyle-feynman-card" aria-labelledby="freestyle-feynman-heading">
               <div class="card-header">
-                <div><p class="section-label">Explain any topic</p><h2 id="freestyle-feynman-heading">Freestyle Feynman</h2></div>
+                <div><h2 id="freestyle-feynman-heading">Freestyle Feynman</h2></div>
               </div>
-              <p class="freestyle-feynman-intro">Choose a writing time and add a prompt if you want one. The timer starts as soon as you begin.</p>
               <div class="freestyle-feynman-setup" id="freestyle-feynman-setup">
                 <label class="freestyle-prompt-field">Prompt (optional)<input id="freestyle-feynman-prompt-input" type="text" maxlength="240" placeholder="e.g. Explain cellular respiration in detail"></label>
                 <div class="freestyle-time-fields">
@@ -854,6 +873,8 @@
       <a href="#flashcards"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h12a2 2 0 0 1 2 2v9H7a2 2 0 0 1-2-2V6Z" /><path d="M8 3h11a2 2 0 0 1 2 2v9M9 10h6" /></svg><span>Study</span></a>
       <a href="#create"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Create</span></a>
       <a href="#notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z" /><path d="M8 11h8M8 15h8" /></svg><span>Notes</span></a>
+      <button type="button" data-mobile-account><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg><span>Log in</span></button>
+      <button type="button" data-mobile-settings><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1v.08H9.55V21a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 4.05 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4h-.08V9.55h.08a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.86-2.86.06.06A1.7 1.7 0 0 0 9 4.05a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1v-.08h4.05v.08a1.7 1.7 0 0 0 1.1 1.6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06A1.7 1.7 0 0 0 19.95 9a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1 .4h.08v4.05H21a1.7 1.7 0 0 0-1.6 1.1Z" /></svg><span>Settings</span></button>
     </nav>
 
     <dialog class="account-dialog" id="account-dialog" aria-labelledby="account-dialog-title">
@@ -867,7 +888,7 @@
           <span class="account-hero-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" /></svg></span>
           <div><h3>Continue with Google</h3><p>Log in securely without creating another password. Your existing study sets and notes will stay in place.</p></div>
           <div id="google-signin-button" class="google-signin-button" hidden></div>
-          <p class="account-legal-copy">Online accounts are for ages 13+. By continuing, you agree to the <a href="./terms.html" target="_blank" rel="noopener">Terms</a> and acknowledge the <a href="./privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+          <label class="account-terms-consent"><input id="account-terms-consent" type="checkbox"><span>I agree to the <a href="./terms.html" target="_blank" rel="noopener">Terms of Service</a>.</span></label>
           <div class="account-message" aria-live="polite"><strong id="google-account-status">Checking sign-in…</strong><span id="google-account-detail">Your study data remains on this device.</span></div>
         </section>
 
@@ -1035,6 +1056,23 @@
       </form>
     </dialog>
 
+    <dialog class="task-dialog spreadsheet-import-dialog" id="spreadsheet-import-dialog" aria-labelledby="spreadsheet-import-title">
+      <form id="spreadsheet-import-form">
+        <div class="dialog-header">
+          <div><p class="section-label">Spreadsheet import</p><h2 id="spreadsheet-import-title">Turn cells into flashcards</h2></div>
+          <button class="icon-button" type="button" id="close-spreadsheet-import" aria-label="Close spreadsheet import">×</button>
+        </div>
+        <label id="spreadsheet-sheet-field">Sheet<select id="spreadsheet-sheet"></select></label>
+        <fieldset class="spreadsheet-orientation"><legend>How is each flashcard arranged?</legend><label><input type="radio" name="spreadsheetOrientation" value="rows" checked><span><strong>One card per row</strong><small>Columns become fields</small></span></label><label><input type="radio" name="spreadsheetOrientation" value="columns"><span><strong>One card per column</strong><small>Rows become fields</small></span></label></fieldset>
+        <label class="spreadsheet-header-toggle"><input type="checkbox" id="spreadsheet-has-headers" checked><span id="spreadsheet-header-copy">First row contains field names</span></label>
+        <div class="spreadsheet-side-mapping"><label>Default front<select id="spreadsheet-front-field"></select></label><label>Default back<select id="spreadsheet-back-field"></select></label></div>
+        <p class="spreadsheet-import-summary" id="spreadsheet-import-summary"></p>
+        <div class="spreadsheet-import-preview" id="spreadsheet-import-preview"></div>
+        <p class="spreadsheet-import-note">Empty rows, columns, and cells are ignored. Up to 15 fields and 5,000 flashcards are imported. Formulas use their saved results; formatting, charts, comments, macros, merged-cell layout, and embedded images are not copied.</p>
+        <div class="dialog-actions"><button class="button secondary-button" type="button" id="cancel-spreadsheet-import">Cancel</button><button class="button primary-button" type="submit" id="confirm-spreadsheet-import">Import flashcards</button></div>
+      </form>
+    </dialog>
+
     <dialog class="deck-preview-dialog" id="deck-preview-dialog" aria-labelledby="deck-preview-title">
       <div class="deck-preview-shell">
         <header class="dialog-header">
@@ -1064,6 +1102,6 @@
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./app.bundle.js?v=20261025-spacing16"></script>
+    <script src="./app.bundle.js?v=20261026-spreadsheet2"></script>
   </body>
 </html>
